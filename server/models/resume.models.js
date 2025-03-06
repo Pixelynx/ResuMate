@@ -1,14 +1,39 @@
-const db = require('../config/database');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db.config');
 
-exports.getAll = async () => {
-  const { rows } = await db.query('SELECT * FROM resumes');
-  return rows;
-};
+const Resume = sequelize.define('Resume', {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  education: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  experience: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  skills: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  certifications: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  projects: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+});
 
-exports.create = async (resume) => {
-  const { rows } = await db.query(
-    'INSERT INTO resumes (name, email, phone, education, experience) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [resume.name, resume.email, resume.phone, resume.education, resume.experience]
-  );
-  return rows[0];
-};
+module.exports = Resume;
