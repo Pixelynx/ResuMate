@@ -47,3 +47,6 @@ Resumate is a web application that allows users to create, enhance, and evaluate
 - [ ] Add more AI-powered features for resume enhancement
 - [ ] Improve the UI/UX of the application
 - [ ] Add support for exporting resumes in different formats (PDF, DOCX)
+
+
+6.5 HRS 
