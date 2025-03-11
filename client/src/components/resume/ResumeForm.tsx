@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Button, Stepper, Step, StepLabel, TextField, Box, IconButton, Typography, Card, CardContent, CardActions, Grid, AppBar, Toolbar } from '@mui/material';
+import { Button, TextField, Box, IconButton, Typography, Card, CardContent, CardActions, Grid } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import {
@@ -13,7 +12,6 @@ import {
   Skills,
   Certification,
   Project,
-  ValidationState
 } from './types/resumeTypes';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
@@ -61,7 +59,14 @@ const ResumeForm: React.FC = () => {
       initialValidationState: {
         firstName: { error: false, message: '', touched: false },
         lastName: { error: false, message: '', touched: false },
-        // ... other fields ...
+        title: { error: false, message: '', touched: false },
+        email: { error: false, message: '', touched: false },
+        phone: { error: false, message: '', touched: false },
+        location: { error: false, message: '', touched: false },
+        linkedin: { error: false, message: '', touched: false },
+        website: { error: false, message: '', touched: false },
+        github: { error: false, message: '', touched: false },
+        instagram: { error: false, message: '', touched: false },
       },
       onValidationChange: (isValid) => {
         // Optional: Handle validation state changes
@@ -143,9 +148,17 @@ const ResumeForm: React.FC = () => {
                   label="First Name"
                   variant="outlined"
                   fullWidth
+                  required
+                  inputRef={el => fieldRefs.current['firstName'] = el}
                   placeholder="Enter your first name"
                   value={formData.personalDetails.firstName}
                   onChange={(e) => handleChange('personalDetails', 0, 'firstName', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'firstName', e.target.value)}
+                  error={validationState.firstName.error && validationState.firstName.touched}
+                  helperText={validationState.firstName.touched ? validationState.firstName.message : ''}
+                  InputProps={{
+                    'aria-label': 'First Name',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -153,9 +166,17 @@ const ResumeForm: React.FC = () => {
                   label="Last Name"
                   variant="outlined"
                   fullWidth
+                  required
+                  inputRef={el => fieldRefs.current['lastName'] = el}
                   placeholder="Enter your last name"
                   value={formData.personalDetails.lastName}
                   onChange={(e) => handleChange('personalDetails', 0, 'lastName', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'lastName', e.target.value)}
+                  error={validationState.lastName.error && validationState.lastName.touched}
+                  helperText={validationState.lastName.touched ? validationState.lastName.message : ''}
+                  InputProps={{
+                    'aria-label': 'Last Name',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -163,9 +184,16 @@ const ResumeForm: React.FC = () => {
                   label="Professional Title"
                   variant="outlined"
                   fullWidth
+                  inputRef={el => fieldRefs.current['title'] = el}
                   placeholder="Enter your professional title"
                   value={formData.personalDetails.title}
                   onChange={(e) => handleChange('personalDetails', 0, 'title', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'title', e.target.value)}
+                  error={validationState.title.error && validationState.title.touched}
+                  helperText={validationState.title.touched ? validationState.title.message : ''}
+                  InputProps={{
+                    'aria-label': 'Professional Title',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -173,9 +201,18 @@ const ResumeForm: React.FC = () => {
                   label="Email Address"
                   variant="outlined"
                   fullWidth
-                  type="email" placeholder="Enter your email address"
+                  required
+                  type="email"
+                  inputRef={el => fieldRefs.current['email'] = el}
+                  placeholder="Enter your email address"
                   value={formData.personalDetails.email}
                   onChange={(e) => handleChange('personalDetails', 0, 'email', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'email', e.target.value)}
+                  error={validationState.email.error && validationState.email.touched}
+                  helperText={validationState.email.touched ? validationState.email.message : ''}
+                  InputProps={{
+                    'aria-label': 'Email Address',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -183,9 +220,17 @@ const ResumeForm: React.FC = () => {
                   label="Phone Number"
                   variant="outlined"
                   fullWidth
+                  required
+                  inputRef={el => fieldRefs.current['phone'] = el}
                   placeholder="Enter your phone number"
                   value={formData.personalDetails.phone}
                   onChange={(e) => handleChange('personalDetails', 0, 'phone', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'phone', e.target.value)}
+                  error={validationState.phone.error && validationState.phone.touched}
+                  helperText={validationState.phone.touched ? validationState.phone.message : ''}
+                  InputProps={{
+                    'aria-label': 'Phone Number',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -193,9 +238,17 @@ const ResumeForm: React.FC = () => {
                   label="Location"
                   variant="outlined"
                   fullWidth
+                  required
+                  inputRef={el => fieldRefs.current['location'] = el}
                   placeholder="Enter your location"
                   value={formData.personalDetails.location}
                   onChange={(e) => handleChange('personalDetails', 0, 'location', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'location', e.target.value)}
+                  error={validationState.location.error && validationState.location.touched}
+                  helperText={validationState.location.touched ? validationState.location.message : ''}
+                  InputProps={{
+                    'aria-label': 'Location',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -203,9 +256,17 @@ const ResumeForm: React.FC = () => {
                   label="LinkedIn Profile URL"
                   variant="outlined"
                   fullWidth
-                  type="url" placeholder="Enter your LinkedIn profile URL"
+                  type="url"
+                  inputRef={el => fieldRefs.current['linkedin'] = el}
+                  placeholder="Enter your LinkedIn profile URL"
                   value={formData.personalDetails.linkedin}
                   onChange={(e) => handleChange('personalDetails', 0, 'linkedin', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'linkedin', e.target.value)}
+                  error={validationState.linkedin.error && validationState.linkedin.touched}
+                  helperText={validationState.linkedin.touched ? validationState.linkedin.message : ''}
+                  InputProps={{
+                    'aria-label': 'LinkedIn Profile URL',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -213,9 +274,17 @@ const ResumeForm: React.FC = () => {
                   label="Website URL"
                   variant="outlined"
                   fullWidth
-                  type="url" placeholder="Enter your website URL"
+                  type="url"
+                  inputRef={el => fieldRefs.current['website'] = el}
+                  placeholder="Enter your website URL"
                   value={formData.personalDetails.website}
                   onChange={(e) => handleChange('personalDetails', 0, 'website', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'website', e.target.value)}
+                  error={validationState.website.error && validationState.website.touched}
+                  helperText={validationState.website.touched ? validationState.website.message : ''}
+                  InputProps={{
+                    'aria-label': 'Website URL',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -223,9 +292,17 @@ const ResumeForm: React.FC = () => {
                   label="GitHub URL"
                   variant="outlined"
                   fullWidth
-                  type="url" placeholder="Enter your GitHub URL"
+                  type="url"
+                  inputRef={el => fieldRefs.current['github'] = el}
+                  placeholder="Enter your GitHub URL"
                   value={formData.personalDetails.github}
                   onChange={(e) => handleChange('personalDetails', 0, 'github', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'github', e.target.value)}
+                  error={validationState.github.error && validationState.github.touched}
+                  helperText={validationState.github.touched ? validationState.github.message : ''}
+                  InputProps={{
+                    'aria-label': 'GitHub URL',
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -233,9 +310,17 @@ const ResumeForm: React.FC = () => {
                   label="Instagram URL"
                   variant="outlined"
                   fullWidth
-                  type="url" placeholder="Enter your Instagram URL"
+                  type="url"
+                  inputRef={el => fieldRefs.current['instagram'] = el}
+                  placeholder="Enter your Instagram URL"
                   value={formData.personalDetails.instagram}
                   onChange={(e) => handleChange('personalDetails', 0, 'instagram', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 'instagram', e.target.value)}
+                  error={validationState.instagram.error && validationState.instagram.touched}
+                  helperText={validationState.instagram.touched ? validationState.instagram.message : ''}
+                  InputProps={{
+                    'aria-label': 'Instagram URL',
+                  }}
                 />
               </Grid>
             </Grid>

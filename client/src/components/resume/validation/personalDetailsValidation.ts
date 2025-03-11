@@ -36,4 +36,3 @@ export const validatePersonalDetails = (field: string, value: string) => {
       return { isValid: true, message: '' };
   }
 };
-// TEST
