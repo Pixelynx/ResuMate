@@ -51,19 +51,3 @@ export interface PersonalDetails {
     technologies: string;
     projectUrl: string;
   }
-
-  // Validation types
-  export interface ValidationState {
-    [key: string]: {
-      error: boolean;
-      message: string;
-      touched: boolean;
-    };
-  }
-
-  export interface ValidationError {
-    fieldName: string;
-    message: string;
-    fieldId?: string;
-  }
-  

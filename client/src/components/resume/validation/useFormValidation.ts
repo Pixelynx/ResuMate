@@ -1,6 +1,6 @@
 // src/components/resume/validation/useFormValidation.ts
 import { useState, useRef, useCallback } from 'react';
-import { ValidationState, ValidationError } from '../types/resumeTypes';
+import { ValidationState, ValidationError } from '../types/validationTypes';
 import { validatePersonalDetails } from './personalDetailsValidation';
 import { validateWorkExperience } from './workExperienceValidation';
 import { validateEducation } from './educationValidation';
@@ -16,7 +16,7 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
   const [validationState, setValidationState] = useState<ValidationState>(initialValidationState);
   const fieldRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  const validateField = useCallback((section: string, field: string, value: any) => {
+  const validateField = useCallback((section: string, index: number, field: string, value: any) => {
     switch (section) {
       case 'personalDetails':
         return validatePersonalDetails(field, value);
@@ -33,8 +33,8 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
     }
   }, []);
 
-  const handleBlur = useCallback((section: string, field: string, value: any) => {
-    const { isValid, message } = validateField(section, field, value);
+  const handleBlur = useCallback((section: string, index: number, field: string, value: any) => {
+    const { isValid, message } = validateField(section, index, field, value);
     
     setValidationState(prev => ({
       ...prev,
@@ -53,10 +53,10 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
     }
   }, [validateField, onValidationChange, validationState]);
 
-  const validateSection = useCallback((section: string, data: any) => {
+  const validateSection = useCallback((section: string, index: number, data: any) => {
     const errors: ValidationError[] = [];
     Object.entries(data).forEach(([field, value]) => {
-      const { isValid, message } = validateField(section, field, value);
+      const { isValid, message } = validateField(section, index, field, value);
       if (!isValid) {
         errors.push({
           fieldName: field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1'),
@@ -69,6 +69,7 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
   }, [validateField]);
 
   return {
+    setValidationState,
     validationState,
     fieldRefs,
     handleBlur,

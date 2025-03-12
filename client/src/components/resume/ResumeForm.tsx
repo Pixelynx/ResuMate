@@ -15,6 +15,7 @@ import {
 } from './types/resumeTypes';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
+import { WorkExperienceValidation } from './types/validationTypes';
 
 interface ResumeFormData {
   personalDetails: PersonalDetails;
@@ -50,11 +51,10 @@ const ResumeForm: React.FC = () => {
     });
 
     const {
+      setValidationState,
       validationState,
       fieldRefs,
       handleBlur,
-      getActiveErrors,
-      handleErrorClick
     } = useFormValidation({
       initialValidationState: {
         firstName: { error: false, message: '', touched: false },
@@ -67,9 +67,19 @@ const ResumeForm: React.FC = () => {
         website: { error: false, message: '', touched: false },
         github: { error: false, message: '', touched: false },
         instagram: { error: false, message: '', touched: false },
+        companyName: { error: false, message: '', touched: false },
+        workExperience: [
+          {
+            companyName: { error: false, message: '', touched: false },
+            jobTitle: { error: false, message: '', touched: false },
+            location: { error: false, message: '', touched: false },
+            startDate: { error: false, message: '', touched: false },
+            endDate: { error: false, message: '', touched: false },
+            description: { error: false, message: '', touched: false },
+          }
+        ]
       },
       onValidationChange: (isValid) => {
-        // Optional: Handle validation state changes
         console.log('Form validation state changed:', isValid);
       }
     });
@@ -87,7 +97,6 @@ const ResumeForm: React.FC = () => {
       const formattedValue = field === 'phone' ? formatPhone(value) : value;
 
       if (isArraySection(section)) {
-        // Create a type map to help TypeScript understand the relationship
         type SectionTypeMap = {
           workExperience: WorkExperience;
           education: Education;
@@ -105,33 +114,43 @@ const ResumeForm: React.FC = () => {
       }
 
       if (section === 'personalDetails') {
-      setTimeout(() => {
-        handleBlur(section, field, formattedValue);
-      }, 300);
-    }
+        setTimeout(() => {
+          handleBlur(section, 0, field, formattedValue);
+        }, 300);
+      }
     };
   
     const addEntry = (section: keyof ResumeFormData) => {
-      if (isArraySection(section) && formData[section].length > 0) {
-        // Create a deep copy of the first entry
-        const newEntry = { ...formData[section][0] };
-        
-        // Use a type assertion to help TypeScript understand what we're doing
-        const typedNewEntry = newEntry as Record<string, string>;
-        
-        // Reset all values to empty strings
-        Object.keys(typedNewEntry).forEach(key => {
-          typedNewEntry[key] = '';
+      if (section === 'workExperience') {
+        setValidationState(prev => {
+          const updatedWorkExperience = [...(prev.workExperience as WorkExperienceValidation[] || [])];
+          updatedWorkExperience.push({
+            companyName: { error: false, message: '', touched: false },
+            jobTitle: { error: false, message: '', touched: false },
+            location: { error: false, message: '', touched: false },
+            startDate: { error: false, message: '', touched: false },
+            endDate: { error: false, message: '', touched: false },
+            description: { error: false, message: '', touched: false },
+          });
+          return {
+            ...prev,
+            workExperience: updatedWorkExperience
+          };
         });
-        
-        // Update the form data with the new entry
+      }
+    
+      if (isArraySection(section) && formData[section].length > 0) {
+        const newEntry = { ...formData[section][0] };
+        const typedNewEntry = newEntry as Record<string, any>;
+        Object.keys(typedNewEntry).forEach(key => {
+          typedNewEntry[key] = key.includes('Date') ? null : '';
+        });
         setFormData({ ...formData, [section]: [...formData[section], typedNewEntry] });
       }
     };
   
     const removeEntry = (section: keyof ResumeFormData, index: number) => {
       if (isArraySection(section)) {
-        // Use a type assertion to tell TypeScript exactly what type of array we're working with
         const sectionArray = formData[section] as any[];
         const updatedSection = sectionArray.filter((_: any, i: number) => i !== index);
         setFormData({ ...formData, [section]: updatedSection });
@@ -153,7 +172,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your first name"
                   value={formData.personalDetails.firstName}
                   onChange={(e) => handleChange('personalDetails', 0, 'firstName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'firstName', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'firstName', e.target.value)}
                   error={validationState.firstName.error && validationState.firstName.touched}
                   helperText={validationState.firstName.touched ? validationState.firstName.message : ''}
                   InputProps={{
@@ -171,7 +190,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your last name"
                   value={formData.personalDetails.lastName}
                   onChange={(e) => handleChange('personalDetails', 0, 'lastName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'lastName', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'lastName', e.target.value)}
                   error={validationState.lastName.error && validationState.lastName.touched}
                   helperText={validationState.lastName.touched ? validationState.lastName.message : ''}
                   InputProps={{
@@ -188,7 +207,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your professional title"
                   value={formData.personalDetails.title}
                   onChange={(e) => handleChange('personalDetails', 0, 'title', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'title', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'title', e.target.value)}
                   error={validationState.title.error && validationState.title.touched}
                   helperText={validationState.title.touched ? validationState.title.message : ''}
                   InputProps={{
@@ -207,7 +226,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your email address"
                   value={formData.personalDetails.email}
                   onChange={(e) => handleChange('personalDetails', 0, 'email', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'email', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'email', e.target.value)}
                   error={validationState.email.error && validationState.email.touched}
                   helperText={validationState.email.touched ? validationState.email.message : ''}
                   InputProps={{
@@ -225,7 +244,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your phone number"
                   value={formData.personalDetails.phone}
                   onChange={(e) => handleChange('personalDetails', 0, 'phone', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'phone', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'phone', e.target.value)}
                   error={validationState.phone.error && validationState.phone.touched}
                   helperText={validationState.phone.touched ? validationState.phone.message : ''}
                   InputProps={{
@@ -243,7 +262,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your location"
                   value={formData.personalDetails.location}
                   onChange={(e) => handleChange('personalDetails', 0, 'location', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'location', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'location', e.target.value)}
                   error={validationState.location.error && validationState.location.touched}
                   helperText={validationState.location.touched ? validationState.location.message : ''}
                   InputProps={{
@@ -261,7 +280,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your LinkedIn profile URL"
                   value={formData.personalDetails.linkedin}
                   onChange={(e) => handleChange('personalDetails', 0, 'linkedin', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'linkedin', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'linkedin', e.target.value)}
                   error={validationState.linkedin.error && validationState.linkedin.touched}
                   helperText={validationState.linkedin.touched ? validationState.linkedin.message : ''}
                   InputProps={{
@@ -279,7 +298,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your website URL"
                   value={formData.personalDetails.website}
                   onChange={(e) => handleChange('personalDetails', 0, 'website', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'website', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'website', e.target.value)}
                   error={validationState.website.error && validationState.website.touched}
                   helperText={validationState.website.touched ? validationState.website.message : ''}
                   InputProps={{
@@ -297,7 +316,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your GitHub URL"
                   value={formData.personalDetails.github}
                   onChange={(e) => handleChange('personalDetails', 0, 'github', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'github', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'github', e.target.value)}
                   error={validationState.github.error && validationState.github.touched}
                   helperText={validationState.github.touched ? validationState.github.message : ''}
                   InputProps={{
@@ -315,7 +334,7 @@ const ResumeForm: React.FC = () => {
                   placeholder="Enter your Instagram URL"
                   value={formData.personalDetails.instagram}
                   onChange={(e) => handleChange('personalDetails', 0, 'instagram', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 'instagram', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'instagram', e.target.value)}
                   error={validationState.instagram.error && validationState.instagram.touched}
                   helperText={validationState.instagram.touched ? validationState.instagram.message : ''}
                   InputProps={{
@@ -330,28 +349,124 @@ const ResumeForm: React.FC = () => {
             <Box>
               {formData.workExperience.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
-                  <TextField label="Company Name" variant="outlined" fullWidth value={entry.companyName} onChange={(e) => handleChange('workExperience', index, 'companyName', e.target.value)} />
-                  <TextField label="Job Title" variant="outlined" fullWidth value={entry.jobTitle} onChange={(e) => handleChange('workExperience', index, 'jobTitle', e.target.value)} />
-                  <TextField label="Location" variant="outlined" fullWidth value={entry.location} onChange={(e) => handleChange('workExperience', index, 'location', e.target.value)} />
+                  <TextField
+                    label="Company Name"
+                    variant="outlined"
+                    fullWidth
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_companyName`] = el}
+                    value={entry.companyName}
+                    onChange={(e) => handleChange('workExperience', index, 'companyName', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'companyName', e.target.value)}
+                    error={validationState.workExperience?.[index]?.companyName.error && 
+                           validationState.workExperience?.[index]?.companyName.touched}
+                    helperText={validationState.workExperience?.[index]?.companyName.touched ? 
+                              validationState.workExperience?.[index]?.companyName.message : ''}
+                    InputProps={{
+                      'aria-label': `Company Name for entry ${index + 1}`,
+                    }}
+                  />
+                  <TextField
+                    label="Job Title"
+                    variant="outlined"
+                    fullWidth
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_jobTitle`] = el}
+                    value={entry.jobTitle}
+                    onChange={(e) => handleChange('workExperience', index, 'jobTitle', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'jobTitle', e.target.value)}
+                    error={validationState.workExperience?.[index]?.jobTitle.error && 
+                           validationState.workExperience?.[index]?.jobTitle.touched}
+                    helperText={validationState.workExperience?.[index]?.jobTitle.touched ? 
+                              validationState.workExperience?.[index]?.jobTitle.message : ''}
+                    InputProps={{
+                      'aria-label': `Job Title for entry ${index + 1}`,
+                    }}
+                  />
+                  <TextField
+                    label="Location"
+                    variant="outlined"
+                    fullWidth
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_location`] = el}
+                    value={entry.location}
+                    onChange={(e) => handleChange('workExperience', index, 'location', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'location', e.target.value)}
+                    error={validationState.workExperience?.[index]?.location.error && 
+                           validationState.workExperience?.[index]?.location.touched}
+                    helperText={validationState.workExperience?.[index]?.location.touched ? 
+                              validationState.workExperience?.[index]?.location.message : ''}
+                    InputProps={{
+                      'aria-label': `Location for entry ${index + 1}`,
+                    }}
+                  />
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment Start Date"
                       value={entry.startDate}
                       onChange={(date) => handleChange('workExperience', index, 'startDate', date)}
-                      slotProps={{ textField: { fullWidth: true } }}
+                      slotProps={{ 
+                        textField: { 
+                          fullWidth: true,
+                          required: true,
+                          inputRef: el => fieldRefs.current[`workExperience_${index}_startDate`] = el,
+                          error: validationState.workExperience?.[index]?.startDate.error && 
+                                 validationState.workExperience?.[index]?.startDate.touched,
+                          helperText: validationState.workExperience?.[index]?.startDate.touched ? 
+                                    validationState.workExperience?.[index]?.startDate.message : ''
+                        } 
+                      }}
                     />
+                  </LocalizationProvider>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment End Date"
                       value={entry.endDate}
                       onChange={(date) => handleChange('workExperience', index, 'endDate', date)}
-                      slotProps={{ textField: { fullWidth: true } }}
+                      slotProps={{ 
+                        textField: { 
+                          fullWidth: true,
+                          inputRef: el => fieldRefs.current[`workExperience_${index}_endDate`] = el,
+                          error: validationState.workExperience?.[index]?.endDate.error && 
+                                 validationState.workExperience?.[index]?.endDate.touched,
+                          helperText: validationState.workExperience?.[index]?.endDate.touched ? 
+                                    validationState.workExperience?.[index]?.endDate.message : ''
+                        } 
+                      }}
                     />
                   </LocalizationProvider>
-                  <TextField label="Job Description" variant="outlined" fullWidth multiline rows={4} value={entry.description} onChange={(e) => handleChange('workExperience', index, 'description', e.target.value)} />
-                  <IconButton onClick={() => removeEntry('workExperience', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <TextField
+                    label="Job Description"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_description`] = el}
+                    value={entry.description}
+                    onChange={(e) => handleChange('workExperience', index, 'description', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'description', e.target.value)}
+                    error={validationState.workExperience?.[index]?.description.error && 
+                           validationState.workExperience?.[index]?.description.touched}
+                    helperText={validationState.workExperience?.[index]?.description.touched ? 
+                              validationState.workExperience?.[index]?.description.message : ''}
+                    InputProps={{
+                      'aria-label': `Job Description for entry ${index + 1}`,
+                    }}
+                  />
+                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                    <IconButton 
+                      onClick={() => removeEntry('workExperience', index)}
+                      disabled={formData.workExperience.length === 1}
+                      aria-label={`Remove work experience entry ${index + 1}`}
+                    >
+                      <RemoveCircleOutlineIcon />
+                    </IconButton>
+                  </Box>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('workExperience')} startIcon={<AddCircleOutlineIcon />}>Add Another</Button>
+              <Button 
+                onClick={() => addEntry('workExperience')} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Work Experience
+              </Button>
             </Box>
           );
         case 2:
@@ -581,10 +696,10 @@ const ResumeForm: React.FC = () => {
     };
   
     return (
-      <Box sx={{
+      <Box sx={{ 
           minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
+        display: 'flex',
+        flexDirection: 'column',
           justifyContent: 'space-between'
         }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: -5 }}>
@@ -597,21 +712,21 @@ const ResumeForm: React.FC = () => {
               <Typography variant="h5" component="div" gutterBottom>
                 {steps[activeStep]}
               </Typography>
-              {renderStepContent(activeStep)}
+          {renderStepContent(activeStep)}
             </CardContent>
             <CardActions sx={{ justifyContent: 'space-between' }}>
               <Button color="primary" onClick={handleBack} disabled={activeStep === 0}>
-                Back
-              </Button>
+              Back
+            </Button>
             <Box sx={{ flex: '1 1 auto' }} />
             <Button color="primary" onClick={handleNext}>
               {activeStep === steps.length - 1 ? 'Finish' : 'Next Section'}
             </Button>
             </CardActions>
         </Card>
+        </Box>
       </Box>
-      </Box>
-  );
-};
+    );
+  };
   
   export default ResumeForm; 
