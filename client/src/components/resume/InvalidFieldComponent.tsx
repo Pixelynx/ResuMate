@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useTheme, useMediaQuery } from '@mui/material';
-import { ValidationError } from './types/resumeTypes';
+import { ValidationError } from './types/validationTypes';
 
 interface InvalidFieldComponentProps {
   errors: ValidationError[];
