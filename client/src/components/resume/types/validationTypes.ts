@@ -17,9 +17,11 @@ export interface PersonalDetailsValidation {
     companyName: FieldValidation;
     jobTitle: FieldValidation;
     location: FieldValidation;
-    startDate: Dayjs | null;
-    endDate: Dayjs | null;
     description: FieldValidation;
+    // Date validation flags
+    startDateValid: boolean;
+    endDateValid: boolean;
+    dateErrorMessage: string;
   }
   
   export interface EducationValidation {

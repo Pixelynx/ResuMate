@@ -42,8 +42,39 @@ Resumate is a web application that allows users to create, enhance, and evaluate
 
 5. Update the database configuration in `backend/config/db.config.js` with your PostgreSQL credentials.
 
+## Validation
+- [ ] Form validation has been implemented for fields using a custom validation system:
+   - [x] Personal Details
+   - [x] Work Experience
+   - [ ] Education
+   - [ ] Skills
+   - [ ] Certification
+   - [ ] Project
+- [x] Real-time validation with visual feedback for invalid fields
+- [x] Phone number format validation
+- [x] Date validation to ensure chronological order (end dates after start dates)
+- [x] Required field validation with appropriate error messages
+- [x] URL and email format validation
+
+### Validation Implementation
+The form uses a custom validation system with the following components:
+
+1. **useFormValidation Hook**: A custom hook that manages validation state and provides validation functions.
+2. **Field-Level Validation**: Each field is validated individually with specific rules.
+3. **Section-Level Validation**: Sections like Work Experience have their own validation logic.
+4. **Date Validation**: Special handling for date fields to ensure chronological order.
+5. **Real-Time Feedback**: Users receive immediate feedback when fields are invalid.
+
+### Future Validation Enhancements
+- [ ] Refactor validation to better handle single-item sections without requiring index parameters
+- [ ] Enhance date validation to check for reasonable date ranges and prevent future dates for past experiences
+- [ ] Add form-level validation to ensure overall resume coherence and completeness
+- [ ] Improve error message clarity and provide suggestions for fixing validation issues
+- [ ] Add validation for file uploads (e.g., profile pictures, attachments)
+
 ## Development Roadmap
-- [ ] Implement simple resume builder
+- [x] Implement simple resume builder
+- [ ] Add form validation for all resume sections
 - [ ] Improve the UI/UX of the application
 - [ ] Add more AI-powered features for resume enhancement
 - [ ] Add support for exporting resumes in different formats (PDF, DOCX)
@@ -66,8 +97,12 @@ The `ResumeForm` component is a multi-step form designed to collect user resume 
 - **State Management**: The form state is managed using React's `useState` hook.
 
 ### Validation
-- [ ] Each step can include validation logic to ensure the data is correctly entered before proceeding to the next step.
-- [ ] Validation can be implemented using form libraries like Formik or custom validation logic.
+- Each step includes validation logic to ensure data is correctly entered before proceeding to the next step
+- Validation is implemented using a custom validation system with the `useFormValidation` hook
+- Real-time validation provides immediate feedback to users
+- Form progression is blocked if the current step contains validation errors
+- Special validation for date fields ensures chronological order (e.g., end dates after start dates)
+- Required fields are clearly marked and validated
 
 ### Usage
 - The `ResumeForm` component is used in the `/builder` route of the application.

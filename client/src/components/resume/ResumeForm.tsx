@@ -55,6 +55,7 @@ const ResumeForm: React.FC = () => {
       validationState,
       fieldRefs,
       handleBlur,
+      validateWorkExperienceDates,
     } = useFormValidation({
       initialValidationState: {
         firstName: { error: false, message: '', touched: false },
@@ -73,9 +74,10 @@ const ResumeForm: React.FC = () => {
             companyName: { error: false, message: '', touched: false },
             jobTitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
-            startDate: { error: false, message: '', touched: false },
-            endDate: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
+            startDateValid: true,
+            endDateValid: true,
+            dateErrorMessage: '',
           }
         ]
       },
@@ -84,7 +86,20 @@ const ResumeForm: React.FC = () => {
       }
     });
   
-    const handleNext = () => setActiveStep((prev) => prev + 1);
+    const handleNext = () => {
+      if (activeStep === 1) {
+        const allDatesValid = formData.workExperience.every((entry, index) => {
+          return validateWorkExperienceDates(index, entry.startDate, entry.endDate);
+        });
+        
+        if (!allDatesValid) {
+          console.log('Please fix date errors before proceeding');
+          return;
+        }
+      }
+      
+      setActiveStep((prev) => prev + 1);
+    };
     const handleBack = () => setActiveStep((prev) => prev - 1);
 
     const isArraySection = (
@@ -104,9 +119,7 @@ const ResumeForm: React.FC = () => {
           projects: Project;
         };
 
-        // Helps TypeScript understand which type we're dealing with based on the section
         const updatedSection = [...formData[section]] as SectionTypeMap[typeof section][];
-        // Now we use a type assertion to tell TypeScript the field is valid for this type
         (updatedSection[index] as any)[field] = value;
         setFormData({ ...formData, [section]: updatedSection });
       } else {
@@ -128,9 +141,10 @@ const ResumeForm: React.FC = () => {
             companyName: { error: false, message: '', touched: false },
             jobTitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
-            startDate: { error: false, message: '', touched: false },
-            endDate: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
+            startDateValid: true,
+            endDateValid: true,
+            dateErrorMessage: '',
           });
           return {
             ...prev,
@@ -401,17 +415,19 @@ const ResumeForm: React.FC = () => {
                     <DatePicker
                       label="Employment Start Date"
                       value={entry.startDate}
-                      onChange={(date) => handleChange('workExperience', index, 'startDate', date)}
-                      slotProps={{ 
-                        textField: { 
+                      onChange={(date) => {
+                        handleChange('workExperience', index, 'startDate', date);
+                        validateWorkExperienceDates(index, date, entry.endDate);
+                      }}
+                      slotProps={{
+                        textField: {
                           fullWidth: true,
                           required: true,
                           inputRef: el => fieldRefs.current[`workExperience_${index}_startDate`] = el,
-                          error: validationState.workExperience?.[index]?.startDate.error && 
-                                 validationState.workExperience?.[index]?.startDate.touched,
-                          helperText: validationState.workExperience?.[index]?.startDate.touched ? 
-                                    validationState.workExperience?.[index]?.startDate.message : ''
-                        } 
+                          error: !validationState.workExperience?.[index]?.startDateValid,
+                          helperText: !validationState.workExperience?.[index]?.startDateValid ?
+                            validationState.workExperience?.[index]?.dateErrorMessage : ''
+                        }
                       }}
                     />
                   </LocalizationProvider>
@@ -419,16 +435,18 @@ const ResumeForm: React.FC = () => {
                     <DatePicker
                       label="Employment End Date"
                       value={entry.endDate}
-                      onChange={(date) => handleChange('workExperience', index, 'endDate', date)}
-                      slotProps={{ 
-                        textField: { 
+                      onChange={(date) => {
+                        handleChange('workExperience', index, 'endDate', date);
+                        validateWorkExperienceDates(index, entry.startDate, date);
+                      }}
+                      slotProps={{
+                        textField: {
                           fullWidth: true,
                           inputRef: el => fieldRefs.current[`workExperience_${index}_endDate`] = el,
-                          error: validationState.workExperience?.[index]?.endDate.error && 
-                                 validationState.workExperience?.[index]?.endDate.touched,
-                          helperText: validationState.workExperience?.[index]?.endDate.touched ? 
-                                    validationState.workExperience?.[index]?.endDate.message : ''
-                        } 
+                          error: !validationState.workExperience?.[index]?.endDateValid,
+                          helperText: !validationState.workExperience?.[index]?.endDateValid ?
+                            validationState.workExperience?.[index]?.dateErrorMessage : ''
+                        }
                       }}
                     />
                   </LocalizationProvider>

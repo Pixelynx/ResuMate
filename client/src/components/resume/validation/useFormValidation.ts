@@ -33,9 +33,48 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
     }
   }, []);
 
+  // Validate if end date is after start date
+  const isValidDateRange = (startDate: any, endDate: any): boolean => {
+    if (!startDate || !endDate) return true; // If either date is missing, consider it valid
+    return new Date(endDate) >= new Date(startDate);
+  };
+
+  const validateWorkExperienceDates = (index: number, startDate: any, endDate: any) => {
+    let isValid = true;
+    let errorMessage = '';
+
+    if (!startDate) {
+      isValid = false;
+      errorMessage = 'Start date is required';
+    }
+    // Check if end date is after start date (if both are provided)
+    else if (startDate && endDate && !isValidDateRange(startDate, endDate)) {
+      isValid = false;
+      errorMessage = 'End date must be after start date';
+    }
+
+    setValidationState(prev => {
+      const updatedWorkExperience = [...prev.workExperience];
+      if (updatedWorkExperience[index]) {
+        updatedWorkExperience[index] = {
+          ...updatedWorkExperience[index],
+          startDateValid: startDate ? true : false,
+          endDateValid: isValid,
+          dateErrorMessage: errorMessage
+        };
+      }
+      return {
+        ...prev,
+        workExperience: updatedWorkExperience
+      };
+    });
+
+    return isValid;
+  };
+
   const handleBlur = useCallback((section: string, index: number, field: string, value: any) => {
     const { isValid, message } = validateField(section, index, field, value);
-    
+
     setValidationState(prev => ({
       ...prev,
       [field]: {
@@ -74,6 +113,7 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
     fieldRefs,
     handleBlur,
     validateSection,
+    validateWorkExperienceDates,
     getActiveErrors: useCallback((): ValidationError[] => {
       return Object.entries(validationState)
         .filter(([_, state]) => state.error && state.touched)
