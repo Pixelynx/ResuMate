@@ -16,8 +16,9 @@ import {
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
 import { WorkExperienceValidation } from './types/validationTypes';
+import ResumePreview from './PreviewResume';
 
-interface ResumeFormData {
+export interface ResumeFormData {
   personalDetails: PersonalDetails;
   workExperience: WorkExperience[];
   education: Education[];
@@ -85,22 +86,56 @@ const ResumeForm: React.FC = () => {
         console.log('Form validation state changed:', isValid);
       }
     });
+
+    const submitResume = async () => {
+      try {
+        const response = await fetch('/api/resumes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        if (response.ok) {
+          // TODO: Success
+        } else {
+          // TODO: Error
+        }
+      } catch (error) {
+        console.error('Error submitting resume:', error);
+      }
+    };
   
     const handleNext = () => {
-      if (activeStep === 1) {
-        const allDatesValid = formData.workExperience.every((entry, index) => {
-          return validateWorkExperienceDates(index, entry.startDate, entry.endDate);
-        });
+      // if (activeStep === 0) {
+      //   const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
+      //   const allFieldsValid = requiredFields.every(field => 
+      //     !validationState[field].error && validationState[field].touched
+      //   );
         
-        if (!allDatesValid) {
-          console.log('Please fix date errors before proceeding');
-          return;
-        }
-      }
+      //   if (!allFieldsValid) {
+      //     console.log('Please complete all required fields before proceeding');
+      //     return;
+      //   }
+      // }
+
+      // if (activeStep === 1) {
+      //   const allDatesValid = formData.workExperience.every((entry, index) => {
+      //     return validateWorkExperienceDates(index, entry.startDate, entry.endDate);
+      //   });
+        
+      //   if (!allDatesValid) {
+      //     console.log('Please fix date errors before proceeding');
+      //     return;
+      //   }
+      // }
       
       setActiveStep((prev) => prev + 1);
     };
+
     const handleBack = () => setActiveStep((prev) => prev - 1);
+
+    const handleFinish = () => {
+      submitResume();
+    }
 
     const isArraySection = (
       section: keyof ResumeFormData
@@ -708,9 +743,11 @@ const ResumeForm: React.FC = () => {
               <Button onClick={() => addEntry('projects')} startIcon={<AddCircleOutlineIcon />}>Add Another Project</Button>
             </Box>
           );
-        default:
-          return 'Unknown step';
-      }
+          case steps.length - 1:
+            return <ResumePreview formData={formData} />;
+          default:
+            return 'Unknown step';
+        }
     };
   
     return (
