@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Button, TextField, Box, IconButton, Typography, Card, CardContent, CardActions, Grid } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Button, TextField, Box, IconButton, Typography, Card, CardContent, CardActions, Grid, Snackbar, Alert, CircularProgress } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -17,6 +17,7 @@ import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
 import { WorkExperienceValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
+import { resumeService } from '../../utils/api';
 
 export interface ResumeFormData {
   personalDetails: PersonalDetails;
@@ -29,8 +30,13 @@ export interface ResumeFormData {
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects'];
 
-const ResumeForm: React.FC = () => {
+const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
     const [activeStep, setActiveStep] = useState(0);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [savedResumeId, setSavedResumeId] = useState<string | null>(resumeId || null);
+    const [loading, setLoading] = useState(!!resumeId);
     const [formData, setFormData] = useState<ResumeFormData> ({
       personalDetails: {
         firstName: '',
@@ -87,20 +93,47 @@ const ResumeForm: React.FC = () => {
       }
     });
 
+    useEffect(() => {
+      const fetchResume = async () => {
+        if (resumeId) {
+          try {
+            setLoading(true);
+            const resumeData = await resumeService.getResumeById(resumeId);
+            setFormData(resumeData);
+            setSavedResumeId(resumeId);
+          } catch (error) {
+            console.error('Error fetching resume:', error);
+            setSubmitError('Failed to load resume data. Please try again.');
+          } finally {
+            setLoading(false);
+          }
+        }
+      };
+
+      fetchResume();
+    }, [resumeId]);
+
     const submitResume = async () => {
       try {
-        const response = await fetch('/api/resumes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if (response.ok) {
-          // TODO: Success
+        setSubmitting(true);
+        setSubmitError(null);
+        
+        let response;
+        
+        if (savedResumeId) {
+          response = await resumeService.updateResume(savedResumeId, formData);
         } else {
-          // TODO: Error
+          response = await resumeService.createResume(formData);
         }
+        
+        setSavedResumeId(response.id);
+        setSubmitSuccess(true);
+        console.log('Resume submitted successfully:', response);
       } catch (error) {
         console.error('Error submitting resume:', error);
+        setSubmitError('Failed to submit resume. Please try again.');
+      } finally {
+        setSubmitting(false);
       }
     };
   
@@ -135,7 +168,7 @@ const ResumeForm: React.FC = () => {
 
     const handleFinish = () => {
       submitResume();
-    }
+    };
 
     const isArraySection = (
       section: keyof ResumeFormData
@@ -753,35 +786,76 @@ const ResumeForm: React.FC = () => {
     return (
       <Box sx={{ 
           minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
+          display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'space-between'
         }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: -5 }}>
-          <Card sx={{ maxWidth: 800,
-              width: '100%', p: 3,
-              borderRadius: 2,
-              boxShadow: 3
-            }}>
-            <CardContent>
-              <Typography variant="h5" component="div" gutterBottom>
-                {steps[activeStep]}
-              </Typography>
-          {renderStepContent(activeStep)}
-            </CardContent>
-            <CardActions sx={{ justifyContent: 'space-between' }}>
-              <Button color="primary" onClick={handleBack} disabled={activeStep === 0}>
-              Back
-            </Button>
-            <Box sx={{ flex: '1 1 auto' }} />
-            <Button color="primary" onClick={handleNext}>
-              {activeStep === steps.length - 1 ? 'Finish' : 'Next Section'}
-            </Button>
-            </CardActions>
-        </Card>
-        </Box>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress />
+            <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: -5 }}>
+            <Card sx={{ maxWidth: 800,
+                width: '100%', p: 3,
+                borderRadius: 2,
+                boxShadow: 3
+              }}>
+              <CardContent>
+                <Typography variant="h5" component="div" gutterBottom>
+                  {steps[activeStep]}
+                </Typography>
+                {renderStepContent(activeStep)}
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'space-between' }}>
+                <Button color="primary" onClick={handleBack} disabled={activeStep === 0}>
+                  Back
+                </Button>
+                <Box sx={{ flex: '1 1 auto' }} />
+                {activeStep === steps.length - 1 ? (
+                  <Button 
+                    color="primary" 
+                    onClick={handleFinish}
+                    disabled={submitting}
+                    startIcon={submitting ? <CircularProgress size={20} /> : null}
+                  >
+                    {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
+                  </Button>
+                ) : (
+                  <Button color="primary" onClick={handleNext}>
+                    Next Section
+                  </Button>
+                )}
+              </CardActions>
+            </Card>
+          </Box>
+        )}
+        
+        {/* Success/Error Notifications */}
+        <Snackbar 
+          open={submitSuccess} 
+          autoHideDuration={6000} 
+          onClose={() => setSubmitSuccess(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSubmitSuccess(false)} severity="success">
+            Resume {savedResumeId ? 'updated' : 'saved'} successfully!
+          </Alert>
+        </Snackbar>
+        
+        <Snackbar 
+          open={!!submitError} 
+          autoHideDuration={6000} 
+          onClose={() => setSubmitError(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSubmitError(null)} severity="error">
+            {submitError}
+          </Alert>
+        </Snackbar>
       </Box>
     );
   };
   
-  export default ResumeForm; 
+  export default ResumeForm;
