@@ -2,9 +2,18 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
 
 const Resume = sequelize.define('Resume', {
-  name: {
+  // Personal Details
+  firstName: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  lastName: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   email: {
     type: DataTypes.STRING,
@@ -14,24 +23,45 @@ const Resume = sequelize.define('Resume', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  education: {
-    type: DataTypes.TEXT,
+  location: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  linkedin: {
+    type: DataTypes.STRING,
     allowNull: true
   },
-  experience: {
-    type: DataTypes.TEXT,
+  website: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  github: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  instagram: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  
+  workExperience: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
+  education: {
+    type: DataTypes.JSON,
     allowNull: true
   },
   skills: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON,
     allowNull: true
   },
   certifications: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON,
     allowNull: true
   },
   projects: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON,
     allowNull: true
   }
 });
