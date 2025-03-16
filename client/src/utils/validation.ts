@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 export const validateName = (name: string, fieldName: 'firstName' | 'lastName'): string | null => {
   const trimmedName = name.trim();
   const fieldLabel = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
@@ -23,6 +25,10 @@ export const validateName = (name: string, fieldName: 'firstName' | 'lastName'):
     if (stripped.length === 11 && !stripped.startsWith('1')) return "Invalid country code";
     if (stripped.length !== 10 && stripped.length !== 11) return "US phone numbers must have 10 digits";
     return null;
+  };
+
+  export  const formatDate = (date: any) => {
+    return date ? dayjs(date).format('MMM YYYY') : 'Present';
   };
   
   export const formatPhone = (phone: string): string => {
