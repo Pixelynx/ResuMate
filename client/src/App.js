@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Header from './components/layouts/Header';
 import Footer from './components/layouts/Footer';
 import ResumeForm from './components/resume/ResumeForm';
+import Dashboard from './components/dashboard/Dashboard';
+import CoverLetterForm from './components/coverLetter/CoverLetterForm';
+import ViewCoverLetter from './components/coverLetter/ViewCoverLetter';
 import { ErrorBoundary } from 'react-error-boundary';
 
 function ErrorFallback({ error }) {
@@ -30,9 +33,21 @@ function App() {
           <Header />
           <main style={{ minHeight: 'calc(100vh - 120px)', padding: '20px' }}>
             <Routes>
-              <Route path="/builder" element={<ResumeForm />} />
-              {/* Default */}
-              <Route path="/" element={<Navigate to="/builder" />} />
+              {/* Resume Routes */}
+              <Route path="/resume/builder" element={<ResumeForm />} />
+              <Route path="/resume/:id" element={<ResumeForm />} />
+              
+              {/* Dashboard Route */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Cover Letter Routes */}
+              <Route path="/cover-letter/new" element={<CoverLetterForm />} />
+              <Route path="/cover-letter/from-resume/:resumeId" element={<CoverLetterForm />} />
+              <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
+              
+              {/* Redirects */}
+              <Route path="/builder" element={<Navigate to="/resume/builder" />} />
+              <Route path="/" element={<Navigate to="/dashboard" />} />
             </Routes>
           </main>
           <Footer />
