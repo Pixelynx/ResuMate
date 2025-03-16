@@ -1,4 +1,5 @@
-const Resume = require('../models/resume.models');
+const db = require('../models');
+const Resume = db.resumes;
 
 exports.createResume = async (req, res) => {
   try {
@@ -24,7 +25,30 @@ exports.createResume = async (req, res) => {
       projects
     });
     
-    res.status(201).json(resume);
+    const formattedResume = {
+      id: resume.id,
+      personalDetails: {
+        firstName: resume.firstName,
+        lastName: resume.lastName,
+        title: resume.title,
+        email: resume.email,
+        phone: resume.phone,
+        location: resume.location,
+        linkedin: resume.linkedin,
+        website: resume.website,
+        github: resume.github,
+        instagram: resume.instagram,
+      },
+      workExperience: resume.workExperience,
+      education: resume.education,
+      skills: resume.skills,
+      certifications: resume.certifications,
+      projects: resume.projects,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt
+    };
+    
+    res.status(201).json(formattedResume);
   } catch (error) {
     console.error('Error creating resume:', error);
     res.status(500).json({ error: error.message });
@@ -34,7 +58,29 @@ exports.createResume = async (req, res) => {
 exports.getAllResumes = async (req, res) => {
   try {
     const resumes = await Resume.findAll();
-    res.json(resumes);
+    const formattedResumes = resumes.map(resume => ({
+      id: resume.id,
+      personalDetails: {
+        firstName: resume.firstName,
+        lastName: resume.lastName,
+        title: resume.title,
+        email: resume.email,
+        phone: resume.phone,
+        location: resume.location,
+        linkedin: resume.linkedin,
+        website: resume.website,
+        github: resume.github,
+        instagram: resume.instagram,
+      },
+      workExperience: resume.workExperience,
+      education: resume.education,
+      skills: resume.skills,
+      certifications: resume.certifications,
+      projects: resume.projects,
+      createdAt: resume.createdAt,
+      updatedAt: resume.updatedAt
+    }));
+    res.json(formattedResumes);
   } catch (error) {
     console.error('Error fetching resumes:', error);
     res.status(500).json({ error: error.message });

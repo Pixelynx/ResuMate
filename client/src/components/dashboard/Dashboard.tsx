@@ -64,7 +64,6 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    debugger
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -79,7 +78,6 @@ const Dashboard: React.FC = () => {
           const coverLetterData = await coverLetterService.getAllCoverLetters();
           setCoverLetters(coverLetterData);
         } catch (coverLetterError) {
-            // ERROR: HITTING CATCH; "Can't read properties of 'undefined' (reading 'firstName')."
           console.error('Error fetching cover letters:', coverLetterError);
           // Don't set the main error, just log it and continue with empty cover letters
           setCoverLetters([]);
