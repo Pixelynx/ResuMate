@@ -28,7 +28,7 @@ export interface ResumeFormData {
   projects: Project[];
 }
 
-const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects'];
+const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
 const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
     const [activeStep, setActiveStep] = useState(0);
@@ -824,7 +824,7 @@ const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
                   </Button>
                 ) : (
                   <Button color="primary" onClick={handleNext}>
-                    Next Section
+                    {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
                   </Button>
                 )}
               </CardActions>
@@ -836,7 +836,13 @@ const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
         <Snackbar 
           open={submitSuccess} 
           autoHideDuration={6000} 
-          onClose={() => setSubmitSuccess(false)}
+          onClose={() => {
+            setSubmitSuccess(false);
+            // Navigate to the preview step after successful submission
+            if (activeStep !== steps.length - 1) {
+              setActiveStep(steps.length - 1);
+            }
+          }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert onClose={() => setSubmitSuccess(false)} severity="success">

@@ -20,7 +20,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
     <Paper elevation={3} sx={{ p: 4, maxWidth: '100%', mx: 'auto' }}>
       {/* Personal Details */}
       <Box sx={{ mb: 3, textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h3" gutterBottom>
           {personalDetails.firstName} {personalDetails.lastName}
         </Typography>
         
