@@ -23,11 +23,12 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { Resume } from '../resume/types/resumeTypes';
 
 dayjs.extend(relativeTime);
 
 interface ResumeListProps {
-  resumes: any[];
+  resumes: Resume[];
   onView: (resumeId: string) => void;
   onEdit: (resumeId: string) => void;
   onDelete: (resumeId: string) => void;
@@ -83,15 +84,15 @@ const ResumeList: React.FC<ResumeListProps> = ({
   };
 
   // Extract skills from resume data
-  const extractSkills = (resume: any) => {
+  const extractSkills = (resume: Resume) => {
     if (resume.skills && resume.skills.skills_) {
       return resume.skills.skills_.split(',').slice(0, 3).map((skill: string) => skill.trim());
     }
     return [];
   };
 
-  const formatDate = (date: string) => {
-    return dayjs(date).fromNow();
+  const formatDate = (date: string | undefined) => {
+    return date ? dayjs(date).fromNow() : 'Never';
   };
 
   return (

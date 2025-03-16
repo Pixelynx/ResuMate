@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Button, TextField, Box, IconButton, Typography, Card, CardContent, CardActions, Grid, Snackbar, Alert, CircularProgress } from '@mui/material';
+import {
+  Button,
+  TextField,
+  Box,
+  IconButton,
+  Typography,
+  Card,
+  CardContent,
+  CardActions,
+  Grid,
+  Snackbar,
+  Alert,
+  CircularProgress
+} from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -99,8 +112,12 @@ const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
           try {
             setLoading(true);
             const resumeData = await resumeService.getResumeById(resumeId);
-            setFormData(resumeData);
-            setSavedResumeId(resumeId);
+            if (resumeData) {
+              setFormData(resumeData);
+              setSavedResumeId(resumeId);
+            } else {
+              throw new Error('Failed to load resume data');
+            }
           } catch (error) {
             console.error('Error fetching resume:', error);
             setSubmitError('Failed to load resume data. Please try again.');
@@ -118,17 +135,20 @@ const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
         setSubmitting(true);
         setSubmitError(null);
         
-        let response;
-        
         if (savedResumeId) {
-          response = await resumeService.updateResume(savedResumeId, formData);
+          await resumeService.updateResume(savedResumeId, formData);
+          setSubmitSuccess(true);
+          console.log('Resume updated successfully');
         } else {
-          response = await resumeService.createResume(formData);
+          const response = await resumeService.createResume(formData);
+          if (response && response.id) {
+            setSavedResumeId(response.id);
+            setSubmitSuccess(true);
+            console.log('Resume created successfully:', response);
+          } else {
+            throw new Error('Failed to create resume - no ID returned');
+          }
         }
-        
-        setSavedResumeId(response.id);
-        setSubmitSuccess(true);
-        console.log('Resume submitted successfully:', response);
       } catch (error) {
         console.error('Error submitting resume:', error);
         setSubmitError('Failed to submit resume. Please try again.');

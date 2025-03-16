@@ -1,6 +1,16 @@
 import React from 'react';
 import { ResumeFormData } from './ResumeForm';
-import { Box, Typography, Divider, Grid, Paper, List, ListItem, ListItemText, Chip, Link } from '@mui/material';
+import { 
+  Box,
+  Typography,
+  Divider,
+  Grid, Paper,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Link
+} from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -12,7 +22,7 @@ import { formatDate } from '../../utils/validation';
 const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => {
   const { personalDetails, workExperience, education, skills, certifications, projects } = formData;
 
-  return (
+    return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: '100%', mx: 'auto' }}>
       {/* Personal Details */}
       <Box sx={{ mb: 3, textAlign: 'center' }}>
@@ -232,7 +242,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
         </Box>
       )}
     </Paper>
-  );
-};
-
-export default ResumePreview;
+    );
+  };
+  
+  export default ResumePreview;

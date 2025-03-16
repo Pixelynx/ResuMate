@@ -1,24 +1,23 @@
-import { Dayjs } from "dayjs";
 
 export interface PersonalDetails {
     firstName: string;
     lastName: string;
-    title: string;
+    title?: string;
     email: string;
     phone: string;
     location: string;
-    linkedin: string;
-    website: string;
-    github: string;
-    instagram: string;
+    linkedin?: string;
+    website?: string;
+    github?: string;
+    instagram?: string;
   }
   
   export interface WorkExperience {
     companyName: string;
     jobTitle: string;
     location: string;
-    startDate: Dayjs | null;
-    endDate: Dayjs | null;
+    startDate: Date | null;
+    endDate: Date | null;
     description: string;
   }
   
@@ -38,9 +37,9 @@ export interface PersonalDetails {
   export interface Certification {
     name: string;
     organization: string;
-    dateObtained: Dayjs | null;
-    expirationDate: Dayjs | null;
-    credentialUrl: string;
+    dateObtained: Date | null;
+    expirationDate: Date | null;
+    credentialUrl?: string;
   }
   
   export interface Project {
@@ -49,5 +48,29 @@ export interface PersonalDetails {
     duration: string;
     description: string;
     technologies: string;
-    projectUrl: string;
+    projectUrl?: string;
+  }
+
+  export interface Resume {
+    id: string;
+    personalDetails: PersonalDetails;
+    workExperience: WorkExperience[];
+    education: Education[];
+    skills: Skills;
+    certifications: Certification[];
+    projects: Project[];
+    createdAt?: string;
+    updatedAt?: string;
+  }
+
+  export interface ResumeResponse {
+    success: boolean;
+    data: Resume;
+    message?: string;
+  }
+
+  export interface ResumeListResponse {
+    success: boolean;
+    data: Resume[];
+    message?: string;
   }
