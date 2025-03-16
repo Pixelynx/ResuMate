@@ -7,14 +7,10 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
-import dayjs from 'dayjs';
+import { formatDate } from '../../utils/validation';
 
 const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => {
   const { personalDetails, workExperience, education, skills, certifications, projects } = formData;
-  
-  const formatDate = (date: any) => {
-    return date ? dayjs(date).format('MMM YYYY') : 'Present';
-  };
 
   return (
     <Paper elevation={3} sx={{ p: 4, maxWidth: '100%', mx: 'auto' }}>
