@@ -12,7 +12,7 @@ import {
   Divider
 } from '@mui/material';
 import { coverLetterService } from '../../utils/api';
-import { CoverLetter, CoverLetterResponse } from './types/coverLetterTypes';
+import { CoverLetter } from './types/coverLetterTypes';
 
 const ViewCoverLetter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,11 +25,32 @@ const ViewCoverLetter: React.FC = () => {
     const fetchCoverLetter = async () => {
       try {
         setLoading(true);
-        const response: CoverLetterResponse = await coverLetterService.getCoverLetter(id!);
-        if (response.success && response.data) {
-          setCoverLetter(response.data);
+        const response = await coverLetterService.getCoverLetter(id!);
+        
+        // Handle both direct response and wrapped response formats
+        if (response && typeof response === 'object') {
+          if ('success' in response && response.success && response.data) {
+            // Wrapped response format with success/data properties
+            setCoverLetter(response.data);
+          } else if ('id' in response && 'title' in response && 'content' in response) {
+            // Direct response format that has required CoverLetter properties
+            const coverLetterData: CoverLetter = {
+              id: response.id,
+              title: response.title,
+              content: response.content,
+              resumeId: response.resumeId,
+              jobTitle: response.jobTitle,
+              company: response.company,
+              generationOptions: 'generationOptions' in response ? response.generationOptions : undefined,
+              createdAt: 'createdAt' in response ? response.createdAt : undefined,
+              updatedAt: 'updatedAt' in response ? response.updatedAt : undefined
+            };
+            setCoverLetter(coverLetterData);
+          } else {
+            setError('Invalid cover letter data format');
+          }
         } else {
-          setError(response.message || 'Failed to load cover letter');
+          setError('Failed to load cover letter');
         }
       } catch (err) {
         setError('Failed to load cover letter. Please try again.');
@@ -44,7 +65,7 @@ const ViewCoverLetter: React.FC = () => {
   }, [id]);
 
   const handleEdit = () => {
-    navigate(`/cover-letters/edit/${id}`);
+    navigate(`/cover-letter/edit/${id}`);
   };
 
   const handleDelete = async () => {

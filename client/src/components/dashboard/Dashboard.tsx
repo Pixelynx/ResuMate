@@ -78,10 +78,16 @@ const Dashboard: React.FC = () => {
         // Fetch cover letters
         try {
           const coverLetterResponse = await coverLetterService.getAllCoverLetters();
-          if (coverLetterResponse.success && coverLetterResponse.data) {
+          console.log("COVERS: ", coverLetterResponse);
+          
+          // Check if response is an array (direct response) or has data property (wrapped response)
+          if (Array.isArray(coverLetterResponse)) {
+            setCoverLetters(coverLetterResponse);
+          } else if (coverLetterResponse.success && coverLetterResponse.data) {
             setCoverLetters(coverLetterResponse.data);
           } else {
-            console.error('Failed to load cover letters:', coverLetterResponse.message);
+            console.error('Failed to load cover letters:', 
+              coverLetterResponse.message || 'Unknown error');
             setCoverLetters([]);
           }
         } catch (coverLetterError) {

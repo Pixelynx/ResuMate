@@ -179,7 +179,7 @@ const CoverLetterForm: React.FC = () => {
 
       clearInterval(progressInterval);
 
-      if (!response || !response.data) {
+      if (!response) {
         throw new Error('Failed to generate cover letter');
       }
 
@@ -191,7 +191,15 @@ const CoverLetterForm: React.FC = () => {
       });
 
       // Navigate to the view page for the new cover letter
-      navigate(`/cover-letters/view/${response.data.id}`);
+      if ('data' in response && response.data && response.data.id) {
+        // Wrapped response format
+        navigate(`/cover-letter/${response.data.id}`);
+      } else if ('id' in response) {
+        // Direct response format
+        navigate(`/cover-letter/${response.id}`);
+      } else {
+        throw new Error('Failed to retrieve cover letter ID');
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate cover letter';
       setGenerationStatus({
@@ -209,11 +217,19 @@ const CoverLetterForm: React.FC = () => {
       
       const response = await coverLetterService.createCoverLetter(formData);
       
-      if (response.success) {
+      if ('success' in response && response.success) {
+        // Wrapped response format
+        setFormState(prev => ({ ...prev, isSubmitting: false }));
+        navigate('/dashboard');
+      } else if ('id' in response) {
+        // Direct response format
         setFormState(prev => ({ ...prev, isSubmitting: false }));
         navigate('/dashboard');
       } else {
-        throw new Error(response.message || 'Failed to save cover letter');
+        const errorMessage = 'success' in response && response.message 
+          ? response.message 
+          : 'Failed to save cover letter';
+        throw new Error(errorMessage);
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to save cover letter';

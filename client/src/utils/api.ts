@@ -7,6 +7,7 @@ import {
   CoverLetterResponse,
   CoverLetterListResponse,
   GenerationOptions,
+  CoverLetter
 } from '../components/coverLetter/types/coverLetterTypes';
 
 const API = axios.create({
@@ -71,9 +72,9 @@ export const resumeService = {
 };
 
 export const coverLetterService = {
-  createCoverLetter: async (coverLetterData: CoverLetterFormData): Promise<CoverLetterResponse> => {
+  createCoverLetter: async (coverLetterData: CoverLetterFormData): Promise<CoverLetterResponse | CoverLetter> => {
     try {
-      const response = await API.post('/cover-letters', coverLetterData);
+      const response = await API.post('/cover-letter', coverLetterData);
       return response.data;
     } catch (error) {
       console.error('Error creating cover letter:', error);
@@ -81,9 +82,9 @@ export const coverLetterService = {
     }
   },
 
-  getCoverLetter: async (id: string): Promise<CoverLetterResponse> => {
+  getCoverLetter: async (id: string): Promise<CoverLetterResponse | CoverLetter> => {
     try {
-      const response = await API.get(`/cover-letters/${id}`);
+      const response = await API.get(`/cover-letter/${id}`);
       return response.data;
     } catch (error) {
       console.error(`Error fetching cover letter with ID ${id}:`, error);
@@ -91,9 +92,9 @@ export const coverLetterService = {
     }
   },
 
-  getAllCoverLetters: async (): Promise<CoverLetterListResponse> => {
+  getAllCoverLetters: async (): Promise<CoverLetterListResponse | CoverLetter[]> => {
     try {
-      const response = await API.get('/cover-letters');
+      const response = await API.get('/cover-letter');
       return response.data;
     } catch (error) {
       console.error('Error fetching cover letters:', error);
@@ -101,9 +102,9 @@ export const coverLetterService = {
     }
   },
 
-  updateCoverLetter: async (id: string, coverLetterData: Partial<CoverLetterFormData>): Promise<CoverLetterResponse> => {
+  updateCoverLetter: async (id: string, coverLetterData: Partial<CoverLetterFormData>): Promise<CoverLetterResponse | CoverLetter> => {
     try {
-      const response = await API.put(`/cover-letters/${id}`, coverLetterData);
+      const response = await API.put(`/cover-letter/${id}`, coverLetterData);
       return response.data;
     } catch (error) {
       console.error(`Error updating cover letter with ID ${id}:`, error);
@@ -113,7 +114,7 @@ export const coverLetterService = {
 
   deleteCoverLetter: async (id: string): Promise<boolean> => {
     try {
-      await API.delete(`/cover-letters/${id}`);
+      await API.delete(`/cover-letter/${id}`);
       return true;
     } catch (error) {
       console.error(`Error deleting cover letter with ID ${id}:`, error);
@@ -124,9 +125,9 @@ export const coverLetterService = {
   generateCoverLetter: async (
     request: CoverLetterGenerationRequest,
     options: GenerationOptions
-  ): Promise<CoverLetterResponse> => {
+  ): Promise<CoverLetterResponse | CoverLetter> => {
     try {
-      const response = await API.post('/cover-letters/generate', {
+      const response = await API.post('/cover-letter/generate', {
         ...request,
         options
       });

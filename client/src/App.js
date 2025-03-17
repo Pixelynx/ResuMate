@@ -45,6 +45,10 @@ function App() {
               <Route path="/cover-letter/from-resume/:resumeId" element={<CoverLetterForm />} />
               <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
               
+              {/* Cover Letters Routes (plural) - for compatibility */}
+              <Route path="/cover-letter/view/:id" element={<ViewCoverLetter />} />
+              <Route path="/cover-letter/edit/:id" element={<CoverLetterForm />} />
+              
               {/* Redirects */}
               <Route path="/builder" element={<Navigate to="/resume/builder" />} />
               <Route path="/" element={<Navigate to="/dashboard" />} />

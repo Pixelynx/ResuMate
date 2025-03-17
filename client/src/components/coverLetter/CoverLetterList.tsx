@@ -60,10 +60,19 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
       try {
         setLoading(true);
         const response = await coverLetterService.getAllCoverLetters();
-        if (response.success && response.data) {
+        
+        // Handle both response formats
+        if (Array.isArray(response)) {
+          // Direct array response
+          setCoverLetters(response);
+        } else if (response.success && response.data) {
+          // Wrapped response with success/data properties
           setCoverLetters(response.data);
         } else {
-          throw new Error(response.message || 'Failed to load cover letters');
+          // Error case
+          throw new Error(
+            response.message || 'Failed to load cover letters'
+          );
         }
         setLoading(false);
       } catch (err) {

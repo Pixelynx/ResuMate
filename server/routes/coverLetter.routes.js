@@ -14,5 +14,5 @@ module.exports = app => {
 
   router.delete("/:id", coverLetters.delete);
 
-  app.use("/api/cover-letters", router);
+  app.use("/api/cover-letter", router);
 }; 
