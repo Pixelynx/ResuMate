@@ -15,6 +15,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     resumeId: {
       type: Sequelize.STRING,
+      allowNull: true,
       references: {
         model: 'resumes',
         key: 'id'
@@ -23,15 +24,29 @@ module.exports = (sequelize, Sequelize) => {
       onDelete: 'SET NULL'
     },
     jobTitle: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      allowNull: false
     },
     company: {
-      type: Sequelize.STRING
+      type: Sequelize.STRING,
+      allowNull: false
+    },
+    generationOptions: {
+      type: Sequelize.JSON,
+      allowNull: true,
+      defaultValue: null
     }
   }, {
     tableName: 'coverLetters',
     timestamps: true
   });
+
+  CoverLetter.associate = (models) => {
+    CoverLetter.belongsTo(models.Resume, {
+      foreignKey: 'resumeId',
+      as: 'resume'
+    });
+  };
 
   return CoverLetter;
 }; 

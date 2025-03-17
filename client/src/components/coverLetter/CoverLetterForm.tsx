@@ -18,6 +18,7 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Container,
 } from '@mui/material';
 import { coverLetterService, resumeService } from '../../utils/api';
 import {
@@ -27,7 +28,9 @@ import {
   GenerationOptions,
   CoverLetterGenerationStatus
 } from './types/coverLetterTypes';
+import { AIGenerationRequest, GenerationProgress } from './types/aiTypes';
 import { Resume } from '../resume/types/resumeTypes';
+import LoadingOverlay from '../common/LoadingOverlay';
 
 interface ResumeOption {
   id: string;
@@ -144,46 +147,58 @@ const CoverLetterForm: React.FC = () => {
       setGenerationStatus({
         isGenerating: true,
         error: null,
-        progress: 0
+        progress: 0,
+        message: 'Preparing to generate cover letter...'
       });
 
       const generationRequest: CoverLetterGenerationRequest = {
         resumeId: formData.resumeId || '',
         jobTitle: formData.jobTitle,
         company: formData.company,
-        jobDescription: formData.jobDescription
+        jobDescription: formData.jobDescription,
+        options: generationOptions
       };
+
+      // Start progress simulation
+      const progressInterval = setInterval(() => {
+        setGenerationStatus(prev => ({
+          ...prev,
+          progress: Math.min(prev.progress + 10, 90),
+          message: prev.progress < 30 
+            ? 'Analyzing resume and job details...'
+            : prev.progress < 60
+            ? 'Generating personalized content...'
+            : 'Finalizing your cover letter...'
+        }));
+      }, 1000);
 
       const response = await coverLetterService.generateCoverLetter(
         generationRequest,
         generationOptions
       );
 
-      if (!response.success || !response.data) {
-        throw new Error(response.message || 'Failed to generate cover letter');
-      }
+      clearInterval(progressInterval);
 
-      const generatedLetter = response.data;
-      setGeneratedContent(generatedLetter.content);
-      setFormData(prev => ({
-        ...prev,
-        content: generatedLetter.content,
-        title: `Cover Letter for ${formData.jobTitle} at ${formData.company}`
-      }));
+      if (!response || !response.data) {
+        throw new Error('Failed to generate cover letter');
+      }
 
       setGenerationStatus({
         isGenerating: false,
         error: null,
-        progress: 100
+        progress: 100,
+        message: 'Cover letter generated successfully!'
       });
 
-      handleNext();
+      // Navigate to the view page for the new cover letter
+      navigate(`/cover-letters/view/${response.data.id}`);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate cover letter';
       setGenerationStatus({
         isGenerating: false,
         error: errorMessage,
-        progress: 0
+        progress: 0,
+        message: 'Generation failed'
       });
     }
   };
@@ -348,8 +363,16 @@ const CoverLetterForm: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto', p: 3 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
+    <Container maxWidth="md">
+      {generationStatus.isGenerating && (
+        <LoadingOverlay
+          message={generationStatus.message}
+          progress={generationStatus.progress}
+          showProgress={true}
+        />
+      )}
+      
+      <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom align="center">
           Create Cover Letter
         </Typography>
@@ -396,7 +419,7 @@ const CoverLetterForm: React.FC = () => {
           </Button>
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 

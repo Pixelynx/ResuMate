@@ -2,15 +2,17 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const resumeRoutes = require('./routes/index');
 const db = require('./models');
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/resumes', resumeRoutes);
+// Routes
+require('./routes/resume.routes')(app);
+require('./routes/coverLetter.routes')(app);
 
 const PORT = process.env.PORT || 5000;
 
@@ -22,7 +24,7 @@ const startServer = async () => {
     
     // Force sync the database models (this will drop and recreate tables)
     // NOTE: To be removed in prod
-    await db.sequelize.sync({ force: true });
+    await db.sequelize.sync();
     console.log('Database models synchronized successfully. Tables have been recreated.');
     
     app.listen(PORT, () => {

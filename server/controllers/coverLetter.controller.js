@@ -50,14 +50,20 @@ exports.findOne = async (req, res) => {
   try {
     const data = await CoverLetter.findByPk(id);
     if (data) {
-      res.send(data);
+      res.send({
+        success: true,
+        data: data,
+        message: "Cover letter retrieved successfully"
+      });
     } else {
       res.status(404).send({
+        success: false,
         message: `Cover Letter with id=${id} was not found.`
       });
     }
   } catch (err) {
     res.status(500).send({
+      success: false,
       message: `Error retrieving Cover Letter with id=${id}`
     });
   }
@@ -117,6 +123,7 @@ exports.generate = async (req, res) => {
     // Validate request
     if (!req.body.resumeId || !req.body.jobTitle || !req.body.company) {
       return res.status(400).send({
+        success: false,
         message: "Resume ID, job title, and company are required!"
       });
     }
@@ -127,17 +134,29 @@ exports.generate = async (req, res) => {
       company: req.body.company,
       jobDescription: req.body.jobDescription || ''
     };
+
+    const options = {
+      tone: req.body.options?.tone || 'professional',
+      length: req.body.options?.length || 'medium',
+      emphasis: req.body.options?.emphasis || [],
+      customInstructions: req.body.options?.customInstructions,
+      model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+      temperature: req.body.options?.temperature || 0.7,
+      maxTokens: req.body.options?.maxTokens || 1000,
+      topP: req.body.options?.topP || 1
+    };
     
     // Fetch the resume data
     const resume = await Resume.findByPk(resumeId);
     if (!resume) {
       return res.status(404).send({
+        success: false,
         message: `Resume with id=${resumeId} was not found.`
       });
     }
 
     // Generate cover letter using AI service
-    const content = await aiService.generateCoverLetter(resume, jobDetails);
+    const content = await aiService.generateCoverLetter(resume, jobDetails, options);
 
     // Create a new cover letter in the database
     const coverLetter = {
@@ -146,15 +165,22 @@ exports.generate = async (req, res) => {
       content: content,
       resumeId: resumeId,
       jobTitle: jobDetails.jobTitle,
-      company: jobDetails.company
+      company: jobDetails.company,
+      generationOptions: options // Store the options used for reference
     };
 
     const savedCoverLetter = await CoverLetter.create(coverLetter);
     
-    res.status(201).send(savedCoverLetter);
+    // Send response with success flag and data
+    res.status(201).send({
+      success: true,
+      data: savedCoverLetter,
+      message: "Cover letter generated successfully"
+    });
   } catch (err) {
     console.error('Error generating cover letter:', err);
     res.status(500).send({
+      success: false,
       message: err.message || "Failed to generate cover letter."
     });
   }
