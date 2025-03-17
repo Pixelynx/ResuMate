@@ -20,7 +20,14 @@ import {
   StepLabel,
 } from '@mui/material';
 import { coverLetterService, resumeService } from '../../utils/api';
-import { CoverLetterData } from '../../utils/api';
+import {
+  CoverLetterFormData,
+  CoverLetterGenerationRequest,
+  CoverLetterFormState,
+  GenerationOptions,
+  CoverLetterGenerationStatus
+} from './types/coverLetterTypes';
+import { Resume } from '../resume/types/resumeTypes';
 
 interface ResumeOption {
   id: string;
@@ -37,20 +44,30 @@ const CoverLetterForm: React.FC = () => {
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
   const [generatedContent, setGeneratedContent] = useState<string>('');
   
-  const [formData, setFormData] = useState<{
-    title: string;
-    selectedResumeId: string;
-    jobTitle: string;
-    company: string;
-    jobDescription: string;
-    content: string;
-  }>({
+  const [formState, setFormState] = useState<CoverLetterFormState>({
+    isSubmitting: false,
+    isEditing: false,
+    validationErrors: {}
+  });
+
+  const [generationStatus, setGenerationStatus] = useState<CoverLetterGenerationStatus>({
+    isGenerating: false,
+    error: null,
+    progress: 0
+  });
+
+  const [formData, setFormData] = useState<CoverLetterFormData>({
     title: '',
-    selectedResumeId: resumeId || '',
-    jobTitle: '',
-    company: '',
-    jobDescription: '',
     content: '',
+    resumeId: resumeId || '',
+    jobTitle: '',
+    company: ''
+  });
+
+  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
+    tone: 'professional',
+    length: 'medium',
+    emphasis: []
   });
 
   const steps = ['Job Details', 'Generate Cover Letter', 'Review & Save'];
@@ -59,12 +76,12 @@ const CoverLetterForm: React.FC = () => {
     const fetchResumes = async () => {
       try {
         setLoading(true);
-        const data = await resumeService.getAllResumes();
-        setResumes(data.map((resume: any) => ({
+        const resumes = await resumeService.getAllResumes();
+        setResumes(resumes.map((resume: Resume) => ({
           id: resume.id,
-          title: resume.personalDetails.fullName 
-            ? `${resume.personalDetails.fullName}'s Resume` 
-            : `Resume ${resume.id.substring(0, 8)}`
+          title: resume.personalDetails.firstName && resume.personalDetails.lastName
+            ? `${resume.personalDetails.firstName} ${resume.personalDetails.lastName}'s Resume`
+            : 'Untitled Resume'
         })));
         setLoading(false);
       } catch (err) {
@@ -78,24 +95,27 @@ const CoverLetterForm: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleResumeChange = (e: SelectChangeEvent) => {
-    setFormData({
-      ...formData,
-      selectedResumeId: e.target.value,
-    });
+    setFormData(prev => ({
+      ...prev,
+      resumeId: e.target.value,
+    }));
   };
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      content: e.target.value,
-    });
+  const handleGenerationOptionsChange = (
+    option: keyof GenerationOptions,
+    value: string | string[]
+  ) => {
+    setGenerationOptions(prev => ({
+      ...prev,
+      [option]: value,
+    }));
   };
 
   const handleNext = () => {
@@ -109,7 +129,7 @@ const CoverLetterForm: React.FC = () => {
   const validateCurrentStep = () => {
     switch (activeStep) {
       case 0:
-        return formData.selectedResumeId && formData.jobTitle && formData.company;
+        return formData.resumeId && formData.jobTitle && formData.company;
       case 1:
         return generatedContent.length > 0;
       case 2:
@@ -121,55 +141,75 @@ const CoverLetterForm: React.FC = () => {
 
   const generateCoverLetter = async () => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await coverLetterService.generateCoverLetter(
-        formData.selectedResumeId,
-        {
-          jobTitle: formData.jobTitle,
-          company: formData.company,
-          jobDescription: formData.jobDescription
-        }
-      );
-      
-      setGeneratedContent(response.content);
-      setFormData({
-        ...formData,
-        content: response.content,
-        title: `Cover Letter for ${formData.jobTitle} at ${formData.company}`
+      setGenerationStatus({
+        isGenerating: true,
+        error: null,
+        progress: 0
       });
-      
-      setLoading(false);
-      setSuccess('Cover letter generated successfully!');
+
+      const generationRequest: CoverLetterGenerationRequest = {
+        resumeId: formData.resumeId || '',
+        jobTitle: formData.jobTitle,
+        company: formData.company,
+        jobDescription: formData.jobDescription
+      };
+
+      const response = await coverLetterService.generateCoverLetter(
+        generationRequest,
+        generationOptions
+      );
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || 'Failed to generate cover letter');
+      }
+
+      const generatedLetter = response.data;
+      setGeneratedContent(generatedLetter.content);
+      setFormData(prev => ({
+        ...prev,
+        content: generatedLetter.content,
+        title: `Cover Letter for ${formData.jobTitle} at ${formData.company}`
+      }));
+
+      setGenerationStatus({
+        isGenerating: false,
+        error: null,
+        progress: 100
+      });
+
       handleNext();
-    } catch (err) {
-      setError('Failed to generate cover letter. Please try again.');
-      setLoading(false);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate cover letter';
+      setGenerationStatus({
+        isGenerating: false,
+        error: errorMessage,
+        progress: 0
+      });
     }
   };
 
   const saveCoverLetter = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setFormState(prev => ({ ...prev, isSubmitting: true }));
       
-      const coverLetterData: CoverLetterData = {
-        title: formData.title,
-        content: formData.content,
-        resumeId: formData.selectedResumeId,
-        jobTitle: formData.jobTitle,
-        company: formData.company
-      };
+      const response = await coverLetterService.createCoverLetter(formData);
       
-      await coverLetterService.createCoverLetter(coverLetterData);
-      
-      setLoading(false);
-      setSuccess('Cover letter saved successfully!');
-      navigate('/dashboard');
-    } catch (err) {
-      setError('Failed to save cover letter. Please try again.');
-      setLoading(false);
+      if (response.success) {
+        setFormState(prev => ({ ...prev, isSubmitting: false }));
+        navigate('/dashboard');
+      } else {
+        throw new Error(response.message || 'Failed to save cover letter');
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save cover letter';
+      setFormState(prev => ({
+        ...prev,
+        isSubmitting: false,
+        validationErrors: {
+          ...prev.validationErrors,
+          submit: errorMessage
+        }
+      }));
     }
   };
 
@@ -185,7 +225,7 @@ const CoverLetterForm: React.FC = () => {
                   <Select
                     labelId="resume-select-label"
                     id="resume-select"
-                    value={formData.selectedResumeId}
+                    value={formData.resumeId}
                     label="Select Resume"
                     onChange={handleResumeChange}
                     disabled={loading}
@@ -295,7 +335,7 @@ const CoverLetterForm: React.FC = () => {
                   multiline
                   rows={12}
                   value={formData.content}
-                  onChange={handleContentChange}
+                  onChange={handleInputChange}
                   disabled={loading}
                 />
               </Grid>

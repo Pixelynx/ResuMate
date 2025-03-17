@@ -17,8 +17,10 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import { useNavigate } from 'react-router-dom';
 import { resumeService, coverLetterService } from '../../utils/api';
+import { Resume } from '../resume/types/resumeTypes';
+import { CoverLetter } from '../coverLetter/types/coverLetterTypes';
 import ResumeList from './ResumeList';
-import CoverLetterList from './CoverLetterList';
+import CoverLetterList from '../coverLetter/CoverLetterList';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -56,8 +58,8 @@ function a11yProps(index: number) {
 const Dashboard: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [resumes, setResumes] = useState<any[]>([]);
-  const [coverLetters, setCoverLetters] = useState<any[]>([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   
@@ -70,16 +72,20 @@ const Dashboard: React.FC = () => {
         setError(null);
         
         // Fetch resumes
-        const resumeData = await resumeService.getAllResumes();
-        setResumes(resumeData);
+        const resumes = await resumeService.getAllResumes();
+        setResumes(resumes);
         
         // Fetch cover letters
         try {
-          const coverLetterData = await coverLetterService.getAllCoverLetters();
-          setCoverLetters(coverLetterData);
+          const coverLetterResponse = await coverLetterService.getAllCoverLetters();
+          if (coverLetterResponse.success && coverLetterResponse.data) {
+            setCoverLetters(coverLetterResponse.data);
+          } else {
+            console.error('Failed to load cover letters:', coverLetterResponse.message);
+            setCoverLetters([]);
+          }
         } catch (coverLetterError) {
           console.error('Error fetching cover letters:', coverLetterError);
-          // Don't set the main error, just log it and continue with empty cover letters
           setCoverLetters([]);
         }
       } catch (error) {
@@ -124,7 +130,6 @@ const Dashboard: React.FC = () => {
   const handleDeleteResume = async (resumeId: string) => {
     try {
       await resumeService.deleteResume(resumeId);
-      // Update the resumes list after deletion
       setResumes(resumes.filter(resume => resume.id !== resumeId));
       setError(null);
     } catch (error) {

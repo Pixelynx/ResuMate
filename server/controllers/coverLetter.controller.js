@@ -2,6 +2,7 @@ const db = require('../models');
 const CoverLetter = db.coverLetters;
 const Resume = db.resumes;
 const { v4: uuidv4 } = require('uuid');
+const aiService = require('../services/ai.service');
 
 exports.create = async (req, res) => {
   try {
@@ -110,3 +111,99 @@ exports.delete = async (req, res) => {
   }
 };
 
+// Generate a Cover Letter using AI
+exports.generate = async (req, res) => {
+  try {
+    // Validate request
+    if (!req.body.resumeId || !req.body.jobTitle || !req.body.company) {
+      return res.status(400).send({
+        message: "Resume ID, job title, and company are required!"
+      });
+    }
+
+    const resumeId = req.body.resumeId;
+    const jobDetails = {
+      jobTitle: req.body.jobTitle,
+      company: req.body.company,
+      jobDescription: req.body.jobDescription || ''
+    };
+    
+    // Fetch the resume data
+    const resume = await Resume.findByPk(resumeId);
+    if (!resume) {
+      return res.status(404).send({
+        message: `Resume with id=${resumeId} was not found.`
+      });
+    }
+
+    // Generate cover letter using AI service
+    const content = await aiService.generateCoverLetter(resume, jobDetails);
+
+    // Create a new cover letter in the database
+    const coverLetter = {
+      id: uuidv4(),
+      title: `${jobDetails.jobTitle} at ${jobDetails.company}`,
+      content: content,
+      resumeId: resumeId,
+      jobTitle: jobDetails.jobTitle,
+      company: jobDetails.company
+    };
+
+    const savedCoverLetter = await CoverLetter.create(coverLetter);
+    
+    res.status(201).send(savedCoverLetter);
+  } catch (err) {
+    console.error('Error generating cover letter:', err);
+    res.status(500).send({
+      message: err.message || "Failed to generate cover letter."
+    });
+  }
+};
+
+// Helper function to generate cover letter content
+function generateCoverLetterContent(
+  fullName,
+  title,
+  skills,
+  recentExperience,
+  jobTitle,
+  company,
+  jobDescription
+) {
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const skillsText = skills.length > 0 
+    ? `My expertise includes ${skills.join(', ')}.` 
+    : '';
+
+  const experienceText = recentExperience 
+    ? `In my recent role as ${recentExperience.jobTitle || 'professional'} at ${recentExperience.company || 'my previous company'}, ${
+      recentExperience.description 
+        ? `I ${recentExperience.description.substring(0, 100)}...`
+        : 'I gained valuable experience in the field.'
+    }` 
+    : '';
+
+  return `${currentDate}
+
+Dear Hiring Manager,
+
+I am writing to express my interest in the ${jobTitle} position at ${company}. As a ${title} with a strong background in the field, I am excited about the opportunity to contribute my skills and experience to your team.
+
+${skillsText}
+
+${experienceText}
+
+${jobDescription ? `I was particularly drawn to this position because the job description aligns well with my background and career goals. ${jobDescription.length > 100 ? 'Your emphasis on ' + jobDescription.substring(0, 100) + '... resonates with my professional experience.' : ''}` : ''}
+
+I am confident that my skills and experience make me a strong candidate for this position. I am excited about the opportunity to contribute to ${company}'s success and would welcome the chance to discuss how my background, skills, and experience would be an asset to your team.
+
+Thank you for considering my application. I look forward to the possibility of discussing this opportunity with you further.
+
+Sincerely,
+${fullName}`;
+} 

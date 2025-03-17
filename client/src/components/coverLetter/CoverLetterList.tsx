@@ -26,11 +26,12 @@ import WorkIcon from '@mui/icons-material/Work';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { coverLetterService, CoverLetterData } from '../../utils/api';
+import { coverLetterService } from '../../utils/api';
+import { CoverLetter } from './types/coverLetterTypes';
 import { formatDate } from '../../utils/validation';
 
 interface CoverLetterListProps {
-  coverLetters?: CoverLetterData[];
+  coverLetters?: CoverLetter[];
   loading?: boolean;
   error?: string | null;
   onRefresh?: () => void;
@@ -43,25 +44,27 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
   onRefresh 
 }) => {
   const navigate = useNavigate();
-  const [coverLetters, setCoverLetters] = useState<CoverLetterData[]>([]);
+  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCoverLetterId, setSelectedCoverLetterId] = useState<string | null>(null);
 
   useEffect(() => {
-    // If cover letters are provided as props, use them
     if (propsCoverLetters) {
       setCoverLetters(propsCoverLetters);
       return;
     }
 
-    // Otherwise, fetch them
     const fetchCoverLetters = async () => {
       try {
         setLoading(true);
-        const data = await coverLetterService.getAllCoverLetters();
-        setCoverLetters(data);
+        const response = await coverLetterService.getAllCoverLetters();
+        if (response.success && response.data) {
+          setCoverLetters(response.data);
+        } else {
+          throw new Error(response.message || 'Failed to load cover letters');
+        }
         setLoading(false);
       } catch (err) {
         setError('Failed to load cover letters. Please try again.');
@@ -96,10 +99,8 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
       setLoading(true);
       await coverLetterService.deleteCoverLetter(selectedCoverLetterId);
       
-      // Update the local state
       setCoverLetters(coverLetters.filter(cl => cl.id !== selectedCoverLetterId));
       
-      // Call the refresh callback if provided
       if (onRefresh) {
         onRefresh();
       }
@@ -232,7 +233,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                     <Button 
                       size="small" 
                       startIcon={<VisibilityIcon />}
-                      onClick={() => handleViewCoverLetter(coverLetter.id!)}
+                      onClick={() => handleViewCoverLetter(coverLetter.id)}
                     >
                       View
                     </Button>
@@ -241,7 +242,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                     <Button 
                       size="small" 
                       startIcon={<EditIcon />}
-                      onClick={() => handleEditCoverLetter(coverLetter.id!)}
+                      onClick={() => handleEditCoverLetter(coverLetter.id)}
                     >
                       Edit
                     </Button>
@@ -251,7 +252,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                     <IconButton 
                       size="small" 
                       color="error"
-                      onClick={() => handleDeleteClick(coverLetter.id!)}
+                      onClick={() => handleDeleteClick(coverLetter.id)}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -286,4 +287,4 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
   );
 };
 
-export default CoverLetterList;
+export default CoverLetterList; 
