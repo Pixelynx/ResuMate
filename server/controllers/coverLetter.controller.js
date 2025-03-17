@@ -50,20 +50,14 @@ exports.findOne = async (req, res) => {
   try {
     const data = await CoverLetter.findByPk(id);
     if (data) {
-      res.send({
-        success: true,
-        data: data,
-        message: "Cover letter retrieved successfully"
-      });
+      res.send(data);
     } else {
       res.status(404).send({
-        success: false,
         message: `Cover Letter with id=${id} was not found.`
       });
     }
   } catch (err) {
     res.status(500).send({
-      success: false,
       message: `Error retrieving Cover Letter with id=${id}`
     });
   }

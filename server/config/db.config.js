@@ -1,6 +1,8 @@
+require('dotenv').config();
+
 module.exports = {
   HOST: process.env.DB_HOST || "localhost",
-  USER: process.env.DB_USER || "postgres",
+  USER: process.env.DB_USERNAME || "postgres",
   PASSWORD: process.env.DB_PASSWORD || "postgres",
   DB: process.env.DB_NAME || "resumate-db",
   dialect: "postgres",
