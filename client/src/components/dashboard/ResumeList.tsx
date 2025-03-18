@@ -98,7 +98,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
   return (
     <Box>
       {resumes.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Box sx={{ textAlign: 'center', p: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             You don't have any resumes yet
           </Typography>

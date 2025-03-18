@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Header from './components/layouts/Header';
 import Footer from './components/layouts/Footer';
 import ResumeForm from './components/resume/ResumeForm';
+import ViewResume from './components/resume/ViewResume';
 import Dashboard from './components/dashboard/Dashboard';
 import CoverLetterForm from './components/coverLetter/CoverLetterForm';
 import ViewCoverLetter from './components/coverLetter/ViewCoverLetter';
@@ -35,7 +36,7 @@ function App() {
             <Routes>
               {/* Resume Routes */}
               <Route path="/resume/builder" element={<ResumeForm />} />
-              <Route path="/resume/:id" element={<ResumeForm />} />
+              <Route path="/resume/:id" element={<ViewResume />} />
               
               {/* Dashboard Route */}
               <Route path="/dashboard" element={<Dashboard />} />

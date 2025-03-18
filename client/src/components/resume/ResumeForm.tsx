@@ -31,6 +31,7 @@ import { formatPhone } from '../../utils/validation';
 import { WorkExperienceValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
 import { resumeService } from '../../utils/api';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 export interface ResumeFormData {
   personalDetails: PersonalDetails;
@@ -43,7 +44,9 @@ export interface ResumeFormData {
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
-const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
+const ResumeForm: React.FC = () => {
+    const [searchParams] = useSearchParams();
+    const resumeId = searchParams.get('id');
     const [activeStep, setActiveStep] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -816,7 +819,7 @@ const ResumeForm: React.FC<{ resumeId?: string }> = ({ resumeId }) => {
             <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: -5 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
             <Card sx={{ maxWidth: 800,
                 width: '100%', p: 3,
                 borderRadius: 2,
