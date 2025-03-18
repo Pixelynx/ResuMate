@@ -98,7 +98,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
   return (
     <Box>
       {resumes.length === 0 ? (
-        <Box sx={{ textAlign: 'center', p: 8 }}>
+        <Box sx={{ textAlign: 'center', py: 3 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             You don't have any resumes yet
           </Typography>
@@ -106,13 +106,13 @@ const ResumeList: React.FC<ResumeListProps> = ({
             variant="contained" 
             color="primary" 
             onClick={() => onEdit('')}
-            sx={{ mt: 2 }}
+            sx={{ mt: 1 }}
           >
             Create Your First Resume
           </Button>
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {resumes.map((resume) => (
             <Grid item xs={12} sm={6} md={4} key={resume.id}>
               <Card 
@@ -127,8 +127,8 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   }
                 }}
               >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2 } }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Typography variant="h6" component="div" noWrap>
                       {resume.personalDetails.firstName} {resume.personalDetails.lastName}
                     </Typography>
@@ -145,9 +145,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
                     {resume.personalDetails.title || 'No title specified'}
                   </Typography>
                   
-                  <Divider sx={{ my: 1.5 }} />
+                  <Divider sx={{ my: 1 }} />
                   
-                  <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Skills:
                     </Typography>
@@ -159,7 +159,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
                           size="small" 
                           sx={{ 
                             backgroundColor: 'rgba(106, 27, 154, 0.1)',
-                            color: '#6a1b9a'
+                            color: '#6a1b9a',
+                            height: '22px',
+                            fontSize: '0.75rem'
                           }} 
                         />
                       ))}
@@ -169,7 +171,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
                           label={`+${resume.skills.skills_.split(',').length - 3} more`} 
                           size="small" 
                           variant="outlined"
-                          sx={{ color: '#6a1b9a', borderColor: '#6a1b9a' }}
+                          sx={{ color: '#6a1b9a', borderColor: '#6a1b9a', height: '22px', fontSize: '0.75rem' }}
                         />
                       )}
                     </Box>
@@ -185,18 +187,19 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   </Box>
                 </CardContent>
                 
-                <Box sx={{ mt: 'auto', p: 1, backgroundColor: 'rgba(106, 27, 154, 0.05)' }}>
+                <Box sx={{ mt: 'auto', p: 0.75, backgroundColor: 'rgba(106, 27, 154, 0.05)' }}>
                   <Typography variant="caption" color="text.secondary">
                     Last updated: {formatDate(resume.updatedAt)}
                   </Typography>
                 </Box>
                 
-                <CardActions>
+                <CardActions sx={{ p: 1 }}>
                   <Tooltip title="View Resume">
                     <Button 
                       size="small" 
-                      startIcon={<VisibilityIcon />}
+                      startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => onView(resume.id)}
+                      sx={{ py: 0.5 }}
                     >
                       View
                     </Button>
@@ -204,8 +207,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   <Tooltip title="Edit Resume">
                     <Button 
                       size="small" 
-                      startIcon={<EditIcon />}
+                      startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => onEdit(resume.id)}
+                      sx={{ py: 0.5 }}
                     >
                       Edit
                     </Button>
@@ -215,8 +219,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
                     <Button 
                       size="small" 
                       color="secondary"
-                      startIcon={<NoteAddIcon />}
+                      startIcon={<NoteAddIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => onCreateCoverLetter(resume.id)}
+                      sx={{ py: 0.5 }}
                     >
                       Cover Letter
                     </Button>

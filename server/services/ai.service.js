@@ -8,7 +8,7 @@ class AIService {
         });
         this.cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
         this.retryLimit = 3;
-        this.retryDelay = 1000; // 1 second
+        this.retryDelay = 1000;
     }
 
     generateCacheKey(resumeData, jobDetails) {

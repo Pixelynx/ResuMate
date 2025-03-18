@@ -40,7 +40,7 @@ function TabPanel(props: TabPanelProps) {
       {...other}
     >
       {value === index && (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 2 }}>
           {children}
         </Box>
       )}
@@ -145,16 +145,27 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container 
+      maxWidth="lg" 
+      sx={{ 
+        mt: 2, 
+        mb: 10,
+        minHeight: 'auto',
+        width: { xs: '100%', sm: '85%', md: '75%' },
+        minWidth: { xs: '100%', sm: '50vw' } 
+      }}
+    >
       <Paper 
         elevation={3} 
         sx={{ 
-          p: 3, 
+          p: { xs: 2, sm: 3 },
           borderRadius: 2,
-          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
+          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+          maxHeight: 'calc(100vh - 160px)',
+          overflow: 'auto'
         }}
       >
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Box sx={{ mb: 2, textAlign: 'center' }}>
           <Typography variant="h4" component="h1" gutterBottom>
             My Dashboard
           </Typography>
@@ -164,14 +175,14 @@ const Dashboard: React.FC = () => {
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
         {/* Quick Actions */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
             Quick Actions
           </Typography>
           <Grid container spacing={2}>
@@ -182,7 +193,7 @@ const Dashboard: React.FC = () => {
                 startIcon={<AddIcon />}
                 onClick={handleCreateNewResume}
                 sx={{ 
-                  py: 2,
+                  py: { xs: 1, sm: 1.5 },
                   background: 'linear-gradient(to right, #6a1b9a, #8e24aa)',
                   '&:hover': {
                     background: 'linear-gradient(to right, #4a148c, #6a1b9a)',
@@ -199,7 +210,7 @@ const Dashboard: React.FC = () => {
                 startIcon={<NoteAddIcon />}
                 onClick={() => handleCreateCoverLetter()}
                 sx={{ 
-                  py: 2,
+                  py: { xs: 1, sm: 1.5 },
                   background: 'linear-gradient(to right, #6a1b9a, #8e24aa)',
                   '&:hover': {
                     background: 'linear-gradient(to right, #4a148c, #6a1b9a)',
@@ -212,7 +223,7 @@ const Dashboard: React.FC = () => {
           </Grid>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <Divider sx={{ my: 2 }} />
 
         {/* Tabs for Resumes and Cover Letters */}
         <Box sx={{ width: '100%' }}>
@@ -223,6 +234,8 @@ const Dashboard: React.FC = () => {
               aria-label="dashboard tabs"
               textColor="primary"
               indicatorColor="primary"
+              variant="scrollable"
+              scrollButtons="auto"
             >
               <Tab 
                 label="My Resumes" 
