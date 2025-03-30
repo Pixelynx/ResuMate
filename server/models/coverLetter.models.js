@@ -21,7 +21,7 @@ module.exports = (sequelize, Sequelize) => {
         key: 'id'
       },
       onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
+      onDelete: 'CASCADE'
     },
     jobTitle: {
       type: Sequelize.STRING,
@@ -30,6 +30,10 @@ module.exports = (sequelize, Sequelize) => {
     company: {
       type: Sequelize.STRING,
       allowNull: false
+    },
+    jobDescription: {
+      type: Sequelize.TEXT,
+      allowNull: true
     },
     generationOptions: {
       type: Sequelize.JSON,

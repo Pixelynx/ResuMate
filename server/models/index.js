@@ -25,7 +25,7 @@ db.coverLetters = require('./coverLetter.models.js')(sequelize, Sequelize);
 // Define relationships
 db.resumes.hasMany(db.coverLetters, { 
   foreignKey: 'resumeId',
-  onDelete: 'SET NULL',
+  onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
 db.coverLetters.belongsTo(db.resumes, { 

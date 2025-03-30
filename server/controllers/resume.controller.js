@@ -254,16 +254,35 @@ exports.updateResume = async (req, res) => {
 
 exports.deleteResume = async (req, res) => {
   try {
+    // Find related cover letters before deleting the resume
+    const CoverLetter = db.coverLetters;
+    const relatedCoverLetters = await CoverLetter.findAll({
+      where: { resumeId: req.params.id }
+    });
+    
+    // Delete the resume - this will cascade delete all related cover letters
+    // due to the onDelete: 'CASCADE' configuration in the model associations
     const deleted = await Resume.destroy({
       where: { id: req.params.id }
     });
+
     if (deleted) {
-      res.status(204).send();
+      res.status(200).json({
+        success: true,
+        message: `Resume with id=${req.params.id} was deleted successfully`,
+        relatedCoverLettersDeleted: relatedCoverLetters.length
+      });
     } else {
-      res.status(404).json({ error: 'Resume not found' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Resume not found' 
+      });
     }
   } catch (error) {
     console.error('Error deleting resume:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
