@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,57 +12,32 @@ import {
   Divider
 } from '@mui/material';
 import { coverLetterService } from '../../utils/api';
-import { CoverLetter } from './types/coverLetterTypes';
+import PrintableCoverLetter from '../print/PrintableCoverLetter';
+import PrintController from '../print/PrintController';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { fetchCoverLetterById } from '../../redux/slices/coverLetterSlice';
+import { 
+  selectCurrentCoverLetter, 
+  selectCoverLetterLoading, 
+  selectCoverLetterError 
+} from '../../redux/selectors/coverLetterSelectors';
 
 const ViewCoverLetter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const printableRef = useRef<HTMLDivElement>(null);
+  
+  // Redux state
+  const coverLetter = useAppSelector(selectCurrentCoverLetter);
+  const loading = useAppSelector(selectCoverLetterLoading);
+  const error = useAppSelector(selectCoverLetterError);
 
   useEffect(() => {
-    const fetchCoverLetter = async () => {
-      try {
-        setLoading(true);
-        const response = await coverLetterService.getCoverLetter(id!);
-        
-        // Handle both direct response and wrapped response formats
-        if (response && typeof response === 'object') {
-          if ('success' in response && response.success && response.data) {
-            // Wrapped response format with success/data properties
-            setCoverLetter(response.data);
-          } else if ('id' in response && 'title' in response && 'content' in response) {
-            // Direct response format that has required CoverLetter properties
-            const coverLetterData: CoverLetter = {
-              id: response.id,
-              title: response.title,
-              content: response.content,
-              resumeId: response.resumeId,
-              jobTitle: response.jobTitle,
-              company: response.company,
-              generationOptions: 'generationOptions' in response ? response.generationOptions : undefined,
-              createdAt: 'createdAt' in response ? response.createdAt : undefined,
-              updatedAt: 'updatedAt' in response ? response.updatedAt : undefined
-            };
-            setCoverLetter(coverLetterData);
-          } else {
-            setError('Invalid cover letter data format');
-          }
-        } else {
-          setError('Failed to load cover letter');
-        }
-      } catch (err) {
-        setError('Failed to load cover letter. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
-      fetchCoverLetter();
+      dispatch(fetchCoverLetterById(id));
     }
-  }, [id]);
+  }, [dispatch, id]);
 
   const handleEdit = () => {
     navigate(`/cover-letter/edit/${id}`);
@@ -74,13 +49,15 @@ const ViewCoverLetter: React.FC = () => {
     }
 
     try {
-      setLoading(true);
       await coverLetterService.deleteCoverLetter(id!);
       navigate('/dashboard');
     } catch (err) {
-      setError('Failed to delete cover letter. Please try again.');
-      setLoading(false);
+      console.error('Failed to delete cover letter:', err);
     }
+  };
+
+  const handleBack = () => {
+    navigate('/dashboard');
   };
 
   if (loading) {
@@ -95,6 +72,13 @@ const ViewCoverLetter: React.FC = () => {
     return (
       <Container maxWidth="md">
         <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+        <Button 
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mt: 2 }}
+        >
+          Back to Dashboard
+        </Button>
       </Container>
     );
   }
@@ -103,12 +87,34 @@ const ViewCoverLetter: React.FC = () => {
     return (
       <Container maxWidth="md">
         <Alert severity="warning" sx={{ mt: 2 }}>Cover letter not found</Alert>
+        <Button 
+          variant="outlined"
+          onClick={handleBack}
+          sx={{ mt: 2 }}
+        >
+          Back to Dashboard
+        </Button>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="md">
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 2 }}>
+        <Button 
+          variant="outlined" 
+          onClick={handleBack}
+        >
+          Back to Dashboard
+        </Button>
+        <PrintController 
+          documentId={coverLetter.id} 
+          documentType="coverLetter" 
+          contentRef={printableRef} 
+        />
+      </Box>
+      
+      {/* Regular view */}
       <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
@@ -149,6 +155,11 @@ const ViewCoverLetter: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
+      
+      {/* Hidden printable view - only shown during printing */}
+      <Box sx={{ display: 'none' }}>
+        <PrintableCoverLetter ref={printableRef} coverLetter={coverLetter} />
+      </Box>
     </Container>
   );
 };

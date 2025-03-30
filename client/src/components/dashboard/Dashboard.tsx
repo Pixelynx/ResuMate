@@ -200,7 +200,7 @@ const Dashboard: React.FC = () => {
                   }
                 }}
               >
-                Create New Resume
+                Create Resume
               </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -211,13 +211,13 @@ const Dashboard: React.FC = () => {
                 onClick={() => handleCreateCoverLetter()}
                 sx={{ 
                   py: { xs: 1, sm: 1.5 },
-                  background: 'linear-gradient(to right, #6a1b9a, #8e24aa)',
+                  background: 'linear-gradient(to right, #6a1b9a,#8e24aa)',
                   '&:hover': {
                     background: 'linear-gradient(to right, #4a148c, #6a1b9a)',
                   }
                 }}
               >
-                Generate Cover Letter
+                Generate Letter
               </Button>
             </Grid>
           </Grid>

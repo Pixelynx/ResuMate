@@ -32,7 +32,7 @@ function App() {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Router>
           <Header />
-          <main style={{ minHeight: 'calc(100vh - 120px)', padding: '20px' }}>
+          <main style={{ height: 'calc(100vh + 50px)', padding: '20px' }}>
             <Routes>
               {/* Resume Routes */}
               <Route path="/resume/builder" element={<ResumeForm />} />

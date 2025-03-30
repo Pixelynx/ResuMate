@@ -1,8 +1,65 @@
 const db = require('../models');
 const Resume = db.resumes;
 
+// Validation helper functions
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const validatePhone = (phone) => {
+  const phoneRegex = /^\d{3}[-.]?\d{3}[-.]?\d{4}$/;
+  return phoneRegex.test(phone);
+};
+
+const validateRequiredFields = (data) => {
+  const errors = [];
+  
+  // Validate personal details
+  if (!data.personalDetails) {
+    errors.push('Personal details are required');
+  } else {
+    const { firstName, lastName, email, phone, location } = data.personalDetails;
+    
+    if (!firstName || firstName.trim() === '') {
+      errors.push('First name is required');
+    }
+    
+    if (!lastName || lastName.trim() === '') {
+      errors.push('Last name is required');
+    }
+    
+    if (!email || email.trim() === '') {
+      errors.push('Email is required');
+    } else if (!validateEmail(email)) {
+      errors.push('Invalid email format');
+    }
+    
+    if (!phone || phone.trim() === '') {
+      errors.push('Phone number is required');
+    } else if (!validatePhone(phone)) {
+      errors.push('Invalid phone number format');
+    }
+    
+    if (!location || location.trim() === '') {
+      errors.push('Location is required');
+    }
+  }
+  
+  return errors;
+};
+
 exports.createResume = async (req, res) => {
   try {
+    // Validate request body
+    const validationErrors = validateRequiredFields(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors: validationErrors
+      });
+    }
+
     const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
     
     const resume = await Resume.create({
@@ -126,6 +183,15 @@ exports.getResumeById = async (req, res) => {
 
 exports.updateResume = async (req, res) => {
   try {
+    // Validate request body
+    const validationErrors = validateRequiredFields(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors: validationErrors
+      });
+    }
+    
     const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
     
     const [updated] = await Resume.update({

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ResumeFormData } from '../components/resume/ResumeForm';
+import { ResumeFormData } from '../components/resume/types/resumeTypes';
 import { Resume } from '../components/resume/types/resumeTypes';
 import {
   CoverLetterFormData,

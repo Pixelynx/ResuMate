@@ -63,6 +63,15 @@ export interface PersonalDetails {
     updatedAt?: string;
   }
 
+  export interface ResumeFormData {
+    personalDetails: PersonalDetails;
+    workExperience: WorkExperience[];
+    education: Education[];
+    skills: Skills;
+    certifications: Certification[];
+    projects: Project[];
+  }
+
   export interface ResumeResponse {
     success: boolean;
     data: Resume;

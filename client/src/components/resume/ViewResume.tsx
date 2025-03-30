@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -6,46 +6,35 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Paper
 } from '@mui/material';
-import { resumeService } from '../../utils/api';
-import { Resume } from './types/resumeTypes';
 import ResumePreview from './PreviewResume';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { fetchResumeById } from '../../redux/slices/resumeSlice';
+import {
+  selectCurrentResume,
+  selectResumeLoading,
+  selectResumeError
+} from '../../redux/selectors/resumeSelectors';
+import PrintableResume from '../print/PrintableResume';
+import PrintController from '../print/PrintController';
 
 const ViewResume: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [resume, setResume] = useState<Resume | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const printableRef = useRef<HTMLDivElement>(null);
+  
+  const resume = useAppSelector(selectCurrentResume);
+  const loading = useAppSelector(selectResumeLoading);
+  const error = useAppSelector(selectResumeError);
 
   useEffect(() => {
-    const fetchResume = async () => {
-      try {
-        setLoading(true);
-        if (!id) {
-          setError('Resume ID is missing');
-          return;
-        }
-        
-        const resumeData = await resumeService.getResumeById(id);
-        if (resumeData) {
-          setResume(resumeData);
-        } else {
-          setError('Resume not found');
-        }
-      } catch (err) {
-        console.error('Error fetching resume:', err);
-        setError('Failed to load resume data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchResume();
-  }, [id]);
+    if (id) {
+      dispatch(fetchResumeById(id));
+    }
+  }, [dispatch, id]);
 
   const handleEdit = () => {
     navigate(`/resume/builder?id=${id}`);
@@ -105,16 +94,32 @@ const ViewResume: React.FC = () => {
         >
           Back to Dashboard
         </Button>
-        <Button 
-          variant="contained" 
-          startIcon={<EditIcon />}
-          onClick={handleEdit}
-        >
-          Edit Resume
-        </Button>
+        <Box>
+          <PrintController 
+            documentId={resume.id} 
+            documentType="resume" 
+            contentRef={printableRef} 
+          />
+          <Button 
+            variant="contained" 
+            startIcon={<EditIcon />}
+            onClick={handleEdit}
+            sx={{ ml: 2 }}
+          >
+            Edit Resume
+          </Button>
+        </Box>
       </Box>
       
-      <ResumePreview formData={resume} />
+      {/* Regular view */}
+      <Box sx={{ display: 'block' }}>
+        <ResumePreview formData={resume} />
+      </Box>
+
+      {/* Hidden printable view - only shown during printing */}
+      <Box sx={{ display: 'none' }}>
+        <PrintableResume ref={printableRef} resume={resume} />
+      </Box>
     </Container>
   );
 };

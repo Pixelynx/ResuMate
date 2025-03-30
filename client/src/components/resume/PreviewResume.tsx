@@ -1,5 +1,4 @@
 import React from 'react';
-import { ResumeFormData } from './ResumeForm';
 import { 
   Box,
   Typography,
@@ -18,6 +17,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
 import { formatDate } from '../../utils/validation';
+import { ResumeFormData } from './types/resumeTypes';
 
 const isSectionEmpty = (section: any[] | object): boolean => {
   if (Array.isArray(section)) {
