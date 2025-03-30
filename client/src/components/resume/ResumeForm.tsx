@@ -59,6 +59,7 @@ import {
 } from '../../redux/selectors/resumeSelectors';
 import { ResumeFormData } from './types/resumeTypes';
 import ResumeParser from './ResumeParser';
+import ResumeFormStepper from './ResumeFormStepper';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
@@ -795,8 +796,12 @@ const ResumeForm: React.FC = () => {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-            <Card sx={{ maxWidth: 800,
-                width: '100%', p: 3,
+            <ResumeFormStepper activeStep={activeStep} steps={steps} />
+            
+            <Card sx={{ 
+                maxWidth: 800,
+                width: '100%', 
+                p: 3,
                 borderRadius: 2,
                 boxShadow: 3
               }}>

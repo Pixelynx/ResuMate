@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => handleCreateCoverLetter()}
                 sx={{ 
                   py: { xs: 1, sm: 1.5 },
-                  background: 'linear-gradient(to right, #6a1b9a,#8e24aa)',
+                  background: 'linear-gradient(to right, #6a1b9a, #8e24aa)',
                   '&:hover': {
                     background: 'linear-gradient(to right, #4a148c, #6a1b9a)',
                   }

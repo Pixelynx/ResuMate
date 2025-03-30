@@ -15,9 +15,6 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  Stepper,
-  Step,
-  StepLabel,
   Container,
 } from '@mui/material';
 import { coverLetterService, resumeService } from '../../utils/api';
@@ -28,9 +25,9 @@ import {
   GenerationOptions,
   CoverLetterGenerationStatus
 } from './types/coverLetterTypes';
-import { AIGenerationRequest, GenerationProgress } from './types/aiTypes';
 import { Resume } from '../resume/types/resumeTypes';
 import LoadingOverlay from '../common/LoadingOverlay';
+import CoverLetterFormStepper from './CoverLetterFormStepper';
 
 interface ResumeOption {
   id: string;
@@ -388,53 +385,49 @@ const CoverLetterForm: React.FC = () => {
         />
       )}
       
-      <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Create Cover Letter
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+        <CoverLetterFormStepper activeStep={activeStep} steps={steps} />
         
-        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 3 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            {success}
-          </Alert>
-        )}
-        
-        {renderStepContent()}
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button
-            variant="outlined"
-            onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
-            disabled={loading}
-          >
-            {activeStep === 0 ? 'Cancel' : 'Back'}
-          </Button>
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Create Cover Letter
+          </Typography>
           
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
-            disabled={loading || !validateCurrentStep()}
-            startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
-          >
-            {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
-          </Button>
-        </Box>
-      </Paper>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }}>
+              {success}
+            </Alert>
+          )}
+          
+          {renderStepContent()}
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+            <Button
+              variant="outlined"
+              onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
+              disabled={loading}
+            >
+              {activeStep === 0 ? 'Cancel' : 'Back'}
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
+              disabled={loading || !validateCurrentStep()}
+              startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
+            >
+              {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
     </Container>
   );
 };
