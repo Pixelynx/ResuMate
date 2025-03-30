@@ -14,6 +14,7 @@ import {
 import { coverLetterService } from '../../utils/api';
 import PrintableCoverLetter from '../print/PrintableCoverLetter';
 import PrintController from '../print/PrintController';
+import JobScore from './JobScore';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchCoverLetterById } from '../../redux/slices/coverLetterSlice';
 import { 
@@ -35,6 +36,7 @@ const ViewCoverLetter: React.FC = () => {
 
   useEffect(() => {
     if (id) {
+      // @ts-ignore - workaround for thunk action type issue
       dispatch(fetchCoverLetterById(id));
     }
   }, [dispatch, id]);
@@ -113,6 +115,9 @@ const ViewCoverLetter: React.FC = () => {
           contentRef={printableRef} 
         />
       </Box>
+      
+      {/* Job Fit Score Component */}
+      <JobScore coverLetterId={coverLetter.id} />
       
       {/* Regular view */}
       <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>

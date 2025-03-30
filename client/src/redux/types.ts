@@ -1,5 +1,7 @@
 import { Resume, ResumeFormData } from '../components/resume/types/resumeTypes';
 import { CoverLetter, CoverLetterGenerationStatus } from '../components/coverLetter/types/coverLetterTypes';
+import { JobFitState } from './slices/jobFitSlice';
+import { PersistPartial } from 'redux-persist/es/persistReducer';
 
 // Resume State Types
 export interface ResumeState {
@@ -40,7 +42,8 @@ export interface PrintState {
 
 // Root State
 export interface RootState {
-  resume: ResumeState;
-  coverLetter: CoverLetterState;
-  print: PrintState;
+  resume: ResumeState & PersistPartial;
+  coverLetter: CoverLetterState & PersistPartial;
+  print: PrintState & PersistPartial;
+  jobFit: JobFitState & PersistPartial;
 } 
