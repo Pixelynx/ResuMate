@@ -4,24 +4,25 @@ import { Box, Typography, Link } from '@mui/material';
 const Footer: React.FC = () => {
   return (
     <Box
-    component="footer"
-    sx={{
-      position: 'relative',
-      margin: '0 auto',
-      bottom: 0,
-      width: 'calc(100% - 32px)',
-      maxWidth: '1200px',
-      padding: '16px 24px',
-      borderRadius: '12px',
-      backgroundColor: 'rgba(106, 27, 154, 0.95)',
-      backdropFilter: 'blur(8px)',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      color: 'white',
-    }}
-  >
+      component="footer"
+      sx={{
+        position: 'absolute',
+        bottom: '4px',
+        left: '50%',
+        width: 'calc(100% - 32px)',
+        maxWidth: '1200px',
+        padding: '16px 24px',
+        borderRadius: '12px',
+        backgroundColor: 'rgba(106, 27, 154, 0.95)',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        color: 'white',
+      }}
+    >
       <Typography variant="body2" sx={{ opacity: 0.9 }}>
         &copy; {new Date().getFullYear()} Resumate
       </Typography>

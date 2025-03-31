@@ -28,12 +28,16 @@ function App() {
   console.log('App component rendering');
 
   return (
-    <div className="App" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      justifyItems: 'center',
-      minHeight: '100vh'
-    }}>
+    <div
+      className="App"
+      style={{
+        display: 'flex',
+        position: 'relative',
+        flexDirection: 'column',
+        justifyItems: 'center',
+        minHeight: '100vh'
+      }}
+    >
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Router>
           <Header />
