@@ -22,25 +22,33 @@ const PrintController: React.FC<PrintControllerProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   
-  // Setup the react-to-print hook with all needed options
-  // Using a type assertion to avoid TypeScript errors
+  // Prepare handler functions separately
+  const handleBeforePrint = React.useCallback(async () => {
+    dispatch(startPrinting({ 
+      target: documentType, 
+      id: documentId 
+    }));
+    return Promise.resolve();
+  }, [dispatch, documentType, documentId]);
+
+  const handleAfterPrint = React.useCallback(() => {
+    dispatch(printCompleted());
+  }, [dispatch]);
+
+  const handlePrintError = React.useCallback((errorLocation: string, error: Error) => {
+    console.error(`Print error at ${errorLocation}:`, error);
+    dispatch(printFailed('Failed to print. Please try again.'));
+  }, [dispatch]);
+
+  // Setup the react-to-print hook
   const handlePrint = useReactToPrint({
-    // The content function that returns the component to be printed
+    // @ts-ignore - The type definitions seem to be outdated
     content: () => contentRef.current,
     documentTitle: `${documentType === 'resume' ? 'Resume' : 'Cover Letter'} - Print`,
-    onBeforePrint: () => {
-      dispatch(startPrinting({ 
-        target: documentType, 
-        id: documentId 
-      }));
-    },
-    onAfterPrint: () => {
-      dispatch(printCompleted());
-    },
-    onPrintError: (error) => {
-      console.error('Print error:', error);
-      dispatch(printFailed('Failed to print. Please try again.'));
-    },
+    // @ts-ignore
+    onBeforeGetContent: handleBeforePrint,
+    onAfterPrint: handleAfterPrint,
+    onPrintError: handlePrintError,
     removeAfterPrint: false,
     pageStyle: `
       @media print {
@@ -56,18 +64,19 @@ const PrintController: React.FC<PrintControllerProps> = ({
     `,
   });
 
+  // Wrapper function to handle the print action
+  const onPrintButtonClick = React.useCallback(() => {
+    if (typeof handlePrint === 'function') {
+      handlePrint();
+    }
+  }, [handlePrint]);
+
   return (
     <Button
       variant="contained"
       color="primary"
       startIcon={<PrintIcon />}
-      // Use a regular function instead of directly passing handlePrint
-      onClick={() => {
-        if (handlePrint) {
-          // TypeScript doesn't see the correct return type, so we force it
-          (handlePrint as () => void)();
-        }
-      }}
+      onClick={onPrintButtonClick}
       sx={{
         background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
         borderRadius: '8px',

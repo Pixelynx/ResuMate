@@ -47,7 +47,8 @@ import {
   addProject,
   removeProject,
   setDraftResume,
-  initNewDraftResume
+  initNewDraftResume,
+  clearError
 } from '../../redux/slices/resumeSlice';
 import { 
   selectActiveStep, 
@@ -856,10 +857,10 @@ const ResumeForm: React.FC = () => {
         <Snackbar 
           open={!!submitError} 
           autoHideDuration={6000} 
-          onClose={() => dispatch(setDraftResume({ formData: null }))}
+          onClose={() => dispatch(clearError())}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={() => dispatch(setDraftResume({ formData: null }))} severity="error">
+          <Alert onClose={() => dispatch(clearError())} severity="error">
             {submitError}
           </Alert>
         </Snackbar>

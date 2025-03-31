@@ -64,12 +64,4 @@ export type AppThunk<ReturnType = void> = ThunkAction<
   RootState,
   unknown,
   Action<string>
->;
-
-// Add type augmentation for redux-thunk
-declare module 'redux' {
-  interface Dispatch<A extends Action = AnyAction> {
-    <T extends A>(action: T): T;
-    <R>(asyncAction: ThunkAction<R, RootState, unknown, Action<string>>): R;
-  }
-} 
+>; 
