@@ -59,6 +59,7 @@ import {
 import { ResumeFormData } from './types/resumeTypes';
 import ResumeParser from './ResumeParser';
 import ResumeFormStepper from './ResumeFormStepper';
+import dayjs from 'dayjs';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
@@ -130,13 +131,47 @@ const ResumeForm: React.FC = () => {
 
     const submitResume = async () => {
       if (!formData) return;
-      console.log("FORM DATA: ", formData)
+      console.log("Starting resume submission");
+      
+      if (formData.workExperience && formData.workExperience.length > 0) {
+        console.log("Work experience date formats:");
+        formData.workExperience.forEach((exp, i) => {
+          const startDate = exp.startDate;
+          const endDate = exp.endDate;
+          
+          console.log(`Entry ${i+1}:`);
+          console.log(` - startDate:`, startDate, typeof startDate);
+          console.log(` - endDate:`, endDate, typeof endDate);
+          
+          // Convert to ISO string if it's a dayjs object
+          if (startDate && typeof startDate === 'object' && startDate.toString) {
+            console.log(` - startDate.toString():`, startDate.toString());
+            // Format as ISO if possible
+            if (dayjs(startDate).isValid()) {
+              console.log(` - startDate as ISO:`, dayjs(startDate).toISOString());
+            }
+          }
+          
+          if (endDate && typeof endDate === 'object' && endDate.toString) {
+            console.log(` - endDate.toString():`, endDate.toString());
+            // Format as ISO if possible
+            if (dayjs(endDate).isValid()) {
+              console.log(` - endDate as ISO:`, dayjs(endDate).toISOString());
+            }
+          }
+        });
+      }
+      
       try {
         if (savedResumeId) {
+          console.log("Updating existing resume with ID:", savedResumeId);
           await dispatch(updateResume({ id: savedResumeId, formData })).unwrap();
+          console.log("Resume updated successfully");
         } else {
+          console.log("Creating new resume");
           const result = await dispatch(createResume(formData)).unwrap();
           if (result) {
+            console.log("Resume created successfully with ID:", result.id);
             setSubmitSuccess(true);
           }
         }

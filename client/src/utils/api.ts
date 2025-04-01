@@ -23,17 +23,36 @@ export type ResumeListResponse = Resume[];
 export const resumeService = {
   createResume: async (resumeData: ResumeFormData): Promise<ResumeResponse> => {
     try {
+      console.log('Creating resume with data:', JSON.stringify(resumeData, null, 2));
+      // Log specifically the format of phone and any dates
+      console.log('Phone format:', resumeData.personalDetails.phone);
+      
+      // Log work experience dates for debugging
+      if (resumeData.workExperience && resumeData.workExperience.length > 0) {
+        resumeData.workExperience.forEach((exp, index) => {
+          console.log(`Work exp #${index + 1} - startDate:`, exp.startDate);
+          console.log(`Work exp #${index + 1} - endDate:`, exp.endDate);
+        });
+      }
+      
       const response = await API.post('/resumes', resumeData);
+      console.log('Resume created successfully:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating resume:', error);
+      if (error.response) {
+        console.error('Server response data:', error.response.data);
+        console.error('Server response status:', error.response.status);
+      }
       throw error;
     }
   },
 
   getAllResumes: async (): Promise<ResumeListResponse> => {
     try {
+      console.log('Fetching all resumes...');
       const response = await API.get('/resumes');
+      console.log('Fetched resumes count:', response.data.length);
       return response.data;
     } catch (error) {
       console.error('Error fetching resumes:', error);
@@ -43,7 +62,9 @@ export const resumeService = {
 
   getResumeById: async (id: string): Promise<ResumeResponse> => {
     try {
+      console.log(`Fetching resume with ID ${id}...`);
       const response = await API.get(`/resumes/${id}`);
+      console.log('Resume fetched successfully:', response.data.id);
       return response.data;
     } catch (error) {
       console.error(`Error fetching resume with ID ${id}:`, error);
@@ -51,18 +72,39 @@ export const resumeService = {
     }
   },
 
-  updateResume: async (id: string, resumeData: ResumeFormData): Promise<void> => {
+  updateResume: async (id: string, resumeData: ResumeFormData): Promise<ResumeResponse> => {
     try {
-      await API.put(`/resumes/${id}`, resumeData);
-    } catch (error) {
+      console.log(`Updating resume with ID ${id}:`, JSON.stringify(resumeData, null, 2));
+      
+      // Log phone format
+      console.log('Phone format:', resumeData.personalDetails.phone);
+      
+      // Log work experience dates for debugging
+      if (resumeData.workExperience && resumeData.workExperience.length > 0) {
+        resumeData.workExperience.forEach((exp, index) => {
+          console.log(`Work exp #${index + 1} - startDate:`, exp.startDate);
+          console.log(`Work exp #${index + 1} - endDate:`, exp.endDate);
+        });
+      }
+      
+      const response = await API.put(`/resumes/${id}`, resumeData);
+      console.log('Resume updated successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
       console.error(`Error updating resume with ID ${id}:`, error);
+      if (error.response) {
+        console.error('Server response data:', error.response.data);
+        console.error('Server response status:', error.response.status);
+      }
       throw error;
     }
   },
 
   deleteResume: async (id: string): Promise<boolean> => {
     try {
+      console.log(`Deleting resume with ID ${id}...`);
       await API.delete(`/resumes/${id}`);
+      console.log('Resume deleted successfully');
       return true;
     } catch (error) {
       console.error(`Error deleting resume with ID ${id}:`, error);

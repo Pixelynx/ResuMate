@@ -44,15 +44,55 @@ export const createResume = createAsyncThunk<Resume, ResumeFormData>(
 );
 
 export const updateResume = createAsyncThunk<
-  void, 
+  Resume, 
   { id: string; formData: ResumeFormData }
 >(
   'resume/updateResume',
   async ({ id, formData }, { rejectWithValue, dispatch }) => {
     try {
-      await resumeService.updateResume(id, formData);
-      dispatch(fetchResumeById(id));
+      console.log('UpdateResume thunk called with id:', id);
+      console.log('Form data:', JSON.stringify(formData, null, 2));
+      
+      // Check date objects before sending to API
+      formData.workExperience.forEach((exp, i) => {
+        console.log(`Work experience ${i+1} dates before API call:`);
+        console.log(`- startDate:`, exp.startDate, typeof exp.startDate);
+        console.log(`- endDate:`, exp.endDate, typeof exp.endDate);
+        
+        // Ensure dates are serializable before sending to API
+        if (exp.startDate && typeof exp.startDate === 'object' && exp.startDate.toString) {
+          console.log(`- startDate toString():`, exp.startDate.toString());
+        }
+        if (exp.endDate && typeof exp.endDate === 'object' && exp.endDate.toString) {
+          console.log(`- endDate toString():`, exp.endDate.toString());
+        }
+      });
+      
+      const response = await resumeService.updateResume(id, formData);
+      console.log('API response received:', response);
+      
+      // If the response contains a resume, return it
+      if (response) {
+        return response;
+      }
+      
+      // If updateResume doesn't return the resume data, fetch it
+      try {
+        console.log('Fetching updated resume data');
+        const updatedResume = await resumeService.getResumeById(id);
+        return updatedResume;
+      } catch (fetchError) {
+        console.error('Error fetching updated resume:', fetchError);
+        // Fall back to formData if we can't fetch the updated resume
+        return { 
+          id, 
+          ...formData, 
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        } as Resume;
+      }
     } catch (error) {
+      console.error('Error in updateResume thunk:', error);
       return rejectWithValue((error as Error).message);
     }
   }
@@ -158,6 +198,8 @@ const resumeSlice = createSlice({
     nextStep: (state: ResumeState) => {
       if (!state.draftResume) return;
 
+      console.log('nextStep called, current step:', state.activeStep);
+      
       if (state.activeStep === 0) {
         // Validate all required personal details fields
         const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
@@ -178,7 +220,19 @@ const resumeSlice = createSlice({
 
       if (state.activeStep === 1) {
         // Work experience dates validation with safer checks
+        console.log('Validating work experience data');
         const workExperience = state.draftResume.workExperience;
+        
+        // Log all work experience entries for debugging
+        workExperience.forEach((entry, i) => {
+          console.log(`Work exp #${i+1} validation:`, {
+            startDate: entry.startDate,
+            startDateType: entry.startDate ? typeof entry.startDate : 'undefined',
+            endDate: entry.endDate,
+            endDateType: entry.endDate ? typeof entry.endDate : 'undefined'
+          });
+        });
+        
         let isValid = true;
         const validationResults = workExperience.map(entry => {
           const startDate = entry.startDate;
@@ -192,15 +246,34 @@ const resumeSlice = createSlice({
             startDateValid = false;
             dateErrorMessage = 'Start date is required';
             isValid = false;
+            console.log('Validation failed: Start date is required');
           } else if (endDate) {
-            // Ensure both dates are valid dayjs objects or can be converted to one
-            const startDayjs = dayjs(startDate);
-            const endDayjs = dayjs(endDate);
-            
-            // Only compare if both are valid dayjs objects
-            if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
-              endDateValid = false;
-              dateErrorMessage = 'End date must be after start date';
+            try {
+              // Ensure both dates are valid dayjs objects or can be converted to one
+              const startDayjs = dayjs(startDate);
+              const endDayjs = dayjs(endDate);
+              
+              console.log('Date comparison:', {
+                startDate: startDate,
+                endDate: endDate,
+                startDayjs: startDayjs.format('YYYY-MM-DD'),
+                endDayjs: endDayjs.format('YYYY-MM-DD'),
+                startValid: startDayjs.isValid(),
+                endValid: endDayjs.isValid(),
+                comparison: startDayjs.isValid() && endDayjs.isValid() ? 
+                  endDayjs.isBefore(startDayjs) ? 'end before start' : 'valid range' : 'invalid format'
+              });
+              
+              // Only compare if both are valid dayjs objects
+              if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
+                endDateValid = false;
+                dateErrorMessage = 'End date must be after start date';
+                isValid = false;
+                console.log('Validation failed: End date is before start date');
+              }
+            } catch (error) {
+              console.error('Error during date validation:', error);
+              dateErrorMessage = 'Error validating dates';
               isValid = false;
             }
           }
@@ -220,9 +293,12 @@ const resumeSlice = createSlice({
           state.validationErrors.workExperience = validationResults;
           console.log('Please fix date errors before proceeding');
           return;
+        } else {
+          console.log('All work experience dates are valid');
         }
       }
 
+      console.log('Moving to next step:', state.activeStep + 1);
       state.activeStep += 1;
     },
     prevStep: (state: ResumeState) => {
@@ -503,9 +579,10 @@ const resumeSlice = createSlice({
         state.submitting = true;
         state.error = null;
       })
-      .addCase(updateResume.fulfilled, (state: ResumeState, action: PayloadAction<void>) => {
+      .addCase(updateResume.fulfilled, (state: ResumeState, action: PayloadAction<Resume>) => {
         state.submitting = false;
-        // The actual state update will happen when fetchResumeById completes
+        state.currentResume = action.payload;
+        state.savedResumeId = action.payload.id;
       })
       .addCase(updateResume.rejected, (state: ResumeState, action: any) => {
         state.submitting = false;
