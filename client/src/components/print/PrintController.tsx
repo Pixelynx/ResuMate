@@ -41,7 +41,7 @@ const PrintController: React.FC<PrintControllerProps> = ({
 
   // Setup the react-to-print hook
   const handlePrint = useReactToPrint({
-    contentRef: () => contentRef.current,
+    contentRef: contentRef,
     documentTitle: `${documentType === 'resume' ? 'Resume' : 'Cover Letter'} - Print`,
     onBeforePrint: handleBeforePrint,
     onAfterPrint: handleAfterPrint,

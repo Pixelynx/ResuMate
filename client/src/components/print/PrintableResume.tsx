@@ -8,12 +8,11 @@ import {
   List,
   ListItem,
   ListItemText,
-  Link
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Resume } from '../resume/types/resumeTypes';
-import { useAppSelector, useAppDispatch } from '../../redux/hooks';
-import { selectIsPrinting, selectShouldShowIcons } from '../../redux/selectors/printSelectors';
+import { useAppSelector } from '../../redux/hooks';
+import { selectIsPrinting } from '../../redux/selectors/printSelectors';
 
 interface PrintableResumeProps {
   resume: Resume;
@@ -70,8 +69,7 @@ const SectionContent = styled(Box)(({ theme }) => ({
 const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props, ref) => {
   const { resume } = props;
   const isPrinting = useAppSelector(selectIsPrinting);
-  const shouldShowIcons = useAppSelector(selectShouldShowIcons);
-  
+
   // Use specific print styles when printing
   useEffect(() => {
     if (isPrinting) {
@@ -96,52 +94,35 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
           )}
           <Box sx={{ mt: 1 }}>
             <Typography variant="body1">
+              {/* FIX PIPE GAPS*/}
               {resume.personalDetails.email} | {resume.personalDetails.phone} | {resume.personalDetails.location}
             </Typography>
             <Box sx={{ mt: 0.5, display: 'flex', justifyContent: 'center', gap: 2 }}>
               {resume.personalDetails.linkedin && (
                 <Typography variant="body2">
-                  {shouldShowIcons ? (
-                    <Link href={resume.personalDetails.linkedin} target="_blank" rel="noopener">
-                      LinkedIn
-                    </Link>
-                  ) : (
-                    `LinkedIn: ${resume.personalDetails.linkedin}`
-                  )}
+                    {`${resume.personalDetails.linkedin} `} | 
                 </Typography>
               )}
               {resume.personalDetails.github && (
                 <Typography variant="body2">
-                  {shouldShowIcons ? (
-                    <Link href={resume.personalDetails.github} target="_blank" rel="noopener">
-                      GitHub
-                    </Link>
-                  ) : (
-                    `GitHub: ${resume.personalDetails.github}`
-                  )}
+                    {`${resume.personalDetails.github} `} | 
                 </Typography>
               )}
               {resume.personalDetails.website && (
                 <Typography variant="body2">
-                  {shouldShowIcons ? (
-                    <Link href={resume.personalDetails.website} target="_blank" rel="noopener">
-                      Portfolio
-                    </Link>
-                  ) : (
-                    `Website: ${resume.personalDetails.website}`
-                  )}
+                    {`${resume.personalDetails.website} `}
                 </Typography>
               )}
             </Box>
           </Box>
         </Box>
 
-        <Divider />
+        <Divider sx={{ mb: 3 }} />
 
         {/* Work Experience */}
         {resume.workExperience && resume.workExperience.length > 0 && (
           <SectionContent>
-            <SectionTitle variant="h5">Work Experience</SectionTitle>
+            <SectionTitle variant="h4">Work Experience</SectionTitle>
             {resume.workExperience.map((experience, index) => (
               <Box key={index} sx={{ mb: 2 }}>
                 <Grid container justifyContent="space-between" alignItems="flex-start">
@@ -176,7 +157,7 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
         {/* Education */}
         {resume.education && resume.education.length > 0 && (
           <SectionContent>
-            <SectionTitle variant="h5">Education</SectionTitle>
+            <SectionTitle variant="h4">Education</SectionTitle>
             {resume.education.map((edu, index) => (
               <Box key={index} sx={{ mb: 2 }}>
                 <Grid container justifyContent="space-between">
@@ -210,10 +191,11 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
         {/* Skills */}
         {resume.skills && (resume.skills.skills_ || resume.skills.languages) && (
           <SectionContent>
-            <SectionTitle variant="h5">Skills</SectionTitle>
+            <SectionTitle variant="h4">Skills</SectionTitle>
             <Grid container spacing={2}>
               {resume.skills.skills_ && (
                 <Grid item xs={12} md={6}>
+                  <Typography variant="h6" sx={{ whiteSpace: 'pre-line'}}>Professional</Typography>
                   <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
                     {resume.skills.skills_}
                   </Typography>
@@ -234,23 +216,16 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
         {/* Projects */}
         {resume.projects && resume.projects.length > 0 && (
           <SectionContent>
-            <SectionTitle variant="h5">Projects</SectionTitle>
+            <SectionTitle variant="h4">Projects</SectionTitle>
             {resume.projects.map((project, index) => (
               <Box key={index} sx={{ mb: 2 }}>
                 <Grid container justifyContent="space-between">
                   <Grid item xs={9}>
                     <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
-                      {project.title}
-                      {project.projectUrl && shouldShowIcons ? (
-                        <Link 
-                          href={project.projectUrl} 
-                          target="_blank" 
-                          rel="noopener" 
-                          sx={{ ml: 1, fontSize: '0.8rem' }}
-                        >
-                          (Link)
-                        </Link>
-                      ) : project.projectUrl ? ` (${project.projectUrl})` : ''}
+                      {project.title} |
+                      {project.projectUrl && (
+                         ` ${project.projectUrl}`
+                      )}
                     </Typography>
                     {project.role && (
                       <Typography variant="body2" color="textSecondary">
@@ -280,7 +255,7 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
         {/* Certifications */}
         {resume.certifications && resume.certifications.length > 0 && (
           <SectionContent>
-            <SectionTitle variant="h5">Certifications</SectionTitle>
+            <SectionTitle variant="h4">Certifications</SectionTitle>
             <List sx={{ py: 0 }}>
               {resume.certifications.map((cert, index) => (
                 <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
@@ -288,16 +263,11 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                     primary={
                       <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                         {cert.name} - {cert.organization}
-                        {cert.credentialUrl && shouldShowIcons ? (
-                          <Link 
-                            href={cert.credentialUrl} 
-                            target="_blank" 
-                            rel="noopener" 
-                            sx={{ ml: 1, fontSize: '0.8rem' }}
-                          >
-                            (Verify)
-                          </Link>
-                        ) : cert.credentialUrl ? ` (${cert.credentialUrl})` : ''}
+                        {cert.credentialUrl && (
+                          <Typography>
+                            {` ${cert.credentialUrl}`}
+                          </Typography>
+                        )}
                       </Typography>
                     }
                     secondary={
