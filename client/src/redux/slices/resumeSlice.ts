@@ -4,11 +4,12 @@ import { Resume, ResumeFormData } from '../../components/resume/types/resumeType
 import { resumeService } from '../../utils/api';
 import { validatePersonalDetails } from '../../components/resume/validation/personalDetailsValidation';
 import dayjs from 'dayjs';
+import { AppThunk } from '../store';
 
 // Async thunks
-export const fetchResumes = createAsyncThunk(
+export const fetchResumes = createAsyncThunk<Resume[], void>(
   'resume/fetchResumes',
-  async (_: void, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async (_: void, { rejectWithValue }) => {
     try {
       const resumes = await resumeService.getAllResumes();
       return resumes;
@@ -18,9 +19,9 @@ export const fetchResumes = createAsyncThunk(
   }
 );
 
-export const fetchResumeById = createAsyncThunk(
+export const fetchResumeById = createAsyncThunk<Resume, string>(
   'resume/fetchResumeById',
-  async (id: string, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       const resume = await resumeService.getResumeById(id);
       return resume;
@@ -30,9 +31,9 @@ export const fetchResumeById = createAsyncThunk(
   }
 );
 
-export const createResume = createAsyncThunk(
+export const createResume = createAsyncThunk<Resume, ResumeFormData>(
   'resume/createResume',
-  async (formData: ResumeFormData, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async (formData: ResumeFormData, { rejectWithValue }) => {
     try {
       const response = await resumeService.createResume(formData);
       return response;
@@ -42,9 +43,12 @@ export const createResume = createAsyncThunk(
   }
 );
 
-export const updateResume = createAsyncThunk(
+export const updateResume = createAsyncThunk<
+  Resume | void, 
+  { id: string; formData: ResumeFormData }
+>(
   'resume/updateResume',
-  async ({ id, formData }: { id: string; formData: ResumeFormData }, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async ({ id, formData }, { rejectWithValue }) => {
     try {
       const response = await resumeService.updateResume(id, formData);
       return response;
@@ -54,9 +58,9 @@ export const updateResume = createAsyncThunk(
   }
 );
 
-export const deleteResume = createAsyncThunk(
+export const deleteResume = createAsyncThunk<string, string>(
   'resume/deleteResume',
-  async (id: string, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async (id: string, { rejectWithValue }) => {
     try {
       await resumeService.deleteResume(id);
       return id;

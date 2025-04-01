@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { AppThunk } from '../store';
 
 export interface JobFitScore {
   score: number;
@@ -20,17 +21,28 @@ const initialState: JobFitState = {
   error: null
 };
 
-export const fetchJobFitScore = createAsyncThunk(
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+export const fetchJobFitScore = createAsyncThunk<JobFitScore, string>(
   'jobFit/fetchJobFitScore',
-  async (coverLetterId: string, { rejectWithValue }: { rejectWithValue: (value: string) => any }) => {
+  async (coverLetterId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/job-fit-score/${coverLetterId}`);
-      return response.data.data as JobFitScore;
+      const response = await axios.get(`${API_BASE_URL}/job-fit-score/${coverLetterId}`);
+      
+      if (response.data && response.data.data) {
+        return response.data.data as JobFitScore;
+      } else if (response.data) {
+        return response.data as JobFitScore;
+      } else {
+        return rejectWithValue('Invalid response format from server');
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        return rejectWithValue(error.response.data.message || 'Failed to fetch job fit score');
+        return rejectWithValue(
+          error.response.data?.message || 'Failed to fetch job fit score'
+        );
       }
-      return rejectWithValue((error as Error).message);
+      return rejectWithValue('An unexpected error occurred');
     }
   }
 );

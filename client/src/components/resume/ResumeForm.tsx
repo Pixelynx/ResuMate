@@ -29,7 +29,6 @@ import {
   fetchResumeById, 
   createResume, 
   updateResume,
-  setActiveStep,
   nextStep,
   prevStep,
   updatePersonalDetails,
@@ -46,7 +45,6 @@ import {
   updateProject,
   addProject,
   removeProject,
-  setDraftResume,
   initNewDraftResume,
   clearError
 } from '../../redux/slices/resumeSlice';

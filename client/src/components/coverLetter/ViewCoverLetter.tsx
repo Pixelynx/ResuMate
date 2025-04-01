@@ -36,7 +36,6 @@ const ViewCoverLetter: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      // @ts-ignore - workaround for thunk action type issue
       dispatch(fetchCoverLetterById(id));
     }
   }, [dispatch, id]);

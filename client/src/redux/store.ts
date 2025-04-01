@@ -43,7 +43,7 @@ const rootReducer = combineReducers({
 // Create the Redux store
 export const store = configureStore({
   reducer: rootReducer,
-  middleware: (getDefaultMiddleware: any) =>
+  middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore non-serializable values like Date objects

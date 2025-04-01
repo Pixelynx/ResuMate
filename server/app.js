@@ -13,6 +13,8 @@ app.use(express.json());
 // Routes
 require('./routes/resume.routes')(app);
 require('./routes/coverLetter.routes')(app);
+
+// Consolidated job fit score routes
 require('./routes/jobFit.routes')(app);
 
 const PORT = process.env.PORT || 5000;

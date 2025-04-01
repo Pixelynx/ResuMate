@@ -2,20 +2,30 @@ export interface CoverLetter {
   id: string;
   title: string;
   content: string;
-  resumeId: string;
-  jobTitle: string;
-  company: string;
+  resumeId?: string;
+  jobTitle?: string;
+  company?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  prevEmployed?: string[];
+  jobDescription?: string;
+  createDate?: string;
+  updatedAt?: string;
   generationOptions?: GenerationOptions;
   createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface CoverLetterGenerationRequest {
   resumeId: string;
-  jobTitle: string;
-  company: string;
+  jobTitle?: string;
+  company?: string;
   jobDescription?: string;
-  options?: GenerationOptions;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
 }
 
 export interface CoverLetterResponse {
@@ -34,9 +44,14 @@ export interface CoverLetterListResponse {
 export interface CoverLetterFormData {
   title: string;
   content: string;
-  resumeId: string;
-  jobTitle: string;
-  company: string;
+  resumeId?: string;
+  jobTitle?: string;
+  company?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  prevEmployed?: string[];
   jobDescription?: string;
 }
 
@@ -86,8 +101,8 @@ export interface CoverLetterFormState {
 export interface GenerationOptions {
   tone?: 'professional' | 'casual' | 'enthusiastic';
   length?: 'short' | 'medium' | 'long';
-  emphasis?: string[]; // specific skills or experiences to emphasize
-  customInstructions?: string;
+  focusPoints?: string[];
+  includeReferences?: boolean;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -98,7 +113,7 @@ export interface GenerationOptions {
 export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   tone: 'professional',
   length: 'medium',
-  emphasis: [],
+  focusPoints: [],
   model: 'gpt-3.5-turbo',
   temperature: 0.7,
   maxTokens: 1000,

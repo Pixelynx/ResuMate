@@ -42,29 +42,37 @@ exports.getJobFitScore = async (req, res) => {
     }
     
     // Format resume data
-    const formattedResume = {
-      id: resume.id,
-      personalDetails: {
-        firstName: resume.firstName,
-        lastName: resume.lastName,
-        title: resume.title,
-        email: resume.email,
-        phone: resume.phone,
-        location: resume.location,
-        linkedin: resume.linkedin,
-        website: resume.website,
-        github: resume.github,
-        instagram: resume.instagram,
-      },
-      workExperience: resume.workExperience,
-      education: resume.education,
-      skills: resume.skills,
-      certifications: resume.certifications,
-      projects: resume.projects
-    };
+    let resumeData;
+    
+    // Check if the resume object is already in the expected format
+    if (resume.personalDetails) {
+      resumeData = resume;
+    } else {
+      // Format resume data into the expected structure
+      resumeData = {
+        id: resume.id,
+        personalDetails: {
+          firstName: resume.firstName,
+          lastName: resume.lastName,
+          title: resume.title,
+          email: resume.email,
+          phone: resume.phone,
+          location: resume.location,
+          linkedin: resume.linkedin,
+          website: resume.website,
+          github: resume.github,
+          instagram: resume.instagram,
+        },
+        workExperience: resume.workExperience,
+        education: resume.education,
+        skills: resume.skills,
+        certifications: resume.certifications,
+        projects: resume.projects
+      };
+    }
     
     // Calculate job fit score
-    const result = await calculateJobFitScore(formattedResume, coverLetter);
+    const result = await calculateJobFitScore(resumeData, coverLetter);
     
     // Return the score and explanation
     res.status(200).json({

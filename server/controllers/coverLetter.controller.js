@@ -13,18 +13,69 @@ exports.create = async (req, res) => {
       });
     }
 
+    const resumeId = req.body.resumeId;
+    let firstName = req.body.firstName || '';
+    let lastName = req.body.lastName || '';
+    let email = req.body.email || '';
+    let phoneNumber = req.body.phoneNumber || '';
+    let prevEmployed = req.body.prevEmployed || [];
+
+    // If a resumeId is provided, fetch the resume data to populate fields
+    if (resumeId) {
+      try {
+        const resume = await Resume.findByPk(resumeId);
+        if (resume) {
+          // Use resume data if not explicitly provided in the request
+          firstName = req.body.firstName || resume.firstName || '';
+          lastName = req.body.lastName || resume.lastName || '';
+          email = req.body.email || resume.email || '';
+          phoneNumber = req.body.phoneNumber || resume.phone || '';
+          
+          // Extract previous employment from work experience
+          if (!req.body.prevEmployed && resume.workExperience) {
+            try {
+              const workExp = typeof resume.workExperience === 'string' 
+                ? JSON.parse(resume.workExperience) 
+                : resume.workExperience;
+                
+              prevEmployed = workExp && Array.isArray(workExp)
+                ? workExp.map(job => job.companyName || '').filter(Boolean)
+                : [];
+            } catch (error) {
+              console.error('Error parsing work experience:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching resume:', error);
+      }
+    }
+
     const coverLetter = {
       id: uuidv4(),
       title: req.body.title,
       content: req.body.content,
-      resumeId: req.body.resumeId,
+      resumeId: resumeId,
       jobTitle: req.body.jobTitle,
       company: req.body.company,
+      jobDescription: req.body.jobDescription || '',
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      prevEmployed,
+      createDate: new Date(),
+      generationOptions: req.body.generationOptions || null
     };
 
     const data = await CoverLetter.create(coverLetter);
+    
+    // Log the created cover letter for debugging
+    console.log('Created cover letter:', JSON.stringify(data, null, 2));
+    
     res.status(201).send(data);
   } catch (err) {
+    console.error('Error in create cover letter:', err);
     res.status(500).send({
       message: err.message || "Some error occurred while creating the Cover Letter."
     });
@@ -67,20 +118,57 @@ exports.update = async (req, res) => {
   const id = req.params.id;
 
   try {
-    const num = await CoverLetter.update(req.body, {
-      where: { id: id }
+    // If we're updating the resumeId, fetch resume data to populate fields
+    if (req.body.resumeId) {
+      try {
+        const resume = await Resume.findByPk(req.body.resumeId);
+        if (resume) {
+          // Only update fields from resume if they're not explicitly provided in the request
+          if (!req.body.firstName) req.body.firstName = resume.firstName || '';
+          if (!req.body.lastName) req.body.lastName = resume.lastName || '';
+          if (!req.body.email) req.body.email = resume.email || '';
+          if (!req.body.phoneNumber) req.body.phoneNumber = resume.phone || '';
+          
+          // Extract previous employment from work experience if not provided
+          if (!req.body.prevEmployed && resume.workExperience) {
+            try {
+              const workExp = typeof resume.workExperience === 'string' 
+                ? JSON.parse(resume.workExperience) 
+                : resume.workExperience;
+                
+              req.body.prevEmployed = workExp && Array.isArray(workExp)
+                ? workExp.map(job => job.companyName || '').filter(Boolean)
+                : [];
+            } catch (error) {
+              console.error('Error parsing work experience:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching resume:', error);
+      }
+    }
+
+    // Make sure jobDescription is empty string not null for consistency
+    if (req.body.jobDescription === null) {
+      req.body.jobDescription = '';
+    }
+
+    const [num, updatedRows] = await CoverLetter.update(req.body, {
+      where: { id: id },
+      returning: true
     });
 
     if (num == 1) {
-      res.send({
-        message: "Cover Letter was updated successfully."
-      });
+      const updatedCoverLetter = await CoverLetter.findByPk(id);
+      res.send(updatedCoverLetter);
     } else {
       res.send({
         message: `Cannot update Cover Letter with id=${id}. Maybe Cover Letter was not found or req.body is empty!`
       });
     }
   } catch (err) {
+    console.error('Error updating cover letter:', err);
     res.status(500).send({
       message: `Error updating Cover Letter with id=${id}`
     });
@@ -152,6 +240,22 @@ exports.generate = async (req, res) => {
     // Generate cover letter using AI service
     const content = await aiService.generateCoverLetter(resume, jobDetails, options);
 
+    // Extract previous employment from work experience
+    let prevEmployed = [];
+    if (resume.workExperience) {
+      try {
+        const workExp = typeof resume.workExperience === 'string' 
+          ? JSON.parse(resume.workExperience) 
+          : resume.workExperience;
+          
+        prevEmployed = workExp && Array.isArray(workExp)
+          ? workExp.map(job => job.companyName || '').filter(Boolean)
+          : [];
+      } catch (error) {
+        console.error('Error parsing work experience:', error);
+      }
+    }
+
     // Create a new cover letter in the database
     const coverLetter = {
       id: uuidv4(),
@@ -160,6 +264,13 @@ exports.generate = async (req, res) => {
       resumeId: resumeId,
       jobTitle: jobDetails.jobTitle,
       company: jobDetails.company,
+      jobDescription: jobDetails.jobDescription || '',
+      firstName: resume.firstName || '',
+      lastName: resume.lastName || '',
+      email: resume.email || '',
+      phoneNumber: resume.phone || '',
+      prevEmployed,
+      createDate: new Date(),
       generationOptions: options // Store the options used for reference
     };
 

@@ -61,13 +61,18 @@ const CoverLetterForm: React.FC = () => {
     content: '',
     resumeId: resumeId || '',
     jobTitle: '',
-    company: ''
+    company: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: '',
+    jobDescription: ''
   });
 
   const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
     tone: 'professional',
     length: 'medium',
-    emphasis: []
+    focusPoints: []
   });
 
   const steps = ['Job Details', 'Generate Cover Letter', 'Review & Save'];
@@ -153,7 +158,10 @@ const CoverLetterForm: React.FC = () => {
         jobTitle: formData.jobTitle,
         company: formData.company,
         jobDescription: formData.jobDescription,
-        options: generationOptions
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber
       };
 
       // Start progress simulation

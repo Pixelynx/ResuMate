@@ -56,7 +56,6 @@ const AnimatedPaper = styled(Paper)(({ theme }) => ({
 
 interface ScoreBoxProps {
   score: number | null;
-  children: React.ReactNode;
 }
 
 const ScoreBox = styled(Box, {
@@ -97,13 +96,9 @@ const ScoreBox = styled(Box, {
 const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  // @ts-ignore - fix for redux persist typing issues
   const score = useAppSelector(selectJobFitScore);
-  // @ts-ignore - fix for redux persist typing issues
   const explanation = useAppSelector(selectJobFitExplanation);
-  // @ts-ignore - fix for redux persist typing issues
   const loading = useAppSelector(selectJobFitLoading);
-  // @ts-ignore - fix for redux persist typing issues
   const error = useAppSelector(selectJobFitError);
   const [open, setOpen] = useState(false);
 
@@ -114,7 +109,6 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   }, [score]);
 
   const handleCalculate = () => {
-    // @ts-ignore - workaround for thunk action type issue
     dispatch(fetchJobFitScore(coverLetterId));
   };
 

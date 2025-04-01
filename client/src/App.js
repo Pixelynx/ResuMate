@@ -7,6 +7,7 @@ import ViewResume from './components/resume/ViewResume';
 import Dashboard from './components/dashboard/Dashboard';
 import CoverLetterForm from './components/coverLetter/CoverLetterForm';
 import ViewCoverLetter from './components/coverLetter/ViewCoverLetter';
+import EditCoverLetter from './components/coverLetter/EditCoverLetter';
 import { ErrorBoundary } from 'react-error-boundary';
 
 function ErrorFallback({ error }) {
@@ -54,10 +55,11 @@ function App() {
               <Route path="/cover-letter/new" element={<CoverLetterForm />} />
               <Route path="/cover-letter/from-resume/:resumeId" element={<CoverLetterForm />} />
               <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
+              <Route path="/cover-letter/edit/:id" element={<EditCoverLetter />} />
               
               {/* Cover Letters Routes (plural) - for compatibility */}
               <Route path="/cover-letter/view/:id" element={<ViewCoverLetter />} />
-              <Route path="/cover-letter/edit/:id" element={<CoverLetterForm />} />
+              <Route path="/cover-letter/edit-legacy/:id" element={<CoverLetterForm />} />
               
               {/* Redirects */}
               <Route path="/builder" element={<Navigate to="/resume/builder" />} />

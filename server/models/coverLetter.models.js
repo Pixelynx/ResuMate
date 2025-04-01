@@ -33,7 +33,36 @@ module.exports = (sequelize, Sequelize) => {
     },
     jobDescription: {
       type: Sequelize.TEXT,
+      allowNull: true,
+      defaultValue: ""
+    },
+    firstName: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: ""
+    },
+    lastName: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: ""
+    },
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: ""
+    },
+    phoneNumber: {
+      type: Sequelize.STRING,
       allowNull: true
+    },
+    prevEmployed: {
+      type: Sequelize.JSON,
+      allowNull: true
+    },
+    createDate: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     },
     generationOptions: {
       type: Sequelize.JSON,

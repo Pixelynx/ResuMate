@@ -1,5 +1,6 @@
 const axios = require("axios");
 require("dotenv").config();
+const { calculateEmbeddingSimilarity } = require('./openaiService');
 
 /**
  * Gets the embedding for a text using OpenAI's embedding API
@@ -34,83 +35,153 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 /**
- * Calculate the job fit score based on resume and job description
- * @param {Object} resume - The resume data
- * @param {Object} coverLetter - The cover letter data with job details
- * @returns {Promise<{score: number, explanation: string}>} The job fit score and explanation
+ * Prepares resume content for analysis
+ * @param {Object} resume - Resume object
+ * @returns {String} Formatted resume content
  */
-async function calculateJobFitScore(resume, coverLetter) {
-    try {
-        // Extract relevant texts from resume
-        const skillsText = resume.skills && resume.skills.skills_ ? resume.skills.skills_ : '';
-        const educationText = resume.education ? resume.education.map(edu => 
-            `${edu.degree} in ${edu.fieldOfStudy} from ${edu.institutionName}`
-        ).join('. ') : '';
+function prepareResumeContent(resume) {
+  const sections = [];
+  
+  // Add personal title if available
+  if (resume.personalDetails && resume.personalDetails.title) {
+    sections.push(`PROFESSIONAL TITLE: ${resume.personalDetails.title}`);
+  } else if (resume.title) {
+    sections.push(`PROFESSIONAL TITLE: ${resume.title}`);
+  }
+  
+  // Add skills
+  if (resume.skills && resume.skills.skills_) {
+    sections.push(`SKILLS: ${resume.skills.skills_}`);
+  }
+  
+  // Add work experience
+  if (resume.workExperience && resume.workExperience.length > 0) {
+    const workExp = resume.workExperience.map(exp => 
+      `WORK EXPERIENCE: ${exp.jobTitle} at ${exp.companyName}\n${exp.description}`
+    ).join('\n\n');
+    sections.push(workExp);
+  }
+  
+  // Add projects
+  if (resume.projects && resume.projects.length > 0) {
+    const projects = resume.projects.map(proj => 
+      `PROJECT: ${proj.title}\n${proj.description}\nTechnologies: ${proj.technologies}`
+    ).join('\n\n');
+    sections.push(projects);
+  }
+  
+  // Add education
+  if (resume.education && resume.education.length > 0) {
+    const education = resume.education.map(edu => 
+      `EDUCATION: ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institutionName}`
+    ).join('\n\n');
+    sections.push(education);
+  }
+  
+  return sections.join('\n\n');
+}
 
-        const workExperienceText = resume.workExperience ? resume.workExperience.map(exp => 
-            `${exp.jobTitle} at ${exp.companyName}: ${exp.description}`
-        ).join('. ') : '';
-
-        const projectsText = resume.projects ? resume.projects.map(proj => 
-            `${proj.title}: ${proj.description}. Technologies: ${proj.technologies}`
-        ).join('. ') : '';
-
-        // Job details
-        const jobTitle = coverLetter.jobTitle || '';
-        const jobDescription = coverLetter.jobDescription || '';
-
-        // Get embeddings for each component
-        const [
-            skillsEmbedding, 
-            workExperienceEmbedding, 
-            projectsEmbedding,
-            educationEmbedding,
-            jobTitleEmbedding,
-            jobDescriptionEmbedding
-        ] = await Promise.all([
-            getEmbedding(skillsText),
-            getEmbedding(workExperienceText),
-            getEmbedding(projectsText),
-            getEmbedding(educationText),
-            getEmbedding(jobTitle),
-            getEmbedding(jobDescription)
-        ]);
-
-        // Calculate component similarities with different weights
-        const skillsScore = cosineSimilarity(skillsEmbedding, jobDescriptionEmbedding) * 0.35; // 35%
-        const workExperienceScore = cosineSimilarity(workExperienceEmbedding, jobDescriptionEmbedding) * 0.25; // 25%
-        const projectsScore = cosineSimilarity(projectsEmbedding, jobDescriptionEmbedding) * 0.20; // 20%
-        const jobTitleScore = cosineSimilarity(jobTitleEmbedding, jobDescriptionEmbedding) * 0.15; // 15%
-        const educationScore = cosineSimilarity(educationEmbedding, jobDescriptionEmbedding) * 0.05; // 5%
-
-        // Calculate total weighted score (0-1)
-        const totalScore = skillsScore + workExperienceScore + projectsScore + jobTitleScore + educationScore;
-        
-        // Scale to 0-10 for display
-        const scaledScore = (totalScore * 10).toFixed(1);
-
-        // Get explanation from GPT
-        const explanation = await generateScoreExplanation(
-            resume, 
-            coverLetter, 
-            scaledScore, 
-            {
-                skills: (skillsScore / 0.35).toFixed(2),
-                workExperience: (workExperienceScore / 0.25).toFixed(2),
-                projects: (projectsScore / 0.20).toFixed(2),
-                jobTitle: (jobTitleScore / 0.15).toFixed(2),
-                education: (educationScore / 0.05).toFixed(2)
-            }
-        );
-
-        return {
-            score: parseFloat(scaledScore),
-            explanation
-        };
-    } catch (error) {
-        console.error("Error calculating job fit score:", error);
-        throw error;
+/**
+ * Calculates job fit score based on resume content and job description
+ * @param {Object} resume - Resume object
+ * @param {Object} coverLetter - Cover letter object containing job description
+ * @returns {Object} Score and explanation
+ */
+exports.calculateJobFitScore = async (resume, coverLetter) => {
+  try {
+    // Extract job description from cover letter
+    const jobDescription = coverLetter.jobDescription;
+    if (!jobDescription) {
+      throw new Error('Job description is required for scoring');
     }
+    
+    // Prepare resume content
+    const resumeContent = prepareResumeContent(resume);
+    
+    // Calculate job fit score using embeddings
+    try {
+      // Use OpenAI embeddings for calculation
+      const similarity = await calculateEmbeddingSimilarity(resumeContent, jobDescription);
+      
+      // Transform similarity (0-1) to a 0-10 score
+      const rawScore = Math.min(10, Math.max(0, similarity * 10));
+      const score = parseFloat(rawScore.toFixed(1));
+      
+      // Generate explanation based on score
+      let explanation;
+      if (score >= 8.5) {
+        explanation = "Exceptional match! Your resume aligns extremely well with this job description. Your skills and experience make you an ideal candidate.";
+      } else if (score >= 7.0) {
+        explanation = "Strong match! Your qualifications align well with this position. Consider highlighting specific experiences that match key requirements.";
+      } else if (score >= 5.0) {
+        explanation = "Moderate match. You meet some of the job requirements, but consider enhancing your resume to better align with this position.";
+      } else {
+        explanation = "Limited match. Your current resume may not fully showcase the qualifications needed for this position. Consider tailoring your resume more specifically.";
+      }
+      
+      return { 
+        score: score, 
+        explanation 
+      };
+    } catch (embeddingError) {
+      console.error('Error with embeddings, falling back to keyword matching:', embeddingError);
+      return calculateBasicJobFitScore(resumeContent, jobDescription);
+    }
+  } catch (error) {
+    console.error('Error in job fit calculation:', error);
+    return {
+      score: 5.0,
+      explanation: "Unable to accurately calculate match score due to an error. Please try again later."
+    };
+  }
+};
+
+/**
+ * Fallback method for job fit score calculation using keywords
+ * @param {String} resumeContent - Resume content
+ * @param {String} jobDescription - Job description
+ * @returns {Object} Score and explanation
+ */
+function calculateBasicJobFitScore(resumeContent, jobDescription) {
+  // Convert to lowercase for matching
+  const resumeLower = resumeContent.toLowerCase();
+  const jobLower = jobDescription.toLowerCase();
+  
+  // Extract potential keywords from job description
+  const jobWords = jobLower.split(/\s+/);
+  const keywords = jobWords.filter(word => 
+    word.length > 4 && 
+    !['with', 'from', 'have', 'that', 'this', 'will', 'able', 'about'].includes(word)
+  );
+  
+  // Count matches
+  const uniqueKeywords = [...new Set(keywords)];
+  let matchCount = 0;
+  
+  uniqueKeywords.forEach(keyword => {
+    if (resumeLower.includes(keyword)) {
+      matchCount++;
+    }
+  });
+  
+  // Calculate score (0-10 scale)
+  const percentMatch = (matchCount / uniqueKeywords.length);
+  const score = Math.min(10, Math.max(0, percentMatch * 10));
+  
+  // Generate explanation
+  let explanation;
+  if (score >= 7.0) {
+    explanation = "Your resume appears to match many key terms from the job description.";
+  } else if (score >= 4.0) {
+    explanation = "Your resume matches some keywords from the job description, but could be better aligned.";
+  } else {
+    explanation = "Your resume may need to be tailored more specifically to this job description.";
+  }
+  
+  return { 
+    score: parseFloat(score.toFixed(1)), 
+    explanation 
+  };
 }
 
 /**
