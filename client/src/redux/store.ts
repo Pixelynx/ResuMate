@@ -11,7 +11,7 @@ import jobFitReducer from './slices/jobFitSlice';
 const resumePersistConfig = {
   key: 'resume',
   storage,
-  whitelist: ['draftResume', 'savedResumeId'] // Only persist draft and ID
+  whitelist: [] // Only persist draft and ID
 };
 
 const coverLetterPersistConfig = {
