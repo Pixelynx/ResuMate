@@ -1,12 +1,9 @@
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 require('dotenv').config();
-
 // Configure OpenAI API connection
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-const openai = new OpenAIApi(configuration);
 
 /**
  * Calculate cosine similarity between two vectors

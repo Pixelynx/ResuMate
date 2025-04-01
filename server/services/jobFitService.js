@@ -3,38 +3,6 @@ require("dotenv").config();
 const { calculateEmbeddingSimilarity } = require('./openaiService');
 
 /**
- * Gets the embedding for a text using OpenAI's embedding API
- * @param {string} text - The text to get an embedding for
- * @returns {Promise<number[]>} The embedding vector
- */
-async function getEmbedding(text) {
-    try {
-        const response = await axios.post(
-            "https://api.openai.com/v1/embeddings",
-            { input: text, model: "text-embedding-ada-002" },
-            { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
-        );
-        return response.data.data[0].embedding;
-    } catch (error) {
-        console.error("Error getting embedding:", error.response?.data || error.message);
-        throw new Error("Failed to generate embedding");
-    }
-}
-
-/**
- * Calculate cosine similarity between two vectors
- * @param {number[]} vecA - First vector
- * @param {number[]} vecB - Second vector
- * @returns {number} Cosine similarity (0-1)
- */
-function cosineSimilarity(vecA, vecB) {
-    const dotProduct = vecA.reduce((sum, val, i) => sum + val * vecB[i], 0);
-    const normA = Math.sqrt(vecA.reduce((sum, val) => sum + val ** 2, 0));
-    const normB = Math.sqrt(vecB.reduce((sum, val) => sum + val ** 2, 0));
-    return dotProduct / (normA * normB);
-}
-
-/**
  * Prepares resume content for analysis
  * @param {Object} resume - Resume object
  * @returns {String} Formatted resume content
@@ -87,7 +55,7 @@ function prepareResumeContent(resume) {
  * @param {Object} coverLetter - Cover letter object containing job description
  * @returns {Object} Score and explanation
  */
-exports.calculateJobFitScore = async (resume, coverLetter) => {
+const calculateJobFitScore = async (resume, coverLetter) => {
   try {
     // Extract job description from cover letter
     const jobDescription = coverLetter.jobDescription;
