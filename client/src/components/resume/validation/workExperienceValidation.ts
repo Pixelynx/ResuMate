@@ -20,13 +20,15 @@ export const validateWorkExperience = (field: string, value: any) => {
 
     case 'startDate':
       if (!value) return { isValid: false, message: 'Start date is required' };
-      if (dayjs(value).isAfter(dayjs())) return { isValid: false, message: 'Start date cannot be in the future' };
+      const startDayjs = dayjs(value);
+      if (!startDayjs.isValid()) return { isValid: false, message: 'Invalid date format' };
+      if (startDayjs.isAfter(dayjs())) return { isValid: false, message: 'Start date cannot be in the future' };
       return { isValid: true, message: '' };
 
     case 'endDate':
-      if (value && dayjs(value).isBefore(dayjs())) {
-        if (dayjs(value).isBefore(dayjs())) return { isValid: true, message: '' };
-      }
+      if (!value) return { isValid: true, message: '' };
+      const endDayjs = dayjs(value);
+      if (!endDayjs.isValid()) return { isValid: false, message: 'Invalid date format' };
       return { isValid: true, message: '' };
 
     case 'description':

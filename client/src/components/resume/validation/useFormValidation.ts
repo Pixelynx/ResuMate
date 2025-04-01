@@ -6,6 +6,7 @@ import { validateWorkExperience } from './workExperienceValidation';
 import { validateEducation } from './educationValidation';
 import { validateSkills } from './skillsValidation';
 import { validateCertification } from './certificationsValidation';
+import dayjs from 'dayjs';
 
 interface UseFormValidationProps {
   initialValidationState: ValidationState;
@@ -36,7 +37,15 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
   // Validate if end date is after start date
   const isValidDateRange = (startDate: any, endDate: any): boolean => {
     if (!startDate || !endDate) return true; // If either date is missing, consider it valid
-    return new Date(endDate) >= new Date(startDate);
+    
+    // Convert to dayjs objects and check validity
+    const startDayjs = dayjs(startDate);
+    const endDayjs = dayjs(endDate);
+    
+    // Only compare if both are valid dayjs objects
+    if (!startDayjs.isValid() || !endDayjs.isValid()) return true; // Consider invalid dates as valid to avoid blocking progression
+    
+    return !endDayjs.isBefore(startDayjs);
   };
 
   const validateWorkExperienceDates = (index: number, startDate: any, endDate: any) => {
@@ -48,9 +57,12 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
       errorMessage = 'Start date is required';
     }
     // Check if end date is after start date (if both are provided)
-    else if (startDate && endDate && !isValidDateRange(startDate, endDate)) {
-      isValid = false;
-      errorMessage = 'End date must be after start date';
+    else if (startDate && endDate) {
+      const validRange = isValidDateRange(startDate, endDate);
+      if (!validRange) {
+        isValid = false;
+        errorMessage = 'End date must be after start date';
+      }
     }
 
     setValidationState(prev => {

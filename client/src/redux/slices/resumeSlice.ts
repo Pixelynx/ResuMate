@@ -44,14 +44,14 @@ export const createResume = createAsyncThunk<Resume, ResumeFormData>(
 );
 
 export const updateResume = createAsyncThunk<
-  Resume | void, 
+  void, 
   { id: string; formData: ResumeFormData }
 >(
   'resume/updateResume',
-  async ({ id, formData }, { rejectWithValue }) => {
+  async ({ id, formData }, { rejectWithValue, dispatch }) => {
     try {
-      const response = await resumeService.updateResume(id, formData);
-      return response;
+      await resumeService.updateResume(id, formData);
+      dispatch(fetchResumeById(id));
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -105,10 +105,17 @@ const validateWorkExperienceDates = (workExperience: any[]) => {
       startDateValid = false;
       dateErrorMessage = 'Start date is required';
       isValid = false;
-    } else if (endDate && dayjs(endDate).isBefore(dayjs(startDate))) {
-      endDateValid = false;
-      dateErrorMessage = 'End date must be after start date';
-      isValid = false;
+    } else if (endDate) {
+      // Ensure both dates are valid dayjs objects or can be converted to one
+      const startDayjs = dayjs(startDate);
+      const endDayjs = dayjs(endDate);
+      
+      // Only compare if both are valid dayjs objects
+      if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
+        endDateValid = false;
+        dateErrorMessage = 'End date must be after start date';
+        isValid = false;
+      }
     }
     
     return {
@@ -170,16 +177,45 @@ const resumeSlice = createSlice({
       }
 
       if (state.activeStep === 1) {
-        // Work experience dates validation
-        const { isValid, validationResults } = validateWorkExperienceDates(state.draftResume.workExperience);
+        // Work experience dates validation with safer checks
+        const workExperience = state.draftResume.workExperience;
+        let isValid = true;
+        const validationResults = workExperience.map(entry => {
+          const startDate = entry.startDate;
+          const endDate = entry.endDate;
+          
+          let startDateValid = true;
+          let endDateValid = true;
+          let dateErrorMessage = '';
+          
+          if (!startDate) {
+            startDateValid = false;
+            dateErrorMessage = 'Start date is required';
+            isValid = false;
+          } else if (endDate) {
+            // Ensure both dates are valid dayjs objects or can be converted to one
+            const startDayjs = dayjs(startDate);
+            const endDayjs = dayjs(endDate);
+            
+            // Only compare if both are valid dayjs objects
+            if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
+              endDateValid = false;
+              dateErrorMessage = 'End date must be after start date';
+              isValid = false;
+            }
+          }
+          
+          return {
+            startDateValid,
+            endDateValid,
+            dateErrorMessage
+          };
+        });
         
         // Check that every work experience entry has valid dates
-        const allDatesValid = state.draftResume.workExperience.every((_, index) => {
-          const entryValidation = validationResults[index];
-          return entryValidation && entryValidation.startDateValid && entryValidation.endDateValid;
-        });
+        const allDatesValid = isValid;
 
-        if (!isValid || !allDatesValid) {
+        if (!allDatesValid) {
           // Update validationErrors for work experience dates
           state.validationErrors.workExperience = validationResults;
           console.log('Please fix date errors before proceeding');
@@ -467,13 +503,9 @@ const resumeSlice = createSlice({
         state.submitting = true;
         state.error = null;
       })
-      .addCase(updateResume.fulfilled, (state: ResumeState, action: PayloadAction<Resume>) => {
+      .addCase(updateResume.fulfilled, (state: ResumeState, action: PayloadAction<void>) => {
         state.submitting = false;
-        state.currentResume = action.payload;
-        const index = state.resumes.findIndex((r: Resume) => r.id === action.payload.id);
-        if (index >= 0) {
-          state.resumes[index] = action.payload;
-        }
+        // The actual state update will happen when fetchResumeById completes
       })
       .addCase(updateResume.rejected, (state: ResumeState, action: any) => {
         state.submitting = false;
