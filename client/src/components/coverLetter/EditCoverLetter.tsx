@@ -155,7 +155,7 @@ const EditCoverLetter: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" sx={{ paddingBottom: '80px' }}>
       <Paper 
         elevation={3} 
         sx={{ 
