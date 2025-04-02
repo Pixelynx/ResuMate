@@ -7,9 +7,13 @@ import {
   Button, 
   Collapse,
   Alert,
-  useTheme
+  useTheme,
+  Modal,
+  IconButton,
+  Backdrop
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
+import CloseIcon from '@mui/icons-material/Close';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { fetchJobFitScore } from '../../redux/slices/jobFitSlice';
 import { 
@@ -44,13 +48,16 @@ const AnimatedPaper = styled(Paper)(({ theme }) => ({
   borderRadius: '12px',
   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
   animation: `${bounceAnimation} 1s ease`,
-  maxWidth: '500px',
+  maxWidth: '600px',
+  width: '100%',
   margin: '0 auto',
   overflow: 'hidden',
   transition: 'all 0.3s ease',
+  position: 'relative',
+  maxHeight: '80vh',
+  overflowY: 'auto',
   '&:hover': {
     boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
-    transform: 'translateY(-3px)',
   }
 }));
 
@@ -93,6 +100,11 @@ const ScoreBox = styled(Box, {
   };
 });
 
+const StyledBackdrop = styled(Backdrop)(({ theme }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+}));
+
 const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -112,6 +124,10 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
     dispatch(fetchJobFitScore(coverLetterId));
   };
 
+  const handleClose = () => {
+    setOpen(false);
+  };
+
   return (
     <Box 
       sx={{ 
@@ -124,39 +140,62 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
         mb: 2 
       }}
     >
-      {!open && (
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleCalculate}
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : <WorkIcon />}
-          sx={{
-            background: 'linear-gradient(45deg, #6a1b9a 30%, #8e24aa 90%)',
-            borderRadius: '8px',
-            boxShadow: '0 3px 5px 2px rgba(106, 27, 154, .3)',
-            color: 'white',
-            height: 48,
-            padding: '0 30px',
-            '&:hover': {
-              boxShadow: '0 5px 8px 2px rgba(142, 36, 170, .4)',
-              transform: 'translateY(-2px)',
-            }
-          }}
-        >
-          {loading ? 'Calculating...' : 'Calculate Job Fit Score'}
-        </Button>
-      )}
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleCalculate}
+        disabled={loading || open}
+        startIcon={loading ? <CircularProgress size={20} /> : <WorkIcon />}
+        sx={{
+          background: 'linear-gradient(45deg, #6a1b9a 30%, #8e24aa 90%)',
+          borderRadius: '8px',
+          boxShadow: '0 3px 5px 2px rgba(106, 27, 154, .3)',
+          color: 'white',
+          height: 48,
+          padding: '0 30px',
+          '&:hover': {
+            boxShadow: '0 5px 8px 2px rgba(142, 36, 170, .4)',
+            transform: 'translateY(-2px)',
+          }
+        }}
+      >
+        {loading ? 'Calculating...' : 'Calculate Job Fit Score'}
+      </Button>
 
-      <Collapse in={open} timeout={800}>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+        slots={{ backdrop: StyledBackdrop }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2
+        }}
+      >
         <AnimatedPaper>
+          <IconButton 
+            sx={{ 
+              position: 'absolute', 
+              top: 8, 
+              right: 8,
+              color: theme.palette.grey[500]
+            }}
+            onClick={handleClose}
+            aria-label="close"
+          >
+            <CloseIcon />
+          </IconButton>
+            
           <Typography 
             variant="h5" 
             gutterBottom 
             sx={{ 
               fontWeight: 'bold',
               textAlign: 'center',
-              color: '#6a1b9a'
+              color: '#6a1b9a',
+              mt: 1
             }}
           >
             Job Fit Analysis
@@ -183,24 +222,21 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
 
               {explanation && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1" sx={{ fontStyle: 'italic', lineHeight: 1.6 }}>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-line' 
+                    }}
+                  >
                     {explanation}
                   </Typography>
                 </Box>
               )}
-              
-              <Button 
-                variant="outlined" 
-                color="primary" 
-                onClick={() => setOpen(false)} 
-                sx={{ mt: 2 }}
-              >
-                Hide
-              </Button>
             </>
           )}
         </AnimatedPaper>
-      </Collapse>
+      </Modal>
     </Box>
   );
 };
