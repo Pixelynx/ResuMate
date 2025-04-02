@@ -889,13 +889,13 @@ const ResumeForm: React.FC = () => {
                 {renderStepContent(activeStep)}
               </CardContent>
               <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Button color="primary" onClick={handleBack} disabled={activeStep === 0}>
+                <Button variant="outlined" color="primary" onClick={handleBack} disabled={activeStep === 0}>
                   Back
                 </Button>
                 <Box sx={{ flex: '1 1 auto' }} />
                 {activeStep === steps.length - 1 ? (
-                  <Button 
-                    color="primary" 
+                  <Button
+                    color="primary"
                     onClick={handleFinish}
                     disabled={submitting}
                     startIcon={submitting ? <CircularProgress size={20} /> : null}
@@ -903,7 +903,7 @@ const ResumeForm: React.FC = () => {
                     {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
                   </Button>
                 ) : (
-                  <Button color="primary" onClick={handleNext}>
+                  <Button variant="contained" color="primary" onClick={handleNext}>
                     {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
                   </Button>
                 )}
