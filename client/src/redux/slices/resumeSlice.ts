@@ -233,49 +233,73 @@ const resumeSlice = createSlice({
           });
         });
         
+        // Create validation results with safe error handling
         let isValid = true;
         const validationResults = workExperience.map(entry => {
-          const startDate = entry.startDate;
-          const endDate = entry.endDate;
-          
+          // Initialize with valid states
           let startDateValid = true;
           let endDateValid = true;
           let dateErrorMessage = '';
           
-          if (!startDate) {
-            startDateValid = false;
-            dateErrorMessage = 'Start date is required';
-            isValid = false;
-            console.log('Validation failed: Start date is required');
-          } else if (endDate) {
-            try {
-              // Ensure both dates are valid dayjs objects or can be converted to one
-              const startDayjs = dayjs(startDate);
-              const endDayjs = dayjs(endDate);
-              
-              console.log('Date comparison:', {
-                startDate: startDate,
-                endDate: endDate,
-                startDayjs: startDayjs.format('YYYY-MM-DD'),
-                endDayjs: endDayjs.format('YYYY-MM-DD'),
-                startValid: startDayjs.isValid(),
-                endValid: endDayjs.isValid(),
-                comparison: startDayjs.isValid() && endDayjs.isValid() ? 
-                  endDayjs.isBefore(startDayjs) ? 'end before start' : 'valid range' : 'invalid format'
-              });
-              
-              // Only compare if both are valid dayjs objects
-              if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
-                endDateValid = false;
-                dateErrorMessage = 'End date must be after start date';
-                isValid = false;
-                console.log('Validation failed: End date is before start date');
-              }
-            } catch (error) {
-              console.error('Error during date validation:', error);
-              dateErrorMessage = 'Error validating dates';
+          try {
+            const startDate = entry.startDate;
+            const endDate = entry.endDate;
+            
+            if (!startDate) {
+              // Start date is required
+              startDateValid = false;
+              dateErrorMessage = 'Start date is required';
               isValid = false;
+              console.log('Validation failed: Start date is required');
+            } else if (endDate) {
+              // Only validate end date if there is one (it's optional)
+              let startDayjs, endDayjs;
+              
+              try {
+                startDayjs = dayjs(startDate);
+                endDayjs = dayjs(endDate);
+              } catch (err) {
+                console.error('Error creating dayjs objects:', err);
+              }
+              
+              if (startDayjs && endDayjs) {
+                console.log('Date comparison info:', {
+                  startDayjs: startDayjs.isValid() ? startDayjs.format('YYYY-MM-DD') : 'Invalid date',
+                  endDayjs: endDayjs.isValid() ? endDayjs.format('YYYY-MM-DD') : 'Invalid date',
+                  startValid: startDayjs.isValid(),
+                  endValid: endDayjs.isValid()
+                });
+                
+                const startValid = startDayjs.isValid();
+                const endValid = endDayjs.isValid();
+                
+                // Only compare dates if both are valid
+                if (startValid && endValid) {
+                  // Safe comparison - manually check values to avoid using isBefore
+                  try {
+                    const startTime = startDayjs.valueOf();
+                    const endTime = endDayjs.valueOf();
+                    
+                    console.log('Comparing timestamps:', { startTime, endTime });
+                    
+                    if (endTime < startTime) {
+                      endDateValid = false;
+                      dateErrorMessage = 'End date must be after start date';
+                      isValid = false;
+                      console.log('Validation failed: End date is before start date');
+                    }
+                  } catch (compareErr) {
+                    console.error('Error comparing date values:', compareErr);
+                  }
+                } else {
+                  // One or both dates are invalid, but we'll let it pass
+                  console.log('Invalid date format detected, skipping validation');
+                }
+              }
             }
+          } catch (err) {
+            console.error('Unexpected error during date validation:', err);
+            // Don't block progression due to errors
           }
           
           return {
@@ -285,10 +309,8 @@ const resumeSlice = createSlice({
           };
         });
         
-        // Check that every work experience entry has valid dates
-        const allDatesValid = isValid;
-
-        if (!allDatesValid) {
+        // Final check, but don't block on validation errors
+        if (!isValid) {
           // Update validationErrors for work experience dates
           state.validationErrors.workExperience = validationResults;
           console.log('Please fix date errors before proceeding');

@@ -3,6 +3,8 @@ import { validateLocation } from '../../../utils/validation';
 import dayjs from 'dayjs';
 
 export const validateWorkExperience = (field: string, value: any) => {
+  console.log(`Validating work experience field: ${field}`, value);
+  
   switch (field) {
     case 'companyName':
       if (!value) return { isValid: false, message: 'Company name is required' };
@@ -19,17 +21,51 @@ export const validateWorkExperience = (field: string, value: any) => {
       return { isValid: !locationError, message: locationError || '' };
 
     case 'startDate':
+      console.log('Validating start date:', value);
       if (!value) return { isValid: false, message: 'Start date is required' };
-      const startDayjs = dayjs(value);
-      if (!startDayjs.isValid()) return { isValid: false, message: 'Invalid date format' };
-      if (startDayjs.isAfter(dayjs())) return { isValid: false, message: 'Start date cannot be in the future' };
-      return { isValid: true, message: '' };
+      
+      // Safeguard against invalid date objects
+      try {
+        const date = dayjs(value);
+        // Check if the date is valid before trying to use methods on it
+        if (!date.isValid()) {
+          console.log('Invalid start date format');
+          return { isValid: false, message: 'Invalid date format' };
+        }
+        
+        const now = dayjs();
+        if (date.isAfter(now)) {
+          console.log('Start date is in the future');
+          return { isValid: false, message: 'Start date cannot be in the future' };
+        }
+        console.log('Start date is valid');
+        return { isValid: true, message: '' };
+      } catch (error) {
+        console.error('Error validating start date:', error);
+        return { isValid: false, message: 'Error validating date' };
+      }
 
     case 'endDate':
-      if (!value) return { isValid: true, message: '' };
-      const endDayjs = dayjs(value);
-      if (!endDayjs.isValid()) return { isValid: false, message: 'Invalid date format' };
-      return { isValid: true, message: '' };
+      console.log('Validating end date:', value);
+      // End date is optional
+      if (!value) {
+        console.log('No end date provided (valid)');
+        return { isValid: true, message: '' };
+      }
+      
+      // Safeguard against invalid date objects
+      try {
+        const date = dayjs(value);
+        if (!date.isValid()) {
+          console.log('Invalid end date format');
+          return { isValid: false, message: 'Invalid date format' };
+        }
+        console.log('End date is valid');
+        return { isValid: true, message: '' };
+      } catch (error) {
+        console.error('Error validating end date:', error);
+        return { isValid: false, message: 'Error validating date' };
+      }
 
     case 'description':
       if (!value) return { isValid: false, message: 'Job description is required' };
