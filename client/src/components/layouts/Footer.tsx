@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     <Box
       component="footer"
       sx={{
-        position: 'absolute',
+        position: 'fixed',
         bottom: '4px',
         left: '50%',
         width: 'calc(100% - 32px)',
@@ -21,6 +21,7 @@ const Footer: React.FC = () => {
         justifyContent: 'space-between',
         alignItems: 'center',
         color: 'white',
+        zIndex: 10,
       }}
     >
       <Typography variant="body2" sx={{ opacity: 0.9 }}>

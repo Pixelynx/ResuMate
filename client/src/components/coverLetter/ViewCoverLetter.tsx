@@ -100,7 +100,7 @@ const ViewCoverLetter: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" sx={{ paddingBottom: '80px' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 2 }}>
         <Button 
           variant="outlined" 
