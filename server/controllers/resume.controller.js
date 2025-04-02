@@ -2,49 +2,70 @@ const db = require('../models');
 const Resume = db.resumes;
 
 // Validation helper functions
+/* 
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 const validatePhone = (phone) => {
-  const phoneRegex = /^\d{3}[-.]?\d{3}[-.]?\d{4}$/;
-  return phoneRegex.test(phone);
+  console.log('Validating phone format:', phone);
+  
+  // Handle common formatting patterns
+  // Accept both standard US formats and international formats with +1 prefix
+  // Including formats like: +1 123-456-7890, (123) 456-7890, 123-456-7890, 1234567890
+  const phoneRegex = /^(\+1\s?)?((\(\d{3}\))|\d{3})[-\s]?\d{3}[-\s]?\d{4}$/;
+  
+  const isValid = phoneRegex.test(phone);
+  console.log('Phone validation result:', isValid ? 'Valid' : 'Invalid');
+  return isValid;
 };
+*/
 
 // Simplified validation - only check if required fields exist
 const validateRequiredFields = (data) => {
+  console.log('Starting basic resume validation...');
   const errors = [];
   
   // Validate personal details
   if (!data.personalDetails) {
     errors.push('Personal details are required');
+    console.log('Validation failed: Personal details missing');
+    return errors;
+  }
+  
+  const { firstName, lastName, email, phone, location } = data.personalDetails;
+  
+  if (!firstName || firstName.trim() === '') {
+    errors.push('First name is required');
+    console.log('Validation failed: First name missing');
+  }
+  
+  if (!lastName || lastName.trim() === '') {
+    errors.push('Last name is required');
+    console.log('Validation failed: Last name missing');
+  }
+  
+  if (!email || email.trim() === '') {
+    errors.push('Email is required');
+    console.log('Validation failed: Email missing');
+  }
+  
+  if (!phone || phone.trim() === '') {
+    errors.push('Phone number is required');
+    console.log('Validation failed: Phone number missing');
+  }
+  
+  if (!location || location.trim() === '') {
+    errors.push('Location is required');
+    console.log('Validation failed: Location missing');
+  }
+  
+  // Log validation result
+  if (errors.length > 0) {
+    console.log('Validation errors:', errors);
   } else {
-    const { firstName, lastName, email, phone, location } = data.personalDetails;
-    
-    if (!firstName || firstName.trim() === '') {
-      errors.push('First name is required');
-    }
-    
-    if (!lastName || lastName.trim() === '') {
-      errors.push('Last name is required');
-    }
-    
-    if (!email || email.trim() === '') {
-      errors.push('Email is required');
-    } else if (!validateEmail(email)) {
-      errors.push('Invalid email format');
-    }
-    
-    if (!phone || phone.trim() === '') {
-      errors.push('Phone number is required');
-    } else if (!validatePhone(phone)) {
-      errors.push('Invalid phone number format');
-    }
-    
-    if (!location || location.trim() === '') {
-      errors.push('Location is required');
-    }
+    console.log('Resume validation passed');
   }
   
   return errors;
