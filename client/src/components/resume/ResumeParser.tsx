@@ -254,18 +254,27 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
         color="primary"
         startIcon={<UploadFileIcon />}
         onClick={triggerFileInput}
-        // disabled={parsingStatus.isParsing}
         disabled={true}
         sx={{
           mb: 2,
-          background: 'linear-gradient(to right, #6a1b9a, #8e24aa)',
+          background: (theme) => parsingStatus.isParsing 
+            ? theme.palette.grey[400] 
+            : 'linear-gradient(to right, #6a1b9a, #8e24aa)',
           borderRadius: '8px',
           height: '2rem',
           boxShadow: '0 3px 5px 2px rgba(106, 27, 154, .3)',
           transition: 'all 0.3s ease-in-out',
           '&:hover': {
-            boxShadow: '0 5px 8px 2px rgba(142, 36, 170, .4)',
-            transform: 'translateY(-2px)',
+            boxShadow: parsingStatus.isParsing 
+              ? 'none'
+              : '0 5px 8px 2px rgba(142, 36, 170, .4)',
+            transform: parsingStatus.isParsing 
+              ? 'none'
+              : 'translateY(-2px)',
+          },
+          '&.Mui-disabled': {
+            background: (theme) => theme.palette.grey[400],
+            color: (theme) => theme.palette.grey[100]
           }
         }}
       >

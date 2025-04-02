@@ -6,6 +6,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Tooltip
 } from '@mui/material';
 import ResumePreview from './PreviewResume';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -100,14 +101,25 @@ const ViewResume: React.FC = () => {
             documentType="resume" 
             contentRef={printableRef} 
           />
-          <Button 
-            variant="contained" 
-            startIcon={<EditIcon />}
-            onClick={handleEdit}
-            sx={{ ml: 2 }}
-          >
-            Edit Resume
-          </Button>
+          <Tooltip title="Edit functionality is temporarily disabled">
+            <span>
+              <Button 
+                variant="contained" 
+                startIcon={<EditIcon />}
+                onClick={handleEdit}
+                disabled={true}
+                sx={{ 
+                  ml: 2,
+                  '&.Mui-disabled': {
+                    backgroundColor: (theme) => theme.palette.grey[400],
+                    color: (theme) => theme.palette.grey[100]
+                  }
+                }}
+              >
+                Edit Resume
+              </Button>
+            </span>
+          </Tooltip>
         </Box>
       </Box>
       
