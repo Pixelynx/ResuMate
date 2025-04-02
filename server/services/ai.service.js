@@ -78,6 +78,7 @@ class AIService {
             `- Maintain a ${tone} tone throughout the letter`,
             `- Focus on these key skills/experiences: ${emphasis.join(', ')}`,
             `- Highlight relevant skills and experience`,
+            `- Emphasize any projects that closely relate to the job function (e.g., if the candidate worked on an e-commerce application and is applying to Shopify, highlight details from that project)`,
             `- Show enthusiasm for the role and company`,
             `- Include a strong closing statement`,
             `- Format with proper spacing and paragraphs`,
@@ -93,7 +94,7 @@ class AIService {
                 messages: [
                     {
                         role: "system",
-                        content: "You are a professional cover letter writer. Create engaging, personalized cover letters that highlight the candidate's relevant skills and experience."
+                        content: "You are a professional cover letter writer. Create engaging, personalized cover letters that highlight the candidate's relevant skills and experience. Always use the actual values provided in the prompt (like name, email, etc.) and never use placeholders like [Your Name] or [Email Address]."
                     },
                     {
                         role: "user",
