@@ -163,7 +163,7 @@ function calculateBasicJobFitScore(resumeContent, jobDescription) {
 async function generateScoreExplanation(resume, coverLetter, score, componentScores) {
     try {
         const prompt = `
-You are an AI career advisor analyzing a job application. Based on the following information, explain why the candidate received a job fit score of ${score}/10.0.
+You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
 
 Job Details:
 - Title: ${coverLetter.jobTitle}
@@ -183,7 +183,13 @@ Component Match Scores (0-1 scale):
 - Job Title match: ${componentScores.jobTitle}
 - Education match: ${componentScores.education}
 
-Provide a 3-4 sentence explanation of the job fit score, highlighting the candidate's strengths and areas for potential improvement. Be specific about which qualifications align well with the job and which ones could be better aligned.
+IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:
+1. Maintain a helpful, friendly tone throughout
+2. Specifically highlight details that make the candidate a good match for this role
+3. Provide specific, actionable suggestions for how they could improve their resume to better match this job description
+4. If their background doesn't align with the role (e.g., a frontend developer applying for a program manager position), suggest how they could highlight transferable skills or relevant experiences from their background
+
+Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
 `;
 
         const response = await axios.post(
@@ -191,11 +197,11 @@ Provide a 3-4 sentence explanation of the job fit score, highlighting the candid
             {
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "You are a helpful career advisor providing job fit analysis." },
+                    { role: "system", content: "You are a helpful career advisor providing personalized job fit analysis with constructive feedback." },
                     { role: "user", content: prompt }
                 ],
                 temperature: 0.7,
-                max_tokens: 200
+                max_tokens: 350
             },
             {
                 headers: {
