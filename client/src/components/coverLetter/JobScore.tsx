@@ -5,12 +5,14 @@ import {
   Paper, 
   CircularProgress, 
   Button, 
-  Collapse,
   Alert,
   useTheme,
   Modal,
   IconButton,
-  Backdrop
+  Backdrop,
+  Dialog,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
 import CloseIcon from '@mui/icons-material/Close';
@@ -48,14 +50,10 @@ const AnimatedPaper = styled(Paper)(({ theme }) => ({
   borderRadius: '12px',
   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
   animation: `${bounceAnimation} 1s ease`,
-  maxWidth: '600px',
   width: '100%',
-  margin: '0 auto',
   overflow: 'hidden',
   transition: 'all 0.3s ease',
   position: 'relative',
-  maxHeight: '80vh',
-  overflowY: 'auto',
   '&:hover': {
     boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
   }
@@ -100,11 +98,6 @@ const ScoreBox = styled(Box, {
   };
 });
 
-const StyledBackdrop = styled(Backdrop)(({ theme }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.6)',
-}));
-
 const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -112,20 +105,35 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   const explanation = useAppSelector(selectJobFitExplanation);
   const loading = useAppSelector(selectJobFitLoading);
   const error = useAppSelector(selectJobFitError);
-  const [open, setOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [hasResults, setHasResults] = useState(false);
 
   useEffect(() => {
+    // If we have results (score or error), mark that we have results
     if (score !== null || error) {
-      setOpen(true);
+      setHasResults(true);
+      
+      // If we're calculating, automatically open the modal
+      if (loading) {
+        setModalOpen(true);
+      }
     }
-  }, [score, error]);
+  }, [score, error, loading]);
 
   const handleCalculate = () => {
     dispatch(fetchJobFitScore(coverLetterId));
+    setModalOpen(true); // Open modal when calculating
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+  
+  const handleOpenModal = () => {
+    // Only allow opening if we have results to show
+    if (hasResults) {
+      setModalOpen(true);
+    }
   };
 
   return (
@@ -144,7 +152,7 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
         variant="contained" 
         color="primary" 
         onClick={handleCalculate}
-        disabled={loading || open}
+        disabled={loading}
         startIcon={loading ? <CircularProgress size={20} /> : <WorkIcon />}
         sx={{
           background: 'linear-gradient(45deg, #6a1b9a 30%, #8e24aa 90%)',
@@ -161,46 +169,57 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
       >
         {loading ? 'Calculating...' : 'Calculate Job Fit Score'}
       </Button>
+      
+      {/* Show a button to view results if available and modal is closed */}
+      {hasResults && !modalOpen && (
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={handleOpenModal}
+          sx={{ mt: 2 }}
+        >
+          View Job Fit Results
+        </Button>
+      )}
 
-      <Modal
-        open={open}
-        onClose={handleClose}
-        closeAfterTransition
-        slots={{ backdrop: StyledBackdrop }}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          p: 2
+      {/* Use Dialog instead of Modal for better accessibility */}
+      <Dialog
+        open={modalOpen}
+        onClose={handleCloseModal}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+          }
         }}
       >
-        <AnimatedPaper>
-          <IconButton 
-            sx={{ 
-              position: 'absolute', 
-              top: 8, 
+        <DialogTitle 
+          sx={{ 
+            textAlign: 'center',
+            fontWeight: 'bold',
+            color: '#6a1b9a',
+            pt: 3,
+            pr: 6 // Add space for the close button
+          }}
+        >
+          Job Fit Analysis
+          <IconButton
+            onClick={handleCloseModal}
+            sx={{
+              position: 'absolute',
               right: 8,
+              top: 8,
               color: theme.palette.grey[500]
             }}
-            onClick={handleClose}
             aria-label="close"
           >
             <CloseIcon />
           </IconButton>
-            
-          <Typography 
-            variant="h5" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 'bold',
-              textAlign: 'center',
-              color: '#6a1b9a',
-              mt: 1
-            }}
-          >
-            Job Fit Analysis
-          </Typography>
-
+        </DialogTitle>
+        
+        <DialogContent>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
               <CircularProgress />
@@ -239,8 +258,8 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
               )}
             </>
           )}
-        </AnimatedPaper>
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
