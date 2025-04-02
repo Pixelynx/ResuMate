@@ -219,7 +219,6 @@ const resumeSlice = createSlice({
       }
 
       if (state.activeStep === 1) {
-        // Work experience dates validation with safer checks
         console.log('Validating work experience data');
         const workExperience = state.draftResume.workExperience;
         

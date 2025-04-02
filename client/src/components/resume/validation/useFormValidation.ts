@@ -62,10 +62,16 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
         return true; // Consider invalid dates as valid to avoid blocking progression
       }
       
-      // Safe comparison
-      const result = !endDayjs.isBefore(startDayjs); // End date should not be before start date
-      console.log('Date range comparison result:', result ? 'Valid' : 'Invalid');
-      return result;
+      // Safe comparison using timestamps instead of isBefore
+      const startTime = startDayjs.valueOf();
+      const endTime = endDayjs.valueOf();
+      
+      console.log('Date range comparison:', { startTime, endTime });
+      
+      // End date should not be before start date
+      const isValid = endTime >= startTime;
+      console.log('Date range comparison result:', isValid ? 'Valid' : 'Invalid');
+      return isValid;
     } catch (error) {
       console.error('Error in date validation:', error);
       return true; // On error, return valid to avoid blocking user

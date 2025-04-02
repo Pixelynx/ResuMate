@@ -133,43 +133,50 @@ const ResumeForm: React.FC = () => {
       if (!formData) return;
       console.log("Starting resume submission");
       
-      if (formData.workExperience && formData.workExperience.length > 0) {
-        console.log("Work experience date formats:");
-        formData.workExperience.forEach((exp, i) => {
+      // Create a serialized copy of form data to ensure all dates are in ISO format
+      const serializedFormData = {
+        ...formData,
+        workExperience: formData.workExperience.map(exp => ({
+          ...exp,
+          startDate: exp.startDate ? 
+            (typeof exp.startDate === 'string' ? exp.startDate : dayjs(exp.startDate).toISOString()) : null,
+          endDate: exp.endDate ? 
+            (typeof exp.endDate === 'string' ? exp.endDate : dayjs(exp.endDate).toISOString()) : null
+        })),
+        education: formData.education.map(edu => ({
+          ...edu,
+          graduationDate: edu.graduationDate ? 
+            (typeof edu.graduationDate === 'string' ? edu.graduationDate : dayjs(edu.graduationDate).toISOString()) : null
+        })),
+        certifications: formData.certifications.map(cert => ({
+          ...cert,
+          dateObtained: cert.dateObtained ? 
+            (typeof cert.dateObtained === 'string' ? cert.dateObtained : dayjs(cert.dateObtained).toISOString()) : null,
+          expirationDate: cert.expirationDate ? 
+            (typeof cert.expirationDate === 'string' ? cert.expirationDate : dayjs(cert.expirationDate).toISOString()) : null
+        }))
+      };
+      
+      if (serializedFormData.workExperience && serializedFormData.workExperience.length > 0) {
+        console.log("Serialized work experience date formats:");
+        serializedFormData.workExperience.forEach((exp, i) => {
           const startDate = exp.startDate;
           const endDate = exp.endDate;
           
           console.log(`Entry ${i+1}:`);
           console.log(` - startDate:`, startDate, typeof startDate);
           console.log(` - endDate:`, endDate, typeof endDate);
-          
-          // Convert to ISO string if it's a dayjs object
-          if (startDate && typeof startDate === 'object' && startDate.toString) {
-            console.log(` - startDate.toString():`, startDate.toString());
-            // Format as ISO if possible
-            if (dayjs(startDate).isValid()) {
-              console.log(` - startDate as ISO:`, dayjs(startDate).toISOString());
-            }
-          }
-          
-          if (endDate && typeof endDate === 'object' && endDate.toString) {
-            console.log(` - endDate.toString():`, endDate.toString());
-            // Format as ISO if possible
-            if (dayjs(endDate).isValid()) {
-              console.log(` - endDate as ISO:`, dayjs(endDate).toISOString());
-            }
-          }
         });
       }
       
       try {
         if (savedResumeId) {
           console.log("Updating existing resume with ID:", savedResumeId);
-          await dispatch(updateResume({ id: savedResumeId, formData })).unwrap();
+          await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
           console.log("Resume updated successfully");
         } else {
           console.log("Creating new resume");
-          const result = await dispatch(createResume(formData)).unwrap();
+          const result = await dispatch(createResume(serializedFormData)).unwrap();
           if (result) {
             console.log("Resume created successfully with ID:", result.id);
             setSubmitSuccess(true);
@@ -191,23 +198,59 @@ const ResumeForm: React.FC = () => {
     }
   
     const handleChange = (section: keyof ResumeFormData, index: number, field: string, value: any) => {
+      // Format phone numbers
       const formattedValue = field === 'phone' ? formatPhone(value) : value;
 
+      // Special handling for date fields to ensure they're serializable
+      const isDateField = ['startDate', 'endDate', 'graduationDate', 'dateObtained', 'expirationDate'].includes(field);
+      
+      // Serialize date objects to ISO strings before storing in Redux
+      let processedValue = formattedValue;
+      if (isDateField && formattedValue) {
+        console.log(`Processing date field ${field}:`, formattedValue);
+        try {
+          // Check if it's a dayjs object (has format method)
+          if (formattedValue.format) {
+            processedValue = formattedValue.toISOString();
+            console.log(`Converted dayjs to ISO string: ${processedValue}`);
+          } 
+          // For regular Date objects
+          else if (formattedValue instanceof Date) {
+            processedValue = formattedValue.toISOString();
+            console.log(`Converted Date to ISO string: ${processedValue}`);
+          }
+          // Otherwise try to create a dayjs object and convert
+          else {
+            const dayjsObj = dayjs(formattedValue);
+            if (dayjsObj.isValid()) {
+              processedValue = dayjsObj.toISOString();
+              console.log(`Converted to ISO string: ${processedValue}`);
+            } else {
+              console.log(`Invalid date, not converting: ${formattedValue}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error serializing date ${field}:`, error);
+          // Fall back to original value if conversion fails
+          processedValue = formattedValue;
+        }
+      }
+
       if (section === 'personalDetails') {
-        dispatch(updatePersonalDetails({ field, value: formattedValue }));
+        dispatch(updatePersonalDetails({ field, value: processedValue }));
         setTimeout(() => {
-          handleBlur(section, 0, field, formattedValue);
+          handleBlur(section, 0, field, processedValue);
         }, 300);
       } else if (section === 'workExperience') {
-        dispatch(updateWorkExperience({ index, field, value }));
+        dispatch(updateWorkExperience({ index, field, value: processedValue }));
       } else if (section === 'education') {
-        dispatch(updateEducation({ index, field, value }));
+        dispatch(updateEducation({ index, field, value: processedValue }));
       } else if (section === 'skills') {
-        dispatch(updateSkills({ field, value }));
+        dispatch(updateSkills({ field, value: processedValue }));
       } else if (section === 'certifications') {
-        dispatch(updateCertification({ index, field, value }));
+        dispatch(updateCertification({ index, field, value: processedValue }));
       } else if (section === 'projects') {
-        dispatch(updateProject({ index, field, value }));
+        dispatch(updateProject({ index, field, value: processedValue }));
       }
     };
   

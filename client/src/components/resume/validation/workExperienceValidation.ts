@@ -34,7 +34,8 @@ export const validateWorkExperience = (field: string, value: any) => {
         }
         
         const now = dayjs();
-        if (date.isAfter(now)) {
+        // Compare using timestamps instead of isAfter
+        if (date.valueOf() > now.valueOf()) {
           console.log('Start date is in the future');
           return { isValid: false, message: 'Start date cannot be in the future' };
         }
