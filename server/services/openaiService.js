@@ -45,6 +45,8 @@ async function calculateEmbeddingSimilarity(text1, text2) {
       return 0.5; // Return middle value if API key not set
     }
     
+    console.log('Calculating embedding similarity between resume and job description...');
+    
     // Get embeddings for both texts
     const [embedding1, embedding2] = await Promise.all([
       getEmbedding(text1),
@@ -52,18 +54,20 @@ async function calculateEmbeddingSimilarity(text1, text2) {
     ]);
     
     if (!embedding1 || !embedding2) {
-      console.warn('Failed to get embeddings');
+      console.warn('Failed to get embeddings, using fallback keyword matching');
       return 0.5;
     }
     
     // Calculate similarity
     const similarity = cosineSimilarity(embedding1, embedding2);
+    console.log(`Embedding similarity calculation successful: ${similarity.toFixed(4)}`);
     
     // Convert similarity (-1 to 1) to a 0 to 1 score
     // Typically for text embeddings, similarity will be positive
     return (similarity + 1) / 2;
   } catch (error) {
     console.error('Error calculating embedding similarity:', error);
+    console.error('Stack trace:', error.stack);
     return 0.5; // Return middle value on error
   }
 }
@@ -78,24 +82,33 @@ async function getEmbedding(text) {
     // Truncate text if too long (OpenAI limits input length)
     const truncatedText = text.substring(0, 8000);
     
+    console.log(`Getting embedding for text (length: ${truncatedText.length} chars)`);
+    
     // Call OpenAI API
-    const response = await openai.createEmbedding({
+    const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",
       input: truncatedText,
+      encoding_format: "float"
     });
     
     // Return embedding vector
-    if (response.data && 
-        response.data.data && 
-        response.data.data[0] && 
-        response.data.data[0].embedding) {
-      return response.data.data[0].embedding;
+    if (response && response.data && response.data.length > 0 && response.data[0].embedding) {
+      console.log(`Successfully retrieved embedding with ${response.data[0].embedding.length} dimensions`);
+      return response.data[0].embedding;
     }
     
-    console.warn('Unexpected response format from OpenAI embeddings:', response);
+    console.warn('Unexpected response format from OpenAI embeddings:', JSON.stringify(response, null, 2));
     return null;
   } catch (error) {
-    console.error('Error getting embedding from OpenAI:', error?.response?.data || error.message);
+    console.error('Error getting embedding from OpenAI:');
+    if (error.response) {
+      console.error('API error response:', error.response.status, error.response.data);
+    } else if (error.message) {
+      console.error('Error message:', error.message);
+    } else {
+      console.error('Unknown error:', error);
+    }
+    console.error('Stack trace:', error.stack);
     return null;
   }
 }

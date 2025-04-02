@@ -115,10 +115,10 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (score !== null) {
+    if (score !== null || error) {
       setOpen(true);
     }
-  }, [score]);
+  }, [score, error]);
 
   const handleCalculate = () => {
     dispatch(fetchJobFitScore(coverLetterId));
@@ -208,6 +208,10 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
           ) : error ? (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
+            </Alert>
+          ) : score === null ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Our job fit scoring service is currently unavailable. Please try again later.
             </Alert>
           ) : (
             <>

@@ -57,6 +57,8 @@ function prepareResumeContent(resume) {
  */
 const calculateJobFitScore = async (resume, coverLetter) => {
   try {
+    console.log('Starting job fit score calculation...');
+    
     // Extract job description from cover letter
     const jobDescription = coverLetter.jobDescription;
     if (!jobDescription) {
@@ -65,90 +67,135 @@ const calculateJobFitScore = async (resume, coverLetter) => {
     
     // Prepare resume content
     const resumeContent = prepareResumeContent(resume);
+    console.log(`Resume content prepared (${resumeContent.length} chars)`);
+    
+    // Calculate weights for different resume components
+    const componentScores = calculateComponentScores(resume, jobDescription);
     
     // Calculate job fit score using embeddings
     try {
       // Use OpenAI embeddings for calculation
+      console.log('Starting embedding similarity calculation...');
       const similarity = await calculateEmbeddingSimilarity(resumeContent, jobDescription);
       
       // Transform similarity (0-1) to a 0-10 score
       const rawScore = Math.min(10, Math.max(0, similarity * 10));
       const score = parseFloat(rawScore.toFixed(1));
+      console.log(`Job fit score calculated: ${score}/10`);
       
-      // Generate explanation based on score
-      let explanation;
-      if (score >= 8.5) {
-        explanation = "Exceptional match! Your resume aligns extremely well with this job description. Your skills and experience make you an ideal candidate.";
-      } else if (score >= 7.0) {
-        explanation = "Strong match! Your qualifications align well with this position. Consider highlighting specific experiences that match key requirements.";
-      } else if (score >= 5.0) {
-        explanation = "Moderate match. You meet some of the job requirements, but consider enhancing your resume to better align with this position.";
-      } else {
-        explanation = "Limited match. Your current resume may not fully showcase the qualifications needed for this position. Consider tailoring your resume more specifically.";
-      }
+      // Generate personalized explanation
+      console.log('Generating personalized explanation...');
+      const explanation = await generateScoreExplanation(
+        resume, 
+        coverLetter, 
+        score, 
+        componentScores
+      );
       
+      console.log('Job fit analysis complete');
       return { 
         score: score, 
         explanation 
       };
     } catch (embeddingError) {
-      console.error('Error with embeddings, falling back to keyword matching:', embeddingError);
-      return calculateBasicJobFitScore(resumeContent, jobDescription);
+      console.error('Error with embeddings:', embeddingError);
+      console.error('Stack trace:', embeddingError.stack);
+      // Instead of falling back to keyword matching, throw an error to be caught by the outer try-catch
+      throw new Error('Unable to calculate job fit score at this time. The embedding service is currently unavailable.');
     }
   } catch (error) {
     console.error('Error in job fit calculation:', error);
     return {
-      score: 5.0,
-      explanation: "Unable to accurately calculate match score due to an error. Please try again later."
+      score: null,
+      explanation: "Unable to calculate job fit score at this time. Please try again later."
     };
   }
 };
 
 /**
- * Fallback method for job fit score calculation using keywords
- * @param {String} resumeContent - Resume content
- * @param {String} jobDescription - Job description
- * @returns {Object} Score and explanation
+ * Calculate individual component scores for a resume against a job description
+ * @param {Object} resume - Resume data
+ * @param {String} jobDescription - Job description text
+ * @returns {Object} Component scores
  */
-function calculateBasicJobFitScore(resumeContent, jobDescription) {
-  // Convert to lowercase for matching
-  const resumeLower = resumeContent.toLowerCase();
-  const jobLower = jobDescription.toLowerCase();
+function calculateComponentScores(resume, jobDescription) {
+  const jobDescLower = jobDescription.toLowerCase();
   
-  // Extract potential keywords from job description
-  const jobWords = jobLower.split(/\s+/);
-  const keywords = jobWords.filter(word => 
-    word.length > 4 && 
-    !['with', 'from', 'have', 'that', 'this', 'will', 'able', 'about'].includes(word)
-  );
-  
-  // Count matches
-  const uniqueKeywords = [...new Set(keywords)];
-  let matchCount = 0;
-  
-  uniqueKeywords.forEach(keyword => {
-    if (resumeLower.includes(keyword)) {
-      matchCount++;
-    }
-  });
-  
-  // Calculate score (0-10 scale)
-  const percentMatch = (matchCount / uniqueKeywords.length);
-  const score = Math.min(10, Math.max(0, percentMatch * 10));
-  
-  // Generate explanation
-  let explanation;
-  if (score >= 7.0) {
-    explanation = "Your resume appears to match many key terms from the job description.";
-  } else if (score >= 4.0) {
-    explanation = "Your resume matches some keywords from the job description, but could be better aligned.";
-  } else {
-    explanation = "Your resume may need to be tailored more specifically to this job description.";
+  // Calculate a basic score for skills match
+  let skillsScore = 0;
+  if (resume.skills && resume.skills.skills_) {
+    const skills = resume.skills.skills_.split(',').map(s => s.trim().toLowerCase());
+    let matchedSkills = 0;
+    
+    skills.forEach(skill => {
+      if (jobDescLower.includes(skill)) {
+        matchedSkills++;
+      }
+    });
+    
+    skillsScore = skills.length > 0 ? matchedSkills / skills.length : 0;
   }
   
-  return { 
-    score: parseFloat(score.toFixed(1)), 
-    explanation 
+  // Basic score for work experience match
+  let workExperienceScore = 0;
+  if (resume.workExperience && resume.workExperience.length > 0) {
+    const jobTitles = resume.workExperience.map(exp => exp.jobTitle.toLowerCase());
+    let titleMatches = 0;
+    
+    jobTitles.forEach(title => {
+      if (jobDescLower.includes(title)) {
+        titleMatches++;
+      }
+    });
+    
+    workExperienceScore = jobTitles.length > 0 ? titleMatches / jobTitles.length : 0;
+  }
+  
+  // Basic score for projects match
+  let projectsScore = 0;
+  if (resume.projects && resume.projects.length > 0) {
+    const technologies = resume.projects
+      .map(proj => proj.technologies ? proj.technologies.toLowerCase() : '')
+      .filter(tech => tech.length > 0);
+    
+    let techMatches = 0;
+    technologies.forEach(tech => {
+      if (jobDescLower.includes(tech)) {
+        techMatches++;
+      }
+    });
+    
+    projectsScore = technologies.length > 0 ? techMatches / technologies.length : 0;
+  }
+  
+  // Job title match
+  let jobTitleScore = 0;
+  if (resume.personalDetails && resume.personalDetails.title) {
+    const title = resume.personalDetails.title.toLowerCase();
+    jobTitleScore = jobDescLower.includes(title) ? 1.0 : 0.2;
+  }
+  
+  // Education match
+  let educationScore = 0;
+  if (resume.education && resume.education.length > 0) {
+    const fields = resume.education.map(edu => edu.fieldOfStudy.toLowerCase());
+    let fieldMatches = 0;
+    
+    fields.forEach(field => {
+      if (jobDescLower.includes(field)) {
+        fieldMatches++;
+      }
+    });
+    
+    educationScore = fields.length > 0 ? fieldMatches / fields.length : 0;
+  }
+  
+  return {
+    skills: skillsScore,
+    workExperience: workExperienceScore,
+    projects: projectsScore,
+    jobTitle: jobTitleScore,
+    education: educationScore
   };
 }
 
@@ -162,12 +209,14 @@ function calculateBasicJobFitScore(resumeContent, jobDescription) {
  */
 async function generateScoreExplanation(resume, coverLetter, score, componentScores) {
     try {
+        console.log('Requesting AI explanation for score:', score);
+        
         const prompt = `
 You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
 
 Job Details:
-- Title: ${coverLetter.jobTitle}
-- Company: ${coverLetter.company}
+- Title: ${coverLetter.jobTitle || "Not specified"}
+- Company: ${coverLetter.company || "Not specified"}
 - Description: ${coverLetter.jobDescription || "Not provided"}
 
 Candidate's Resume:
@@ -177,11 +226,11 @@ Candidate's Resume:
 - Education: ${resume.education?.map(edu => `${edu.degree} in ${edu.fieldOfStudy}`).join(', ') || "Not provided"}
 
 Component Match Scores (0-1 scale):
-- Skills match: ${componentScores.skills}
-- Work Experience match: ${componentScores.workExperience}
-- Projects match: ${componentScores.projects}
-- Job Title match: ${componentScores.jobTitle}
-- Education match: ${componentScores.education}
+- Skills match: ${componentScores.skills.toFixed(2)}
+- Work Experience match: ${componentScores.workExperience.toFixed(2)}
+- Projects match: ${componentScores.projects.toFixed(2)}
+- Job Title match: ${componentScores.jobTitle.toFixed(2)}
+- Education match: ${componentScores.education.toFixed(2)}
 
 IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:
 1. Maintain a helpful, friendly tone throughout
@@ -192,6 +241,7 @@ IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the foll
 Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
 `;
 
+        console.log('Sending request to OpenAI...');
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
@@ -211,10 +261,14 @@ Be specific about which qualifications align well with the job and which ones co
             }
         );
 
-        return response.data.choices[0].message.content.trim();
+        const explanation = response.data.choices[0].message.content.trim();
+        console.log('Successfully generated personalized explanation');
+        return explanation;
     } catch (error) {
         console.error("Error generating explanation:", error.response?.data || error.message);
-        return "Unable to generate explanation for the job fit score at this time.";
+        console.error("Stack trace:", error.stack);
+        
+        return "We're unable to provide a detailed analysis of your job fit at this time. Our systems are experiencing some technical difficulties. Please try again later or contact support if the issue persists.";
     }
 }
 
