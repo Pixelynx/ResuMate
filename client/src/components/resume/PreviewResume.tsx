@@ -3,12 +3,13 @@ import {
   Box,
   Typography,
   Divider,
-  Grid, Paper,
+  Grid,
   List,
   ListItem,
   ListItemText,
   Chip,
-  Link
+  Link,
+  Container
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -46,7 +47,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
   const hasProjects = !isSectionEmpty(projects);
 
   return (
-    <Paper elevation={3} sx={{ p: 4, maxWidth: '100%', mx: 'auto' }}>
+    <Container maxWidth="md">
       {/* Personal Details */}
       <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h3" gutterBottom>
@@ -295,7 +296,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
             ))}
         </Box>
       )}
-    </Paper>
+    </Container>
     );
   };
   
