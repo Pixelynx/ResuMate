@@ -1,4 +1,3 @@
-
 export interface PersonalDetails {
     firstName: string;
     lastName: string;
@@ -16,8 +15,8 @@ export interface PersonalDetails {
     companyName: string;
     jobTitle: string;
     location: string;
-    startDate: Date | null;
-    endDate: Date | null;
+    startDate: Date | string | null;
+    endDate: Date | string | null;
     description: string;
   }
   
@@ -26,7 +25,7 @@ export interface PersonalDetails {
     degree: string;
     fieldOfStudy: string;
     location: string;
-    graduationDate: Date | null;
+    graduationDate: Date | string | null;
   }
   
   export interface Skills {
@@ -37,8 +36,8 @@ export interface PersonalDetails {
   export interface Certification {
     name: string;
     organization: string;
-    dateObtained: Date | null;
-    expirationDate: Date | null;
+    dateObtained: Date | string | null;
+    expirationDate: Date | string | null;
     credentialUrl?: string;
   }
   

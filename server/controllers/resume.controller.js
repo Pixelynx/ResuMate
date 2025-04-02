@@ -12,6 +12,7 @@ const validatePhone = (phone) => {
   return phoneRegex.test(phone);
 };
 
+// Simplified validation - only check if required fields exist
 const validateRequiredFields = (data) => {
   const errors = [];
   
@@ -51,9 +52,23 @@ const validateRequiredFields = (data) => {
 
 exports.createResume = async (req, res) => {
   try {
-    // Validate request body
+    console.log('Creating resume with data:', JSON.stringify(req.body, null, 2));
+    
+    // Log dates for debugging
+    if (req.body.workExperience && req.body.workExperience.length > 0) {
+      console.log('Work Experience dates:');
+      req.body.workExperience.forEach((exp, i) => {
+        console.log(`- Entry ${i+1}:`);
+        console.log(`  startDate: ${exp.startDate}`);
+        console.log(`  endDate: ${exp.endDate}`);
+        console.log(`  Types: startDate (${typeof exp.startDate}), endDate (${typeof exp.endDate})`);
+      });
+    }
+    
+    // Validate request body - only basic existence checks
     const validationErrors = validateRequiredFields(req.body);
     if (validationErrors.length > 0) {
+      console.log('Resume creation failed due to validation errors');
       return res.status(400).json({
         success: false,
         errors: validationErrors
@@ -62,6 +77,16 @@ exports.createResume = async (req, res) => {
 
     const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
     
+    /* 
+    // Clean date fields to ensure proper format before saving
+    const cleanWorkExperience = workExperience && workExperience.map(exp => ({
+      ...exp,
+      startDate: exp.startDate, // Keep as is, PostgreSQL/Sequelize will handle the conversion
+      endDate: exp.endDate  // Keep as is, PostgreSQL/Sequelize will handle the conversion
+    }));
+    */
+    
+    console.log('Creating resume in database...');
     const resume = await Resume.create({
       // Personal details
       firstName: personalDetails.firstName,
@@ -75,12 +100,13 @@ exports.createResume = async (req, res) => {
       github: personalDetails.github,
       instagram: personalDetails.instagram,
       
-      workExperience,
+      workExperience: workExperience,
       education,
       skills,
       certifications,
       projects
     });
+    console.log('Resume created successfully with ID:', resume.id);
     
     const formattedResume = {
       id: resume.id,
@@ -105,6 +131,7 @@ exports.createResume = async (req, res) => {
       updatedAt: resume.updatedAt
     };
     
+    console.log('Sending formatted resume response');
     res.status(201).json(formattedResume);
   } catch (error) {
     console.error('Error creating resume:', error);
@@ -183,9 +210,24 @@ exports.getResumeById = async (req, res) => {
 
 exports.updateResume = async (req, res) => {
   try {
-    // Validate request body
+    console.log(`Updating resume with ID ${req.params.id}`);
+    console.log('Update data:', JSON.stringify(req.body, null, 2));
+    
+    // Log dates for debugging
+    if (req.body.workExperience && req.body.workExperience.length > 0) {
+      console.log('Work Experience dates:');
+      req.body.workExperience.forEach((exp, i) => {
+        console.log(`- Entry ${i+1}:`);
+        console.log(`  startDate: ${exp.startDate}`);
+        console.log(`  endDate: ${exp.endDate}`);
+        console.log(`  Types: startDate (${typeof exp.startDate}), endDate (${typeof exp.endDate})`);
+      });
+    }
+    
+    // Basic validation - only check required fields
     const validationErrors = validateRequiredFields(req.body);
     if (validationErrors.length > 0) {
+      console.log('Resume update failed due to validation errors');
       return res.status(400).json({
         success: false,
         errors: validationErrors
@@ -194,6 +236,7 @@ exports.updateResume = async (req, res) => {
     
     const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
     
+    console.log('Updating resume in database...');
     const [updated] = await Resume.update({
       // Personal details
       firstName: personalDetails.firstName,
@@ -207,7 +250,7 @@ exports.updateResume = async (req, res) => {
       github: personalDetails.github,
       instagram: personalDetails.instagram,
       
-      workExperience,
+      workExperience: workExperience,
       education,
       skills,
       certifications,
@@ -217,6 +260,7 @@ exports.updateResume = async (req, res) => {
     });
     
     if (updated) {
+      console.log('Resume updated successfully');
       const updatedResume = await Resume.findByPk(req.params.id);
       
       const formattedResume = {
@@ -242,8 +286,10 @@ exports.updateResume = async (req, res) => {
         updatedAt: updatedResume.updatedAt
       };
       
+      console.log('Sending formatted resume response');
       res.json(formattedResume);
     } else {
+      console.log(`Resume with ID ${req.params.id} not found`);
       res.status(404).json({ error: 'Resume not found' });
     }
   } catch (error) {
