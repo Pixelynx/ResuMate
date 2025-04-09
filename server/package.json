@@ -8,9 +8,13 @@
     },
     "dependencies": {
         "@mui/lab": "^6.0.0-beta.30",
+        "axios": "^1.8.4",
+        "body-parser": "^2.2.0",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "express": "^4.21.2",
+        "node-cache": "^5.1.2",
+        "openai": "^4.90.0",
         "pg": "^8.13.3",
         "sequelize": "^6.37.6"
     },
