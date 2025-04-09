@@ -160,6 +160,7 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
         <Button
           variant="outlined"
           color="primary"
+          disabled={true} // TODO: Fix persisting previous results
           onClick={handleOpenModal}
           sx={{ mt: 2 }}
         >

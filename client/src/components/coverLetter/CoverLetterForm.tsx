@@ -113,15 +113,15 @@ const CoverLetterForm: React.FC = () => {
     }));
   };
 
-  const handleGenerationOptionsChange = (
-    option: keyof GenerationOptions,
-    value: string | string[]
-  ) => {
-    setGenerationOptions(prev => ({
-      ...prev,
-      [option]: value,
-    }));
-  };
+  // const handleGenerationOptionsChange = (
+  //   option: keyof GenerationOptions,
+  //   value: string | string[]
+  // ) => {
+  //   setGenerationOptions(prev => ({
+  //     ...prev,
+  //     [option]: value,
+  //   }));
+  // };
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -171,7 +171,7 @@ const CoverLetterForm: React.FC = () => {
           progress: Math.min(prev.progress + 10, 90),
           message: prev.progress < 30 
             ? 'Analyzing resume and job details...'
-            : prev.progress < 60
+            : prev.progress < 80
             ? 'Generating personalized content...'
             : 'Finalizing your cover letter...'
         }));

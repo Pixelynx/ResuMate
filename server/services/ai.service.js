@@ -44,7 +44,7 @@ class AIService {
             skills = {},
             education = []
         } = resumeData;
-
+    
         const {
             firstName,
             lastName,
@@ -53,38 +53,75 @@ class AIService {
             phone,
             location
         } = personalDetails;
-
+    
         const recentExperience = workExperience[0] || {};
         const skillsList = Array.isArray(skills?.skills_) 
             ? skills.skills_.join(', ')
             : '';
-
+    
         const { tone = 'professional', emphasis = [] } = options;
-
+    
+        // Build candidate details, only including fields that actually exist
+        const candidateDetailsParts = [`Candidate Details:`];
+        
+        if (firstName || lastName) {
+            candidateDetailsParts.push(`- Name: ${firstName || ''} ${lastName || ''}`.trim());
+        }
+        
+        if (title) {
+            candidateDetailsParts.push(`- Current Title: ${title}`);
+        }
+        
+        if (location) {
+            candidateDetailsParts.push(`- Location: ${location}`);
+        }
+        
+        if (skillsList) {
+            candidateDetailsParts.push(`- Key Skills: ${skillsList}`);
+        }
+        
+        if (recentExperience.jobTitle && recentExperience.company) {
+            candidateDetailsParts.push(`- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}`);
+        }
+        
+        if (education.length > 0 && education[0].degree && education[0].institution) {
+            candidateDetailsParts.push(`- Education: ${education[0].degree} from ${education[0].institution}`);
+        }
+    
+        // Only include emphasis areas that actually exist in the resume
+        const validEmphasis = emphasis.filter(item => 
+            (skillsList && skillsList.toLowerCase().includes(item.toLowerCase())) || 
+            workExperience.some(exp => exp.description && exp.description.toLowerCase().includes(item.toLowerCase()))
+        );
+    
         const promptParts = [
             `Write a ${tone} cover letter for a ${jobDetails.jobTitle} position at ${jobDetails.company}.`,
-            `Candidate Details:`,
-            `- Name: ${firstName} ${lastName}`,
-            `- Current Title: ${title || 'Professional'}`,
-            `- Location: ${location || 'Available for relocation'}`,
-            `- Key Skills: ${skillsList}`,
-            recentExperience.jobTitle ? `- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}` : '',
-            education[0] ? `- Education: ${education[0].degree} from ${education[0].institution}` : '',
+            ...candidateDetailsParts,
             `Job Details:`,
             `- Company: ${jobDetails.company}`,
             `- Position: ${jobDetails.jobTitle}`,
             jobDetails.jobDescription ? `- Job Description: ${jobDetails.jobDescription}` : '',
             `Guidelines:`,
             `- Maintain a ${tone} tone throughout the letter`,
-            `- Focus on these key skills/experiences: ${emphasis.join(', ')}`,
-            `- Highlight relevant skills and experience`,
-            `- Emphasize any projects that closely relate to the job function (e.g., if the candidate worked on an e-commerce application and is applying to Shopify, highlight details from that project)`,
-            `- Show enthusiasm for the role and company`,
-            `- Include a strong closing statement`,
+            `- CRITICAL: NEVER invent or fabricate qualifications, degrees, skills, or experiences that are not explicitly provided in the resume data`,
+            `- Only reference skills and experiences that are explicitly mentioned in the resume data`,
+            `- Completely omit any mentions of qualifications, education, or experiences that don't exist in the resume`,
+            `- If the candidate lacks specific experience or education relevant to the position, focus only on what they genuinely have to offer`,
+            `- Do not make assumptions about the candidate's background or fill in missing information`,
+            validEmphasis.length > 0 ? `- Focus on these verified skills/experiences that appear in the resume: ${validEmphasis.join(', ')}` : `- Do not emphasize any specific skills as none of the requested emphasis areas match the resume`,
             `- Format with proper spacing and paragraphs`,
             options.customInstructions ? `Additional Instructions: ${options.customInstructions}` : ''
         ];
-
+    
+        // Add a data verification section to ensure the model checks what data actually exists
+        promptParts.push(`
+    Available Resume Data Verification:
+    - Work history available: ${workExperience.length > 0 ? 'Yes' : 'No'}
+    - Education history available: ${education.length > 0 ? 'Yes' : 'No'}
+    - Skills listed: ${skillsList ? 'Yes' : 'No'}
+    
+    IMPORTANT: This cover letter must strictly reference ONLY skills, experiences, and qualifications that are explicitly present in the resume data. Completely omit mentions of any qualifications or backgrounds that don't exist rather than noting their absence. DO NOT fabricate or embellish the candidate's background to better match the job requirements.`);
+    
         return promptParts.filter(Boolean).join('\n');
     }
 

@@ -191,12 +191,6 @@ const ResumeForm: React.FC = () => {
     const handleBack = () => dispatch(prevStep());
     const handleFinish = () => submitResume();
 
-    const isArraySection = (
-      section: keyof ResumeFormData
-    ): section is "workExperience" | "education" | "certifications" | "projects" => {
-      return ['workExperience', 'education', 'certifications', 'projects'].includes(section);
-    }
-  
     const handleChange = (section: keyof ResumeFormData, index: number, field: string, value: any) => {
       // Format phone numbers
       const formattedValue = field === 'phone' ? formatPhone(value) : value;
@@ -864,7 +858,8 @@ const ResumeForm: React.FC = () => {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          paddingBottom: '80px'
         }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
