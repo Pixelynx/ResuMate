@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder }
 import { CoverLetterState } from '../types';
 import { CoverLetter, CoverLetterFormData, CoverLetterGenerationRequest, GenerationOptions } from '../../components/coverLetter/types/coverLetterTypes';
 import { coverLetterService } from '../../utils/api';
-import { AppThunk } from '../store';
 
 // Async thunks
 export const fetchCoverLetters = createAsyncThunk<CoverLetter[], void>(

@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Alert,
   Container,
-  Divider
 } from '@mui/material';
 import { coverLetterService } from '../../utils/api';
 import { CoverLetter } from './types/coverLetterTypes';
@@ -170,8 +169,6 @@ const EditCoverLetter: React.FC = () => {
           Edit Cover Letter
         </Typography>
         
-        <Divider sx={{ mb: 4 }} />
-        
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -187,68 +184,7 @@ const EditCoverLetter: React.FC = () => {
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Typography variant="h6" gutterBottom>
-              Cover Letter Information
-            </Typography>
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              label="First Name"
-              name="firstName"
-              value={coverLetter.firstName || ''}
-              onChange={handleInputChange}
-              error={!validation.firstName}
-              helperText={!validation.firstName ? 'First name is required' : ''}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              label="Last Name"
-              name="lastName"
-              value={coverLetter.lastName || ''}
-              onChange={handleInputChange}
-              error={!validation.lastName}
-              helperText={!validation.lastName ? 'Last name is required' : ''}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              label="Email"
-              name="email"
-              type="email"
-              value={coverLetter.email || ''}
-              onChange={handleInputChange}
-              error={!validation.email}
-              helperText={!validation.email ? 'Valid email is required' : ''}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Phone Number"
-              name="phoneNumber"
-              value={coverLetter.phoneNumber || ''}
-              onChange={handleInputChange}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="h6" gutterBottom>
-              Job Details
+              Title
             </Typography>
           </Grid>
           
@@ -266,43 +202,9 @@ const EditCoverLetter: React.FC = () => {
             />
           </Grid>
           
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Job Title"
-              name="jobTitle"
-              value={coverLetter.jobTitle || ''}
-              onChange={handleInputChange}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Company"
-              name="company"
-              value={coverLetter.company || ''}
-              onChange={handleInputChange}
-              disabled={submitting}
-            />
-          </Grid>
           
           <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Job Description"
-              name="jobDescription"
-              multiline
-              rows={4}
-              value={coverLetter.jobDescription || ''}
-              onChange={handleInputChange}
-              disabled={submitting}
-            />
-          </Grid>
-          
-          <Grid item xs={12}>
-            <Divider sx={{ my: 2 }} />
+            {/* <Divider sx={{ my: 2 }} /> */}
             <Typography variant="h6" gutterBottom>
               Cover Letter Content
             </Typography>

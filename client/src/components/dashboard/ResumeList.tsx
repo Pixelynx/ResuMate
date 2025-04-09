@@ -62,13 +62,6 @@ const ResumeList: React.FC<ResumeListProps> = ({
     }
   };
 
-  const handleEdit = () => {
-    if (selectedResumeId) {
-      onEdit(selectedResumeId);
-      handleMenuClose();
-    }
-  };
-
   const handleDelete = () => {
     if (selectedResumeId) {
       onDelete(selectedResumeId);

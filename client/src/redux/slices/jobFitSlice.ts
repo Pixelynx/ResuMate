@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { AppThunk } from '../store';
 
 export interface JobFitScore {
   score: number;
@@ -27,7 +26,7 @@ export const fetchJobFitScore = createAsyncThunk<JobFitScore, string>(
   'jobFit/fetchJobFitScore',
   async (coverLetterId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/job-fit-score/${coverLetterId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/endpoint/job-fit-score/${coverLetterId}`);
       
       if (response.data && response.data.data) {
         return response.data.data as JobFitScore;

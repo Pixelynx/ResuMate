@@ -40,11 +40,11 @@ const CoverLetterForm: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, ] = useState<string | null>(null);
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
-  const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [generatedContent, ] = useState<string>('');
   
-  const [formState, setFormState] = useState<CoverLetterFormState>({
+  const [, setFormState] = useState<CoverLetterFormState>({
     isSubmitting: false,
     isEditing: false,
     validationErrors: {}
@@ -69,7 +69,7 @@ const CoverLetterForm: React.FC = () => {
     jobDescription: ''
   });
 
-  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
+  const [generationOptions, ] = useState<GenerationOptions>({
     tone: 'professional',
     length: 'medium',
     focusPoints: []
@@ -113,15 +113,15 @@ const CoverLetterForm: React.FC = () => {
     }));
   };
 
-  const handleGenerationOptionsChange = (
-    option: keyof GenerationOptions,
-    value: string | string[]
-  ) => {
-    setGenerationOptions(prev => ({
-      ...prev,
-      [option]: value,
-    }));
-  };
+  // const handleGenerationOptionsChange = (
+  //   option: keyof GenerationOptions,
+  //   value: string | string[]
+  // ) => {
+  //   setGenerationOptions(prev => ({
+  //     ...prev,
+  //     [option]: value,
+  //   }));
+  // };
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -171,7 +171,7 @@ const CoverLetterForm: React.FC = () => {
           progress: Math.min(prev.progress + 10, 90),
           message: prev.progress < 30 
             ? 'Analyzing resume and job details...'
-            : prev.progress < 60
+            : prev.progress < 80
             ? 'Generating personalized content...'
             : 'Finalizing your cover letter...'
         }));

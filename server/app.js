@@ -19,6 +19,11 @@ require('./routes/jobFit.routes')(app);
 
 const PORT = process.env.PORT || 5000;
 
+app.use(cors({
+  origin: 'https://resumate-ai.netflify.app',
+  credentials: true,
+}));
+
 const startServer = async () => {
   try {
     // Test the database connection
