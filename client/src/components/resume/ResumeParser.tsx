@@ -167,7 +167,7 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
     // Extract skills (any section that mentions skills/contains bullet points)
     const skillsSection = sections.find(section => 
       section.toLowerCase().includes('skills') || 
-      section.match(/\n\s*[•\-\*]\s+/)
+      section.match(/\n\s*[•\-*]\s+/)
     );
     
     if (skillsSection) {

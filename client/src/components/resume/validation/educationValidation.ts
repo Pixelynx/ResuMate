@@ -1,6 +1,5 @@
 // src/components/resume/validation/educationValidation.ts
 import { validateLocation } from '../../../utils/validation';
-import dayjs from 'dayjs';
 
 export const validateEducation = (field: string, value: any) => {
   switch (field) {

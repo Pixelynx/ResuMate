@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   CircularProgress,
   Button,
   Alert,
@@ -22,37 +21,37 @@ import {
   selectJobFitLoading,
   selectJobFitError
 } from '../../redux/selectors/jobFitSelectors';
-import { keyframes } from '@emotion/react';
+// import { keyframes } from '@emotion/react';
 import { styled } from '@mui/material/styles';
 interface JobScoreProps {
   coverLetterId: string;
 }
 // Define animations
-const bounceAnimation = keyframes`
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-15px);
-  }
-  60% {
-    transform: translateY(-7px);
-  }
-`;
+// const bounceAnimation = keyframes`
+//   0%, 20%, 50%, 80%, 100% {
+//     transform: translateY(0);
+//   }
+//   40% {
+//     transform: translateY(-15px);
+//   }
+//   60% {
+//     transform: translateY(-7px);
+//   }
+// `;
 // Styled components
-const AnimatedPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: '12px',
-  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
-  animation: `${bounceAnimation} 1s ease`,
-  width: '100%',
-  overflow: 'hidden',
-  transition: 'all 0.3s ease',
-  position: 'relative',
-  '&:hover': {
-    boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
-  }
-}));
+// const AnimatedPaper = styled(Paper)(({ theme }) => ({
+//   padding: theme.spacing(3),
+//   borderRadius: '12px',
+//   boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+//   animation: `${bounceAnimation} 1s ease`,
+//   width: '100%',
+//   overflow: 'hidden',
+//   transition: 'all 0.3s ease',
+//   position: 'relative',
+//   '&:hover': {
+//     boxShadow: '0 12px 20px rgba(0, 0, 0, 0.15)',
+//   }
+// }));
 interface ScoreBoxProps {
   score: number | null;
 }

@@ -4,7 +4,6 @@ import { Resume, ResumeFormData } from '../../components/resume/types/resumeType
 import { resumeService } from '../../utils/api';
 import { validatePersonalDetails } from '../../components/resume/validation/personalDetailsValidation';
 import dayjs from 'dayjs';
-import { AppThunk } from '../store';
 
 // Async thunks
 export const fetchResumes = createAsyncThunk<Resume[], void>(
@@ -128,43 +127,6 @@ const validatePersonalDetailsSection = (personalDetails: any) => {
     }
   }
 
-  return { isValid, validationResults };
-};
-
-const validateWorkExperienceDates = (workExperience: any[]) => {
-  let isValid = true;
-  const validationResults = workExperience.map(entry => {
-    const startDate = entry.startDate;
-    const endDate = entry.endDate;
-    
-    let startDateValid = true;
-    let endDateValid = true;
-    let dateErrorMessage = '';
-    
-    if (!startDate) {
-      startDateValid = false;
-      dateErrorMessage = 'Start date is required';
-      isValid = false;
-    } else if (endDate) {
-      // Ensure both dates are valid dayjs objects or can be converted to one
-      const startDayjs = dayjs(startDate);
-      const endDayjs = dayjs(endDate);
-      
-      // Only compare if both are valid dayjs objects
-      if (startDayjs.isValid() && endDayjs.isValid() && endDayjs.isBefore(startDayjs)) {
-        endDateValid = false;
-        dateErrorMessage = 'End date must be after start date';
-        isValid = false;
-      }
-    }
-    
-    return {
-      startDateValid,
-      endDateValid,
-      dateErrorMessage
-    };
-  });
-  
   return { isValid, validationResults };
 };
 

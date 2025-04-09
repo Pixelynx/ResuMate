@@ -10,7 +10,6 @@ import {
   CircularProgress,
   Alert,
   Container,
-  Divider
 } from '@mui/material';
 import { coverLetterService } from '../../utils/api';
 import { CoverLetter } from './types/coverLetterTypes';

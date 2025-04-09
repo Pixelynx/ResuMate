@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { AppThunk } from '../store';
 
 export interface JobFitScore {
   score: number;
