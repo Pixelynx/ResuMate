@@ -27,7 +27,7 @@ export const fetchJobFitScore = createAsyncThunk<JobFitScore, string>(
   'jobFit/fetchJobFitScore',
   async (coverLetterId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/job-fit-score/${coverLetterId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/endpoint/job-fit-score/${coverLetterId}`);
       
       if (response.data && response.data.data) {
         return response.data.data as JobFitScore;
