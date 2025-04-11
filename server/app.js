@@ -7,7 +7,11 @@ const db = require('./models');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://resumate-ai.netlify.app',  'http://localhost:3000'],
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // Routes
@@ -18,11 +22,6 @@ require('./routes/coverLetter.routes')(app);
 require('./routes/jobFit.routes')(app);
 
 const PORT = process.env.PORT || 5000;
-
-app.use(cors({
-  origin: 'https://resumate-ai.netflify.app',
-  credentials: true,
-}));
 
 const startServer = async () => {
   try {

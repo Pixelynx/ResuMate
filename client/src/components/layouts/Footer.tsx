@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
       }}
     >
       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-        &copy; {new Date().getFullYear()} Resumate
+        {new Date().getFullYear()} Resumate
       </Typography>
       <Box sx={{ display: 'flex', gap: 3 }}>
         <Link
