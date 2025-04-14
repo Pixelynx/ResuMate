@@ -65,7 +65,7 @@ const CoverLetterForm: React.FC = () => {
     firstname: '',
     lastname: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     jobdescription: ''
   });
 

@@ -7,12 +7,17 @@ const db = require('./models');
 const app = express();
 
 // Middleware
-app.use(cors());
-// Middleware
-// app.use(cors({
-//   origin: ['https://resumate-ai.netlify.app',  'http://localhost:3000'],
-//   credentials: true,
-// }));
+const allowedOrigins = [
+  'https://resumate-ai.netlify.app',
+  process.env.NODE_ENV === 'production'
+    ? 'https://resumate-ai.herokuapp.com'
+    : 'http://localhost:3000'
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 app.use(express.json());
 
