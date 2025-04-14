@@ -172,7 +172,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   <Tooltip title="View Resume">
                     <Button 
                       size="small" 
-                      startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => onView(resume.id)}
                       sx={{ py: 0.5 }}
                     >

@@ -245,7 +245,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                   <Tooltip title="View Cover Letter">
                     <Button 
                       size="small" 
-                      startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => handleViewCoverLetter(coverLetter.id)}
                       sx={{ py: 0.5 }}
                     >
