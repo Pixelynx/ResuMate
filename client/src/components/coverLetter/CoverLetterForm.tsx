@@ -35,7 +35,7 @@ interface ResumeOption {
 }
 
 const CoverLetterForm: React.FC = () => {
-  const { resumeId } = useParams<{ resumeId?: string }>();
+  const { resumeid } = useParams<{ resumeid?: string }>();
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -59,17 +59,17 @@ const CoverLetterForm: React.FC = () => {
   const [formData, setFormData] = useState<CoverLetterFormData>({
     title: '',
     content: '',
-    resumeId: resumeId || '',
-    jobTitle: '',
+    resumeid: resumeid || '',
+    jobtitle: '',
     company: '',
-    firstName: '',
-    lastName: '',
+    firstname: '',
+    lastname: '',
     email: '',
-    phoneNumber: '',
-    jobDescription: ''
+    phone: '',
+    jobdescription: ''
   });
 
-  const [generationOptions, ] = useState<GenerationOptions>({
+  const [generationoptions, ] = useState<GenerationOptions>({
     tone: 'professional',
     length: 'medium',
     focusPoints: []
@@ -84,8 +84,8 @@ const CoverLetterForm: React.FC = () => {
         const resumes = await resumeService.getAllResumes();
         setResumes(resumes.map((resume: Resume) => ({
           id: resume.id,
-          title: resume.personalDetails.firstName && resume.personalDetails.lastName
-            ? `${resume.personalDetails.firstName} ${resume.personalDetails.lastName}'s Resume`
+          title: resume.personalDetails.firstname && resume.personalDetails.lastname
+            ? `${resume.personalDetails.firstname} ${resume.personalDetails.lastname}'s Resume`
             : 'Untitled Resume'
         })));
         setLoading(false);
@@ -109,7 +109,7 @@ const CoverLetterForm: React.FC = () => {
   const handleResumeChange = (e: SelectChangeEvent) => {
     setFormData(prev => ({
       ...prev,
-      resumeId: e.target.value,
+      resumeid: e.target.value,
     }));
   };
 
@@ -134,7 +134,7 @@ const CoverLetterForm: React.FC = () => {
   const validateCurrentStep = () => {
     switch (activeStep) {
       case 0:
-        return formData.resumeId && formData.jobTitle && formData.company;
+        return formData.resumeid && formData.jobtitle && formData.company;
       case 1:
         return generatedContent.length > 0;
       case 2:
@@ -154,12 +154,12 @@ const CoverLetterForm: React.FC = () => {
       });
 
       const generationRequest: CoverLetterGenerationRequest = {
-        resumeId: formData.resumeId || '',
-        jobTitle: formData.jobTitle,
+        resumeid: formData.resumeid || '',
+        jobtitle: formData.jobtitle,
         company: formData.company,
-        jobDescription: formData.jobDescription,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        jobdescription: formData.jobdescription,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
         email: formData.email,
         phoneNumber: formData.phoneNumber
       };
@@ -179,7 +179,7 @@ const CoverLetterForm: React.FC = () => {
 
       const response = await coverLetterService.generateCoverLetter(
         generationRequest,
-        generationOptions
+        generationoptions
       );
 
       clearInterval(progressInterval);
@@ -261,7 +261,7 @@ const CoverLetterForm: React.FC = () => {
                   <Select
                     labelId="resume-select-label"
                     id="resume-select"
-                    value={formData.resumeId}
+                    value={formData.resumeid}
                     label="Select Resume"
                     onChange={handleResumeChange}
                     disabled={loading}
@@ -278,10 +278,10 @@ const CoverLetterForm: React.FC = () => {
                 <TextField
                   required
                   fullWidth
-                  id="jobTitle"
-                  name="jobTitle"
+                  id="jobtitle"
+                  name="jobtitle"
                   label="Job Title"
-                  value={formData.jobTitle}
+                  value={formData.jobtitle}
                   onChange={handleInputChange}
                   disabled={loading}
                 />
@@ -301,12 +301,12 @@ const CoverLetterForm: React.FC = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  id="jobDescription"
-                  name="jobDescription"
+                  id="jobdescription"
+                  name="jobdescription"
                   label="Job Description (Optional)"
                   multiline
                   rows={6}
-                  value={formData.jobDescription}
+                  value={formData.jobdescription}
                   onChange={handleInputChange}
                   disabled={loading}
                   placeholder="Paste the job description here to create a more tailored cover letter"

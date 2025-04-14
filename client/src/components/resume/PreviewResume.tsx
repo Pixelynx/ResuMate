@@ -51,7 +51,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
       {/* Personal Details */}
       <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h3" gutterBottom>
-          {personalDetails.firstName} {personalDetails.lastName}
+          {personalDetails.firstname} {personalDetails.lastname}
         </Typography>
         
         {personalDetails.title && (
@@ -117,12 +117,12 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
           </Typography>
           
           {workExperience
-            .filter(job => job.companyName.trim() || job.jobTitle.trim())
+            .filter(job => job.companyName.trim() || job.jobtitle.trim())
             .map((job, index) => (
               <Box key={index} sx={{ mb: 2 }}>
                 <Typography variant="h6">{job.companyName}</Typography>
-                {job.jobTitle && (
-                  <Typography variant="subtitle1" color="primary">{job.jobTitle}</Typography>
+                {job.jobtitle && (
+                  <Typography variant="subtitle1" color="primary">{job.jobtitle}</Typography>
                 )}
                 <Typography variant="body2" color="text.secondary">
                   {job.location}
@@ -136,7 +136,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                     {job.description}
                   </Typography>
                 )}
-                {index < workExperience.filter(j => j.companyName.trim() || j.jobTitle.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
+                {index < workExperience.filter(j => j.companyName.trim() || j.jobtitle.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
               </Box>
             ))}
         </Box>

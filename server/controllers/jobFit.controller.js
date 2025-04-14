@@ -1,6 +1,6 @@
 const db = require('../models');
 const Resume = db.resumes;
-const CoverLetter = db.coverLetters;
+const CoverLetter = db.coverletters;
 const { calculateJobFitScore } = require('../services/jobFitService');
 
 exports.getJobFitScore = async (req, res) => {
@@ -25,7 +25,7 @@ exports.getJobFitScore = async (req, res) => {
     }
     
     // Get the associated resume
-    const resume = await Resume.findByPk(coverLetter.resumeId);
+    const resume = await Resume.findByPk(coverLetter.resumeid);
     if (!resume) {
       return res.status(404).json({
         success: false,
@@ -34,7 +34,7 @@ exports.getJobFitScore = async (req, res) => {
     }
     
     // Check if job description exists
-    if (!coverLetter.jobDescription) {
+    if (!coverLetter.jobdescription) {
       return res.status(400).json({
         success: false,
         message: "Job description is required for scoring"
@@ -52,8 +52,8 @@ exports.getJobFitScore = async (req, res) => {
       resumeData = {
         id: resume.id,
         personalDetails: {
-          firstName: resume.firstName,
-          lastName: resume.lastName,
+          firstname: resume.firstname,
+          lastname: resume.lastname,
           title: resume.title,
           email: resume.email,
           phone: resume.phone,

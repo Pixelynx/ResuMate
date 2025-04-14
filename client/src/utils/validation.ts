@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 
-export const validateName = (name: string, fieldName: 'firstName' | 'lastName'): string | null => {
+export const validateName = (name: string, fieldName: 'firstname' | 'lastname'): string | null => {
   const trimmedName = name.trim();
   const fieldLabel = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
   

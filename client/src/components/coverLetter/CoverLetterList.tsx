@@ -205,18 +205,18 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                     <DescriptionIcon color="primary" fontSize="small" />
                   </Box>
                   
-                  {coverLetter.jobTitle && coverLetter.company && (
+                  {coverLetter.jobtitle && coverLetter.company && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                       <Typography variant="body2" color="text.secondary" noWrap>
-                        {coverLetter.jobTitle} at {coverLetter.company}
+                        {coverLetter.jobtitle} at {coverLetter.company}
                       </Typography>
                     </Box>
                   )}
                   
                   <Divider sx={{ my: 1 }} />
                   
-                  {coverLetter.resumeId && (
+                  {coverLetter.resumeid && (
                     <Box sx={{ mb: 1 }}>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
                         Based on:

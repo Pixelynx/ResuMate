@@ -12,7 +12,7 @@ class AIService {
     }
 
     generateCacheKey(resumeData, jobDetails) {
-        return `${resumeData.id}-${jobDetails.jobTitle}-${jobDetails.company}`.toLowerCase();
+        return `${resumeData.id}-${jobDetails.jobtitle}-${jobDetails.company}`.toLowerCase();
     }
 
     async generateCoverLetter(resumeData, jobDetails, options = {}) {
@@ -46,8 +46,8 @@ class AIService {
         } = resumeData;
     
         const {
-            firstName,
-            lastName,
+            firstname,
+            lastname,
             title,
             email,
             phone,
@@ -64,8 +64,8 @@ class AIService {
         // Build candidate details, only including fields that actually exist
         const candidateDetailsParts = [`Candidate Details:`];
         
-        if (firstName || lastName) {
-            candidateDetailsParts.push(`- Name: ${firstName || ''} ${lastName || ''}`.trim());
+        if (firstname || lastname) {
+            candidateDetailsParts.push(`- Name: ${firstname || ''} ${lastname || ''}`.trim());
         }
         
         if (title) {
@@ -80,8 +80,8 @@ class AIService {
             candidateDetailsParts.push(`- Key Skills: ${skillsList}`);
         }
         
-        if (recentExperience.jobTitle && recentExperience.company) {
-            candidateDetailsParts.push(`- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}`);
+        if (recentExperience.jobtitle && recentExperience.company) {
+            candidateDetailsParts.push(`- Recent Role: ${recentExperience.jobtitle} at ${recentExperience.company}`);
         }
         
         if (education.length > 0 && education[0].degree && education[0].institution) {
@@ -95,12 +95,12 @@ class AIService {
         );
     
         const promptParts = [
-            `Write a ${tone} cover letter for a ${jobDetails.jobTitle} position at ${jobDetails.company}.`,
+            `Write a ${tone} cover letter for a ${jobDetails.jobtitle} position at ${jobDetails.company}.`,
             ...candidateDetailsParts,
             `Job Details:`,
             `- Company: ${jobDetails.company}`,
-            `- Position: ${jobDetails.jobTitle}`,
-            jobDetails.jobDescription ? `- Job Description: ${jobDetails.jobDescription}` : '',
+            `- Position: ${jobDetails.jobtitle}`,
+            jobDetails.jobdescription ? `- Job Description: ${jobDetails.jobdescription}` : '',
             `Guidelines:`,
             `- Maintain a ${tone} tone throughout the letter`,
             `- CRITICAL: NEVER invent or fabricate qualifications, degrees, skills, or experiences that are not explicitly provided in the resume data`,

@@ -73,7 +73,7 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
   // Use specific print styles when printing
   useEffect(() => {
     if (isPrinting) {
-      document.title = `${resume.personalDetails.firstName} ${resume.personalDetails.lastName} - Resume`;
+      document.title = `${resume.personalDetails.firstname} ${resume.personalDetails.lastname} - Resume`;
     }
   }, [isPrinting, resume.personalDetails]);
 
@@ -85,7 +85,7 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
         {/* Header/Personal Details */}
         <Box sx={{ mb: 3, textAlign: 'center' }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            {resume.personalDetails.firstName} {resume.personalDetails.lastName}
+            {resume.personalDetails.firstname} {resume.personalDetails.lastname}
           </Typography>
           {resume.personalDetails.title && (
             <Typography variant="h6" color="textSecondary">
@@ -128,7 +128,7 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                 <Grid container justifyContent="space-between" alignItems="flex-start">
                   <Grid item xs={9}>
                     <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
-                      {experience.jobTitle} at {experience.companyName}
+                      {experience.jobtitle} at {experience.companyName}
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
                       {experience.location}

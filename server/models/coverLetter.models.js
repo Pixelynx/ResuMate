@@ -13,7 +13,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: false
     },
-    resumeId: {
+    resumeid: {
       type: Sequelize.STRING,
       allowNull: true,
       references: {
@@ -23,7 +23,7 @@ module.exports = (sequelize, Sequelize) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    jobTitle: {
+    jobtitle: {
       type: Sequelize.STRING,
       allowNull: false
     },
@@ -31,17 +31,17 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false
     },
-    jobDescription: {
+    jobdescription: {
       type: Sequelize.TEXT,
       allowNull: true,
       defaultValue: ""
     },
-    firstName: {
+    firstname: {
       type: Sequelize.STRING,
       allowNull: false,
       defaultValue: ""
     },
-    lastName: {
+    lastname: {
       type: Sequelize.STRING,
       allowNull: false,
       defaultValue: ""
@@ -64,19 +64,19 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     },
-    generationOptions: {
+    generationoptions: {
       type: Sequelize.JSON,
       allowNull: true,
       defaultValue: null
     }
   }, {
-    tableName: 'coverLetters',
+    tableName: 'coverletters',
     timestamps: true
   });
 
   CoverLetter.associate = (models) => {
     CoverLetter.belongsTo(models.Resume, {
-      foreignKey: 'resumeId',
+      foreignKey: 'resumeid',
       as: 'resume'
     });
   };

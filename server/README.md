@@ -126,8 +126,8 @@ Authorization: Bearer <token>
   ```json
   {
     "personalDetails": {
-      "firstName": "John",
-      "lastName": "Doe",
+      "firstname": "John",
+      "lastname": "Doe",
       "email": "john.doe@example.com",
       "phone": "123-456-7890",
       "location": "New York, NY",
@@ -136,7 +136,7 @@ Authorization: Bearer <token>
     "workExperience": [
       {
         "companyName": "Example Corp",
-        "jobTitle": "Software Engineer",
+        "jobtitle": "Software Engineer",
         "location": "New York, NY",
         "startDate": "2020-01-01",
         "endDate": "2022-01-01",
@@ -191,15 +191,15 @@ Authorization: Bearer <token>
   ```json
   {
     "title": "Application for Software Engineer",
-    "resumeId": "resume-id-here",
+    "resumeid": "resume-id-here",
     "content": "Dear Hiring Manager...",
-    "jobTitle": "Software Engineer",
+    "jobtitle": "Software Engineer",
     "company": "Tech Company",
-    "jobDescription": "We are looking for...",
-    "firstName": "John",
-    "lastName": "Doe",
+    "jobdescription": "We are looking for...",
+    "firstname": "John",
+    "lastname": "Doe",
     "email": "john.doe@example.com",
-    "phoneNumber": "123-456-7890"
+    "phone": "123-456-7890"
   }
   ```
 - **Success Response**: `201 Created` with the created cover letter object
@@ -212,10 +212,10 @@ Authorization: Bearer <token>
 - **Body**:
   ```json
   {
-    "resumeId": "resume-id-here",
-    "jobTitle": "Software Engineer",
+    "resumeid": "resume-id-here",
+    "jobtitle": "Software Engineer",
     "company": "Tech Company",
-    "jobDescription": "We are looking for...",
+    "jobdescription": "We are looking for...",
     "options": {
       "tone": "professional",
       "length": "medium",
@@ -235,7 +235,7 @@ Authorization: Bearer <token>
 - **Body**:
   ```json
   {
-    "resumeId": "resume-id-here",
+    "resumeid": "resume-id-here",
     "coverLetterId": "cover-letter-id-here"
   }
   ```
@@ -276,7 +276,7 @@ The system uses proper error handling for OpenAI API calls, with appropriate log
 ```javascript
 try {
   // Use OpenAI embeddings for calculation
-  const similarity = await calculateEmbeddingSimilarity(resumeContent, jobDescription);
+  const similarity = await calculateEmbeddingSimilarity(resumeContent, jobdescription);
   
   // Process results...
 } catch (embeddingError) {

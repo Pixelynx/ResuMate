@@ -20,16 +20,16 @@ db.sequelize = sequelize;
 
 // Initialize models
 db.resumes = require('./resume.models.js')(sequelize, Sequelize);
-db.coverLetters = require('./coverLetter.models.js')(sequelize, Sequelize);
+db.coverletters = require('./coverLetter.models.js')(sequelize, Sequelize);
 
 // Define relationships
-db.resumes.hasMany(db.coverLetters, { 
-  foreignKey: 'resumeId',
+db.resumes.hasMany(db.coverletters, { 
+  foreignKey: 'resumeid',
   onDelete: 'CASCADE',
   onUpdate: 'CASCADE'
 });
-db.coverLetters.belongsTo(db.resumes, { 
-  foreignKey: 'resumeId'
+db.coverletters.belongsTo(db.resumes, { 
+  foreignKey: 'resumeid'
 });
 
 module.exports = db; 

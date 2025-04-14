@@ -29,10 +29,10 @@ dayjs.extend(relativeTime);
 
 interface ResumeListProps {
   resumes: Resume[];
-  onView: (resumeId: string) => void;
-  onEdit: (resumeId: string) => void;
-  onDelete: (resumeId: string) => void;
-  onCreateCoverLetter: (resumeId: string) => void;
+  onView: (resumeid: string) => void;
+  onEdit: (resumeid: string) => void;
+  onDelete: (resumeid: string) => void;
+  onCreateCoverLetter: (resumeid: string) => void;
 }
 
 const ResumeList: React.FC<ResumeListProps> = ({
@@ -45,9 +45,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedResumeId, setSelectedResumeId] = React.useState<string | null>(null);
   
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, resumeId: string) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, resumeid: string) => {
     setAnchorEl(event.currentTarget);
-    setSelectedResumeId(resumeId);
+    setSelectedResumeId(resumeid);
   };
 
   const handleMenuClose = () => {
@@ -123,7 +123,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Typography variant="h6" component="div" noWrap>
-                      {resume.personalDetails.firstName} {resume.personalDetails.lastName}
+                      {resume.personalDetails.firstname} {resume.personalDetails.lastname}
                     </Typography>
                     <IconButton 
                       size="small" 

@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 module.exports = {
     async up(queryInterface, Sequelize) {
         // Create resume IDs upfront so they can be referenced consistently
-        const resumeIds = {
+        const resumeids = {
             softwareEngineer: uuidv4(),
             dataScientist: uuidv4(),
             fullStackDev: uuidv4(),
@@ -18,9 +18,9 @@ module.exports = {
         await queryInterface.bulkInsert('resumes', [
             // Technical Role 1: Software Engineer
             {
-                id: resumeIds.softwareEngineer,
-                firstName: 'John',
-                lastName: 'Doe',
+                id: resumeids.softwareEngineer,
+                firstname: 'John',
+                lastname: 'Doe',
                 title: 'Software Engineer',
                 email: 'john.doe@example.com',
                 phone: '123-456-7890',
@@ -32,7 +32,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'Tech Company',
-                        jobTitle: 'Frontend Developer',
+                        jobtitle: 'Frontend Developer',
                         location: 'Remote',
                         startDate: new Date('2022-01-01'),
                         endDate: new Date('2023-01-01'),
@@ -76,9 +76,9 @@ module.exports = {
             },
             // Technical Role 2: Data Scientist
             {
-                id: resumeIds.dataScientist,
-                firstName: 'Jane',
-                lastName: 'Smith',
+                id: resumeids.dataScientist,
+                firstname: 'Jane',
+                lastname: 'Smith',
                 title: 'Data Scientist',
                 email: 'jane.smith@example.com',
                 phone: '987-654-3210',
@@ -90,7 +90,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'Data Corp',
-                        jobTitle: 'Data Analyst',
+                        jobtitle: 'Data Analyst',
                         location: 'Remote',
                         startDate: new Date('2020-01-01'),
                         endDate: new Date('2021-12-31'),
@@ -134,9 +134,9 @@ module.exports = {
             },
             // Technical Role 3: Full Stack Developer
             {
-                id: resumeIds.fullStackDev,
-                firstName: 'Alice',
-                lastName: 'Johnson',
+                id: resumeids.fullStackDev,
+                firstname: 'Alice',
+                lastname: 'Johnson',
                 title: 'Full Stack Developer',
                 email: 'alice.johnson@example.com',
                 phone: '555-123-4567',
@@ -148,7 +148,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'Web Solutions Inc.',
-                        jobTitle: 'Software Engineer',
+                        jobtitle: 'Software Engineer',
                         location: 'Austin, TX',
                         startDate: new Date('2021-06-01'),
                         endDate: new Date('2024-12-31'),
@@ -156,7 +156,7 @@ module.exports = {
                     },
                     {
                         companyName: 'Startup Hub',
-                        jobTitle: 'Junior Developer',
+                        jobtitle: 'Junior Developer',
                         location: 'Remote',
                         startDate: new Date('2019-01-01'),
                         endDate: new Date('2021-05-31'),
@@ -201,9 +201,9 @@ module.exports = {
             },
             // Technical Role 4: DevOps Engineer
             {
-                id: resumeIds.devOpsEngineer,
-                firstName: 'Bob',
-                lastName: 'Lee',
+                id: resumeids.devOpsEngineer,
+                firstname: 'Bob',
+                lastname: 'Lee',
                 title: 'DevOps Engineer',
                 email: 'bob.lee@example.com',
                 phone: '555-987-6543',
@@ -215,7 +215,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'CloudOps LLC',
-                        jobTitle: 'DevOps Engineer',
+                        jobtitle: 'DevOps Engineer',
                         location: 'Remote',
                         startDate: new Date('2020-05-01'),
                         endDate: null,
@@ -241,9 +241,9 @@ module.exports = {
             },
             // Technical Role 5: Backend Developer
             {
-                id: resumeIds.backendDev,
-                firstName: 'Ethan',
-                lastName: 'Brown',
+                id: resumeids.backendDev,
+                firstname: 'Ethan',
+                lastname: 'Brown',
                 title: 'Backend Developer',
                 email: 'ethan.brown@example.com',
                 phone: '555-789-1234',
@@ -255,7 +255,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'Cloud Solutions Inc.',
-                        jobTitle: 'Backend Developer',
+                        jobtitle: 'Backend Developer',
                         location: 'Remote',
                         startDate: new Date('2021-07-01'),
                         endDate: null,
@@ -264,7 +264,7 @@ module.exports = {
                     },
                     {
                         companyName: 'DataTech LLC',
-                        jobTitle: 'Junior Backend Developer',
+                        jobtitle: 'Junior Backend Developer',
                         location: 'Denver, CO',
                         startDate: new Date('2019-06-01'),
                         endDate: new Date('2021-06-30'),
@@ -312,9 +312,9 @@ module.exports = {
             },
             // Non-Technical Role 1: Marketing Coordinator
             {
-                id: resumeIds.marketingCoord,
-                firstName: 'Sophia',
-                lastName: 'Williams',
+                id: resumeids.marketingCoord,
+                firstname: 'Sophia',
+                lastname: 'Williams',
                 title: 'Marketing Coordinator',
                 email: 'sophia.williams@example.com',
                 phone: '555-321-9876',
@@ -326,7 +326,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'Creative Agency Co.',
-                        jobTitle: 'Marketing Coordinator',
+                        jobtitle: 'Marketing Coordinator',
                         location: 'Chicago, IL',
                         startDate: new Date('2022-03-01'),
                         endDate: null,
@@ -335,7 +335,7 @@ module.exports = {
                     },
                     {
                         companyName: 'Brand Builders LLC',
-                        jobTitle: 'Marketing Assistant',
+                        jobtitle: 'Marketing Assistant',
                         location: 'Remote',
                         startDate: new Date('2020-06-01'),
                         endDate: new Date('2022-02-28'),
@@ -363,9 +363,9 @@ module.exports = {
             },
             // Non-Technical Role 2: Human Resources Specialist
             {
-                id: resumeIds.hrSpecialist,
-                firstName: 'Michael',
-                lastName: 'Taylor',
+                id: resumeids.hrSpecialist,
+                firstname: 'Michael',
+                lastname: 'Taylor',
                 title: 'Human Resources Specialist',
                 email: 'michael.taylor@example.com',
                 phone: '555-654-7890',
@@ -377,7 +377,7 @@ module.exports = {
                 workExperience: JSON.stringify([
                     {
                         companyName: 'People First Inc.',
-                        jobTitle: 'HR Specialist',
+                        jobtitle: 'HR Specialist',
                         location: 'Atlanta, GA',
                         startDate: new Date('2021-04-01'),
                         endDate: null,
@@ -386,7 +386,7 @@ module.exports = {
                     },
                     {
                         companyName: 'Talent Solutions LLC',
-                        jobTitle: 'HR Assistant',
+                        jobtitle: 'HR Assistant',
                         location: 'Remote',
                         startDate: new Date('2019-08-01'),
                         endDate: new Date('2021-03-31'),

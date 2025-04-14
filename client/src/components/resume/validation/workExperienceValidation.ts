@@ -11,7 +11,7 @@ export const validateWorkExperience = (field: string, value: any) => {
       if (value.length < 2) return { isValid: false, message: 'Company name must be at least 2 characters' };
       return { isValid: true, message: '' };
 
-    case 'jobTitle':
+    case 'jobtitle':
       if (!value) return { isValid: false, message: 'Job title is required' };
       if (value.length < 2) return { isValid: false, message: 'Job title must be at least 2 characters' };
       return { isValid: true, message: '' };

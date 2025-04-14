@@ -117,26 +117,26 @@ const Dashboard: React.FC = () => {
     navigate('/resume/builder');
   };
 
-  const handleCreateCoverLetter = (resumeId?: string) => {
-    if (resumeId) {
-      navigate(`/cover-letter/from-resume/${resumeId}`);
+  const handleCreateCoverLetter = (resumeid?: string) => {
+    if (resumeid) {
+      navigate(`/cover-letter/from-resume/${resumeid}`);
     } else {
       navigate('/cover-letter/new');
     }
   };
 
-  const handleViewResume = (resumeId: string) => {
-    navigate(`/resume/${resumeId}`);
+  const handleViewResume = (resumeid: string) => {
+    navigate(`/resume/${resumeid}`);
   };
 
-  const handleEditResume = (resumeId: string) => {
-    navigate(`/resume/builder?id=${resumeId}`);
+  const handleEditResume = (resumeid: string) => {
+    navigate(`/resume/builder?id=${resumeid}`);
   };
 
-  const handleDeleteResume = async (resumeId: string) => {
+  const handleDeleteResume = async (resumeid: string) => {
     try {
-      await resumeService.deleteResume(resumeId);
-      setResumes(resumes.filter(resume => resume.id !== resumeId));
+      await resumeService.deleteResume(resumeid);
+      setResumes(resumes.filter(resume => resume.id !== resumeid));
       setError(null);
     } catch (error) {
       console.error('Error deleting resume:', error);

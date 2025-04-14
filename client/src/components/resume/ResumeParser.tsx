@@ -86,8 +86,8 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
     // Default resume structure
     const resumeData: ResumeFormData = {
       personalDetails: {
-        firstName: '',
-        lastName: '',
+        firstname: '',
+        lastname: '',
         title: '',
         email: '',
         phone: '',
@@ -99,7 +99,7 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
       },
       workExperience: [{ 
         companyName: '', 
-        jobTitle: '', 
+        jobtitle: '', 
         location: '', 
         startDate: null, 
         endDate: null, 
@@ -136,8 +136,8 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
     // Extract personal details
     const nameMatch = text.match(/^([A-Za-z]+)\s+([A-Za-z]+)/);
     if (nameMatch) {
-      resumeData.personalDetails.firstName = nameMatch[1] || '';
-      resumeData.personalDetails.lastName = nameMatch[2] || '';
+      resumeData.personalDetails.firstname = nameMatch[1] || '';
+      resumeData.personalDetails.lastname = nameMatch[2] || '';
     }
     
     // Look for email
@@ -184,7 +184,7 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
         
         if (lines.length >= 3) {
           // Try to extract company name and job title
-          const jobTitle = lines[0].trim();
+          const jobtitle = lines[0].trim();
           const companyLine = lines[1].trim();
           const companyMatch = companyLine.match(/([^|,]+)/);
           const companyName = companyMatch ? companyMatch[1].trim() : companyLine;
@@ -193,7 +193,7 @@ const ResumeParser: React.FC<ResumeParserProps> = ({ className }) => {
           const dateMatch = section.match(/(\w+ \d{4})\s*[-–]\s*(\w+ \d{4}|present)/i);
           
           workExperienceData.push({
-            jobTitle,
+            jobtitle,
             companyName,
             location: '', 
             startDate: dateMatch ? new Date(dateMatch[1]) : null,

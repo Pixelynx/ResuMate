@@ -10,24 +10,24 @@ module.exports = {
     
     try {
       // Get all cover letters
-      const coverLetters = await queryInterface.sequelize.query(
-        'SELECT id, resumeId, jobDescription, jobTitle FROM coverLetters',
+      const coverletters = await queryInterface.sequelize.query(
+        'SELECT id, resumeid, jobdescription, jobtitle FROM coverletters',
         { type: queryInterface.sequelize.QueryTypes.SELECT }
       );
       
-      console.log(`Found ${coverLetters.length} cover letters to process`);
+      console.log(`Found ${coverletters.length} cover letters to process`);
       
       // For each cover letter, log information about job fit calculation
-      for (const coverLetter of coverLetters) {
-        if (coverLetter.jobDescription && coverLetter.resumeId) {
+      for (const coverLetter of coverletters) {
+        if (coverLetter.jobdescription && coverLetter.resumeid) {
           // In a real implementation, this would call the jobFitService to calculate scores
           // For example: 
           // const score = await calculateJobFitScore(resume, coverLetter);
           
           // Log that we would calculate a score for this cover letter
-          console.log(`Would calculate job fit score for cover letter ${coverLetter.id} (${coverLetter.jobTitle})`);
-          console.log(`- Associated resume: ${coverLetter.resumeId}`);
-          console.log(`- Job description length: ${coverLetter.jobDescription.length} characters`);
+          console.log(`Would calculate job fit score for cover letter ${coverLetter.id} (${coverLetter.jobtitle})`);
+          console.log(`- Associated resume: ${coverLetter.resumeid}`);
+          console.log(`- Job description length: ${coverLetter.jobdescription.length} characters`);
         } else {
           console.log(`Skipping cover letter ${coverLetter.id} - missing job description or resume`);
         }

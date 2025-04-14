@@ -1,8 +1,8 @@
 import { Dayjs } from "dayjs";
 
 export interface PersonalDetailsValidation {
-    firstName: FieldValidation;
-    lastName: FieldValidation;
+    firstname: FieldValidation;
+    lastname: FieldValidation;
     title: FieldValidation;
     email: FieldValidation;
     phone: FieldValidation;
@@ -15,7 +15,7 @@ export interface PersonalDetailsValidation {
   
   export interface WorkExperienceValidation {
     companyName: FieldValidation;
-    jobTitle: FieldValidation;
+    jobtitle: FieldValidation;
     location: FieldValidation;
     description: FieldValidation;
     // Date validation flags

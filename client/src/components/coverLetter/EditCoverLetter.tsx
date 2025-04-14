@@ -15,8 +15,8 @@ import { coverLetterService } from '../../utils/api';
 import { CoverLetter } from './types/coverLetterTypes';
 
 interface ValidationState {
-  firstName: boolean;
-  lastName: boolean;
+  firstname: boolean;
+  lastname: boolean;
   email: boolean;
   title: boolean;
   content: boolean;
@@ -32,8 +32,8 @@ const EditCoverLetter: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   
   const [validation, setValidation] = useState<ValidationState>({
-    firstName: true,
-    lastName: true,
+    firstname: true,
+    lastname: true,
     email: true,
     title: true,
     content: true
@@ -76,8 +76,8 @@ const EditCoverLetter: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newValidation = {
-      firstName: Boolean(coverLetter?.firstName),
-      lastName: Boolean(coverLetter?.lastName),
+      firstname: Boolean(coverLetter?.firstname),
+      lastname: Boolean(coverLetter?.lastname),
       email: Boolean(coverLetter?.email) && validateEmail(coverLetter?.email || ''),
       title: Boolean(coverLetter?.title),
       content: Boolean(coverLetter?.content)

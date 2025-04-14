@@ -75,12 +75,12 @@ export const generateCoverLetter = createAsyncThunk<
   async ({ request, options }, { rejectWithValue }) => {
     try {
       // Use provided options or fallback to defaults
-      const generationOptions: GenerationOptions = options || {
+      const generationoptions: GenerationOptions = options || {
         tone: 'professional',
         length: 'medium',
         focusPoints: []
       };
-      const response = await coverLetterService.generateCoverLetter(request, generationOptions);
+      const response = await coverLetterService.generateCoverLetter(request, generationoptions);
       return response as CoverLetter;
     } catch (error) {
       return rejectWithValue((error as Error).message);

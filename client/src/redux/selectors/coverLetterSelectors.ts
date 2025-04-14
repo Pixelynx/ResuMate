@@ -19,5 +19,5 @@ export const selectGenerationError = (state: RootState) =>
 export const selectCoverLetterById = (id: string) => 
   (state: RootState) => state.coverLetter.coverLetters.find(cl => cl.id === id) || null;
 
-export const selectCoverLettersByResumeId = (resumeId: string) => 
-  (state: RootState) => state.coverLetter.coverLetters.filter(cl => cl.resumeId === resumeId); 
+export const selectCoverLettersByResumeId = (resumeid: string) => 
+  (state: RootState) => state.coverLetter.coverLetters.filter(cl => cl.resumeid === resumeid); 

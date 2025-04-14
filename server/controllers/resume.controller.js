@@ -34,14 +34,14 @@ const validateRequiredFields = (data) => {
     return errors;
   }
   
-  const { firstName, lastName, email, phone, location } = data.personalDetails;
+  const { firstname, lastname, email, phone, location } = data.personalDetails;
   
-  if (!firstName || firstName.trim() === '') {
+  if (!firstname || firstname.trim() === '') {
     errors.push('First name is required');
     console.log('Validation failed: First name missing');
   }
   
-  if (!lastName || lastName.trim() === '') {
+  if (!lastname || lastname.trim() === '') {
     errors.push('Last name is required');
     console.log('Validation failed: Last name missing');
   }
@@ -110,8 +110,8 @@ exports.createResume = async (req, res) => {
     console.log('Creating resume in database...');
     const resume = await Resume.create({
       // Personal details
-      firstName: personalDetails.firstName,
-      lastName: personalDetails.lastName,
+      firstname: personalDetails.firstname,
+      lastname: personalDetails.lastname,
       title: personalDetails.title,
       email: personalDetails.email,
       phone: personalDetails.phone,
@@ -132,8 +132,8 @@ exports.createResume = async (req, res) => {
     const formattedResume = {
       id: resume.id,
       personalDetails: {
-        firstName: resume.firstName,
-        lastName: resume.lastName,
+        firstname: resume.firstname,
+        lastname: resume.lastname,
         title: resume.title,
         email: resume.email,
         phone: resume.phone,
@@ -166,8 +166,8 @@ exports.getAllResumes = async (req, res) => {
     const formattedResumes = resumes.map(resume => ({
       id: resume.id,
       personalDetails: {
-        firstName: resume.firstName,
-        lastName: resume.lastName,
+        firstname: resume.firstname,
+        lastname: resume.lastname,
         title: resume.title,
         email: resume.email,
         phone: resume.phone,
@@ -199,8 +199,8 @@ exports.getResumeById = async (req, res) => {
       const formattedResume = {
         id: resume.id,
         personalDetails: {
-          firstName: resume.firstName,
-          lastName: resume.lastName,
+          firstname: resume.firstname,
+          lastname: resume.lastname,
           title: resume.title,
           email: resume.email,
           phone: resume.phone,
@@ -260,8 +260,8 @@ exports.updateResume = async (req, res) => {
     console.log('Updating resume in database...');
     const [updated] = await Resume.update({
       // Personal details
-      firstName: personalDetails.firstName,
-      lastName: personalDetails.lastName,
+      firstname: personalDetails.firstname,
+      lastname: personalDetails.lastname,
       title: personalDetails.title,
       email: personalDetails.email,
       phone: personalDetails.phone,
@@ -287,8 +287,8 @@ exports.updateResume = async (req, res) => {
       const formattedResume = {
         id: updatedResume.id,
         personalDetails: {
-          firstName: updatedResume.firstName,
-          lastName: updatedResume.lastName,
+          firstname: updatedResume.firstname,
+          lastname: updatedResume.lastname,
           title: updatedResume.title,
           email: updatedResume.email,
           phone: updatedResume.phone,
@@ -322,9 +322,9 @@ exports.updateResume = async (req, res) => {
 exports.deleteResume = async (req, res) => {
   try {
     // Find related cover letters before deleting the resume
-    const CoverLetter = db.coverLetters;
+    const CoverLetter = db.coverletters;
     const relatedCoverLetters = await CoverLetter.findAll({
-      where: { resumeId: req.params.id }
+      where: { resumeid: req.params.id }
     });
     
     // Delete the resume - this will cascade delete all related cover letters

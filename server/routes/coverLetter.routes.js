@@ -1,18 +1,18 @@
 module.exports = app => {
-  const coverLetters = require("../controllers/coverLetter.controller.js");
+  const coverletters = require("../controllers/coverLetter.controller.js");
   const router = require("express").Router();
 
-  router.post("/", coverLetters.create);
+  router.post("/", coverletters.create);
 
-  router.post("/generate", coverLetters.generate);
+  router.post("/generate", coverletters.generate);
 
-  router.get("/", coverLetters.findAll);
+  router.get("/", coverletters.findAll);
 
-  router.get("/:id", coverLetters.findOne);
+  router.get("/:id", coverletters.findOne);
 
-  router.put("/:id", coverLetters.update);
+  router.put("/:id", coverletters.update);
 
-  router.delete("/:id", coverLetters.delete);
+  router.delete("/:id", coverletters.delete);
 
   app.use("/api/cover-letter", router);
 }; 

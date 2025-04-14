@@ -6,19 +6,21 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // Get the existing resume IDs to link cover letters correctly
     const resumes = await queryInterface.sequelize.query(
-      'SELECT id, firstName, lastName, title FROM resumes',
+      'SELECT id, firstname, lastname, title FROM resumes',
       { type: queryInterface.sequelize.QueryTypes.SELECT }
     );
 
     // Create cover letters linked to the existing resumes
-    const coverLetters = [];
+    const coverletters = [];
 
     // Cover letter for Software Engineer resume (John Doe)
     if (resumes.length > 0) {
       const softwareEngineerResume = resumes.find(r => r.title === 'Software Engineer');
       if (softwareEngineerResume) {
-        coverLetters.push({
+        coverletters.push({
           id: uuidv4(),
+          firstname: 'John',
+          lastname: 'Doe',
           title: 'Frontend Developer Application - Tech Innovators',
           content: `Dear Hiring Manager,
 
@@ -32,17 +34,19 @@ I look forward to discussing how my skills and experience can contribute to Tech
 
 Sincerely,
 John Doe`,
-          resumeId: softwareEngineerResume.id,
-          jobTitle: 'Frontend Developer',
+          resumeid: softwareEngineerResume.id,
+          email: 'johndoe@resumate.com',
+          phoneNumber: '+11112223333',
+          jobtitle: 'Frontend Developer',
           company: 'Tech Innovators',
-          jobDescription: `We are looking for a Frontend Developer who is proficient with React.js. The ideal candidate should have:
+          jobdescription: `We are looking for a Frontend Developer who is proficient with React.js. The ideal candidate should have:
 - 3+ years of experience with JavaScript and React
 - Strong understanding of responsive design
 - Experience with performance optimization
 - Knowledge of frontend testing frameworks
 - Ability to work in an agile team environment
 - Experience with TypeScript and Redux is a plus`,
-          generationOptions: JSON.stringify({
+          generationoptions: JSON.stringify({
             tone: 'professional',
             length: 'medium',
             emphasis: ['experience', 'technical skills']
@@ -55,8 +59,10 @@ John Doe`,
       // Cover letter for Data Scientist resume (Jane Smith)
       const dataScientistResume = resumes.find(r => r.title === 'Data Scientist');
       if (dataScientistResume) {
-        coverLetters.push({
+        coverletters.push({
           id: uuidv4(),
+          firstname: 'Jane',
+          lastname: 'Smith',
           title: 'Data Scientist Position - DataCrunch Analytics',
           content: `Dear Hiring Team,
 
@@ -70,17 +76,19 @@ I would welcome the opportunity to discuss how my skills and experience can help
 
 Best regards,
 Jane Smith`,
-          resumeId: dataScientistResume.id,
-          jobTitle: 'Data Scientist',
+          resumeid: dataScientistResume.id,
+          email: 'janesmith@resumate.com',
+          phoneNumber: '+11112223334',
+          jobtitle: 'Data Scientist',
           company: 'DataCrunch Analytics',
-          jobDescription: `DataCrunch Analytics is seeking a skilled Data Scientist to join our growing team. Requirements:
+          jobdescription: `DataCrunch Analytics is seeking a skilled Data Scientist to join our growing team. Requirements:
 - MS or PhD in Statistics, Mathematics, Computer Science or related field
 - Strong programming skills in Python and R
 - Experience with SQL and database systems
 - Knowledge of machine learning algorithms and statistical modeling
 - Excellent communication skills to present findings to stakeholders
 - Experience with big data technologies (Hadoop, Spark) is a plus`,
-          generationOptions: JSON.stringify({
+          generationoptions: JSON.stringify({
             tone: 'professional',
             length: 'medium',
             emphasis: ['technical skills', 'experience']
@@ -93,8 +101,10 @@ Jane Smith`,
       // Cover letter for Full Stack Developer resume (Alice Johnson)
       const fullStackResume = resumes.find(r => r.title === 'Full Stack Developer');
       if (fullStackResume) {
-        coverLetters.push({
+        coverletters.push({
           id: uuidv4(),
+          firstname: 'Alice',
+          lastname: 'Johnson',
           title: 'Full Stack Developer Application - SaaS Solutions',
           content: `Dear Hiring Manager,
 
@@ -108,10 +118,12 @@ I look forward to discussing how my technical skills and experience can benefit 
 
 Best regards,
 Alice Johnson`,
-          resumeId: fullStackResume.id,
-          jobTitle: 'Full Stack Developer',
+          resumeid: fullStackResume.id,
+          phoneNumber: '+11112223335',
+          email: 'alicejohnson@resumate.com',
+          jobtitle: 'Full Stack Developer',
           company: 'SaaS Solutions',
-          jobDescription: `We're looking for a Full Stack Developer to join our team building enterprise SaaS solutions. The ideal candidate will have:
+          jobdescription: `We're looking for a Full Stack Developer to join our team building enterprise SaaS solutions. The ideal candidate will have:
 - 3+ years of experience in full stack development
 - Proficiency in React or Angular on the frontend
 - Experience with Node.js and Express on the backend
@@ -119,7 +131,7 @@ Alice Johnson`,
 - Understanding of microservices architecture
 - Experience with AWS or other cloud platforms
 - Excellent problem-solving and communication skills`,
-          generationOptions: JSON.stringify({
+          generationoptions: JSON.stringify({
             tone: 'confident',
             length: 'medium',
             emphasis: ['technical skills', 'problem solving']
@@ -132,8 +144,10 @@ Alice Johnson`,
       // Cover letter for Marketing Coordinator resume
       const marketingResume = resumes.find(r => r.title === 'Marketing Coordinator');
       if (marketingResume) {
-        coverLetters.push({
+        coverletters.push({
           id: uuidv4(),
+          firstname: 'Sophia',
+          lastname: 'Williams',
           title: 'Marketing Coordinator Position - Global Brands Inc.',
           content: `Dear Hiring Manager,
 
@@ -147,10 +161,12 @@ Thank you for considering my application. I look forward to the possibility of d
 
 Sincerely,
 Sophia Williams`,
-          resumeId: marketingResume.id,
-          jobTitle: 'Marketing Coordinator',
+          resumeid: marketingResume.id,
+          email: 'sophiawilliams@resumate.com',
+          phoneNumber: '+11112223336',
+          jobtitle: 'Marketing Coordinator',
           company: 'Global Brands Inc.',
-          jobDescription: `Global Brands Inc. is seeking a Marketing Coordinator to join our dynamic team. Responsibilities include:
+          jobdescription: `Global Brands Inc. is seeking a Marketing Coordinator to join our dynamic team. Responsibilities include:
 - Developing and implementing social media strategies
 - Creating and distributing marketing materials
 - Assisting with event planning and coordination
@@ -164,7 +180,7 @@ Requirements:
 - Strong social media and communication skills
 - Experience with digital marketing tools and analytics
 - Ability to manage multiple projects simultaneously`,
-          generationOptions: JSON.stringify({
+          generationoptions: JSON.stringify({
             tone: 'enthusiastic',
             length: 'medium',
             emphasis: ['experience', 'communication skills']
@@ -175,10 +191,10 @@ Requirements:
       }
     }
 
-    await queryInterface.bulkInsert('coverLetters', coverLetters, {});
+    await queryInterface.bulkInsert('coverletters', coverletters, {});
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('coverLetters', null, {});
+    await queryInterface.bulkDelete('coverletters', null, {});
   }
 }; 

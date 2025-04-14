@@ -53,7 +53,7 @@ function App() {
               
               {/* Cover Letter Routes */}
               <Route path="/cover-letter/new" element={<CoverLetterForm />} />
-              <Route path="/cover-letter/from-resume/:resumeId" element={<CoverLetterForm />} />
+              <Route path="/cover-letter/from-resume/:resumeid" element={<CoverLetterForm />} />
               <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
               <Route path="/cover-letter/edit/:id" element={<EditCoverLetter />} />
               

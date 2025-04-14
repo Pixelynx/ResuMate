@@ -126,7 +126,7 @@ const ViewCoverLetter: React.FC = () => {
               {coverLetter.title}
             </Typography>
             <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              For: {coverLetter.jobTitle} at {coverLetter.company}
+              For: {coverLetter.jobtitle} at {coverLetter.company}
             </Typography>
             <Divider sx={{ my: 2 }} />
           </Grid>

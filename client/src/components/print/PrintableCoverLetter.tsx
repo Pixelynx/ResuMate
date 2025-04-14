@@ -57,7 +57,7 @@ const PrintableCoverLetter = forwardRef<HTMLDivElement, PrintableCoverLetterProp
   // Use specific print styles when printing
   useEffect(() => {
     if (isPrinting) {
-      document.title = `Cover Letter - ${coverLetter.jobTitle} at ${coverLetter.company}`;
+      document.title = `Cover Letter - ${coverLetter.jobtitle} at ${coverLetter.company}`;
     }
   }, [isPrinting, coverLetter]);
 
@@ -71,7 +71,7 @@ const PrintableCoverLetter = forwardRef<HTMLDivElement, PrintableCoverLetterProp
             {coverLetter.title}
           </Typography>
           <Typography variant="h5" color="textSecondary" gutterBottom>
-            {coverLetter.jobTitle} at {coverLetter.company}
+            {coverLetter.jobtitle} at {coverLetter.company}
           </Typography>
         </Box>
         

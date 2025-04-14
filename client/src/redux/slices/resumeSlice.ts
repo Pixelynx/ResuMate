@@ -110,7 +110,7 @@ export const deleteResume = createAsyncThunk<string, string>(
 );
 
 const validatePersonalDetailsSection = (personalDetails: any) => {
-  const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
+  const requiredFields = ['firstname', 'lastname', 'email', 'phone', 'location'];
   const validationResults: Record<string, { error: boolean; message: string; touched: boolean }> = {};
   let isValid = true;
 
@@ -164,7 +164,7 @@ const resumeSlice = createSlice({
       
       if (state.activeStep === 0) {
         // Validate all required personal details fields
-        const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
+        const requiredFields = ['firstname', 'lastname', 'email', 'phone', 'location'];
         const { isValid, validationResults } = validatePersonalDetailsSection(state.draftResume.personalDetails);
         
         // Check if all required fields are valid and have been touched
@@ -300,8 +300,8 @@ const resumeSlice = createSlice({
     initNewDraftResume: (state: ResumeState) => {
       state.draftResume = {
         personalDetails: {
-          firstName: '',
-          lastName: '',
+          firstname: '',
+          lastname: '',
           title: '',
           email: '',
           phone: '',
@@ -313,7 +313,7 @@ const resumeSlice = createSlice({
         },
         workExperience: [{
           companyName: '',
-          jobTitle: '',
+          jobtitle: '',
           location: '',
           startDate: null,
           endDate: null,
@@ -397,7 +397,7 @@ const resumeSlice = createSlice({
       if (state.draftResume) {
         state.draftResume.workExperience.push({
           companyName: '',
-          jobTitle: '',
+          jobtitle: '',
           location: '',
           startDate: null,
           endDate: null,

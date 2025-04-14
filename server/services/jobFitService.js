@@ -25,7 +25,7 @@ function prepareResumeContent(resume) {
   // Add work experience
   if (resume.workExperience && resume.workExperience.length > 0) {
     const workExp = resume.workExperience.map(exp => 
-      `WORK EXPERIENCE: ${exp.jobTitle} at ${exp.companyName}\n${exp.description}`
+      `WORK EXPERIENCE: ${exp.jobtitle} at ${exp.companyName}\n${exp.description}`
     ).join('\n\n');
     sections.push(workExp);
   }
@@ -60,8 +60,8 @@ const calculateJobFitScore = async (resume, coverLetter) => {
     console.log('Starting job fit score calculation...');
     
     // Extract job description from cover letter
-    const jobDescription = coverLetter.jobDescription;
-    if (!jobDescription) {
+    const jobdescription = coverLetter.jobdescription;
+    if (!jobdescription) {
       throw new Error('Job description is required for scoring');
     }
     
@@ -70,13 +70,13 @@ const calculateJobFitScore = async (resume, coverLetter) => {
     console.log(`Resume content prepared (${resumeContent.length} chars)`);
     
     // Calculate weights for different resume components
-    const componentScores = calculateComponentScores(resume, jobDescription);
+    const componentScores = calculateComponentScores(resume, jobdescription);
     
     // Calculate job fit score using embeddings
     try {
       // Use OpenAI embeddings for calculation
       console.log('Starting embedding similarity calculation...');
-      const similarity = await calculateEmbeddingSimilarity(resumeContent, jobDescription);
+      const similarity = await calculateEmbeddingSimilarity(resumeContent, jobdescription);
       
       // Transform similarity (0-1) to a 0-10 score
       const rawScore = Math.min(10, Math.max(0, similarity * 10));
@@ -115,11 +115,11 @@ const calculateJobFitScore = async (resume, coverLetter) => {
 /**
  * Calculate individual component scores for a resume against a job description
  * @param {Object} resume - Resume data
- * @param {String} jobDescription - Job description text
+ * @param {String} jobdescription - Job description text
  * @returns {Object} Component scores
  */
-function calculateComponentScores(resume, jobDescription) {
-  const jobDescLower = jobDescription.toLowerCase();
+function calculateComponentScores(resume, jobdescription) {
+  const jobDescLower = jobdescription.toLowerCase();
   
   // Calculate a basic score for skills match
   let skillsScore = 0;
@@ -139,16 +139,16 @@ function calculateComponentScores(resume, jobDescription) {
   // Basic score for work experience match
   let workExperienceScore = 0;
   if (resume.workExperience && resume.workExperience.length > 0) {
-    const jobTitles = resume.workExperience.map(exp => exp.jobTitle.toLowerCase());
+    const jobtitles = resume.workExperience.map(exp => exp.jobtitle.toLowerCase());
     let titleMatches = 0;
     
-    jobTitles.forEach(title => {
+    jobtitles.forEach(title => {
       if (jobDescLower.includes(title)) {
         titleMatches++;
       }
     });
     
-    workExperienceScore = jobTitles.length > 0 ? titleMatches / jobTitles.length : 0;
+    workExperienceScore = jobtitles.length > 0 ? titleMatches / jobtitles.length : 0;
   }
   
   // Basic score for projects match
@@ -169,10 +169,10 @@ function calculateComponentScores(resume, jobDescription) {
   }
   
   // Job title match
-  let jobTitleScore = 0;
+  let jobtitleScore = 0;
   if (resume.personalDetails && resume.personalDetails.title) {
     const title = resume.personalDetails.title.toLowerCase();
-    jobTitleScore = jobDescLower.includes(title) ? 1.0 : 0.2;
+    jobtitleScore = jobDescLower.includes(title) ? 1.0 : 0.2;
   }
   
   // Education match
@@ -194,7 +194,7 @@ function calculateComponentScores(resume, jobDescription) {
     skills: skillsScore,
     workExperience: workExperienceScore,
     projects: projectsScore,
-    jobTitle: jobTitleScore,
+    jobtitle: jobtitleScore,
     education: educationScore
   };
 }
@@ -215,13 +215,13 @@ async function generateScoreExplanation(resume, coverLetter, score, componentSco
 You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
 
 Job Details:
-- Title: ${coverLetter.jobTitle || "Not specified"}
+- Title: ${coverLetter.jobtitle || "Not specified"}
 - Company: ${coverLetter.company || "Not specified"}
-- Description: ${coverLetter.jobDescription || "Not provided"}
+- Description: ${coverLetter.jobdescription || "Not provided"}
 
 Candidate's Resume:
 - Skills: ${resume.skills?.skills_ || "Not provided"}
-- Work Experience: ${resume.workExperience?.map(exp => `${exp.jobTitle} at ${exp.companyName}`).join(', ') || "Not provided"}
+- Work Experience: ${resume.workExperience?.map(exp => `${exp.jobtitle} at ${exp.companyName}`).join(', ') || "Not provided"}
 - Projects: ${resume.projects?.map(proj => proj.title).join(', ') || "Not provided"}
 - Education: ${resume.education?.map(edu => `${edu.degree} in ${edu.fieldOfStudy}`).join(', ') || "Not provided"}
 
@@ -229,7 +229,7 @@ Component Match Scores (0-1 scale):
 - Skills match: ${componentScores.skills.toFixed(2)}
 - Work Experience match: ${componentScores.workExperience.toFixed(2)}
 - Projects match: ${componentScores.projects.toFixed(2)}
-- Job Title match: ${componentScores.jobTitle.toFixed(2)}
+- Job Title match: ${componentScores.jobtitle.toFixed(2)}
 - Education match: ${componentScores.education.toFixed(2)}
 
 IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:

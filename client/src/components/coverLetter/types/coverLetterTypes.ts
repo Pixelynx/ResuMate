@@ -2,28 +2,28 @@ export interface CoverLetter {
   id: string;
   title: string;
   content: string;
-  resumeId?: string;
-  jobTitle?: string;
+  resumeid?: string;
+  jobtitle?: string;
   company?: string;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
   phoneNumber?: string;
   prevEmployed?: string[];
-  jobDescription?: string;
+  jobdescription?: string;
   createDate?: string;
   updatedAt?: string;
-  generationOptions?: GenerationOptions;
+  generationoptions?: GenerationOptions;
   createdAt?: string;
 }
 
 export interface CoverLetterGenerationRequest {
-  resumeId: string;
-  jobTitle?: string;
+  resumeid: string;
+  jobtitle?: string;
   company?: string;
-  jobDescription?: string;
-  firstName?: string;
-  lastName?: string;
+  jobdescription?: string;
+  firstname?: string;
+  lastname?: string;
   email?: string;
   phoneNumber?: string;
 }
@@ -44,15 +44,15 @@ export interface CoverLetterListResponse {
 export interface CoverLetterFormData {
   title: string;
   content: string;
-  resumeId?: string;
-  jobTitle?: string;
+  resumeid?: string;
+  jobtitle?: string;
   company?: string;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   email: string;
   phoneNumber?: string;
   prevEmployed?: string[];
-  jobDescription?: string;
+  jobdescription?: string;
 }
 
 export interface CoverLetterGenerationStatus {
@@ -84,7 +84,7 @@ export interface APIResponse<T> {
 // export interface CoverLetterValidationErrors {
 //   title?: string;
 //   content?: string;
-//   jobTitle?: string;
+//   jobtitle?: string;
 //   company?: string;
 // }
 

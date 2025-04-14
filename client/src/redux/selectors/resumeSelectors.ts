@@ -35,8 +35,8 @@ export const selectPersonalDetailsComplete = (state: RootState) => {
   if (!personalDetails) return false;
   
   return !!(
-    personalDetails.firstName &&
-    personalDetails.lastName &&
+    personalDetails.firstname &&
+    personalDetails.lastname &&
     personalDetails.email &&
     personalDetails.phone &&
     personalDetails.location
@@ -46,7 +46,7 @@ export const selectPersonalDetailsComplete = (state: RootState) => {
 export const selectWorkExperienceComplete = (state: RootState) => {
   const workExperience = selectWorkExperience(state);
   return workExperience.some(exp => 
-    exp.companyName && exp.jobTitle && exp.location && exp.startDate
+    exp.companyName && exp.jobtitle && exp.location && exp.startDate
   );
 };
 

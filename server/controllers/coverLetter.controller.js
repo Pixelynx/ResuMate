@@ -1,5 +1,5 @@
 const db = require('../models');
-const CoverLetter = db.coverLetters;
+const CoverLetter = db.coverletters;
 const Resume = db.resumes;
 const { v4: uuidv4 } = require('uuid');
 const aiService = require('../services/ai.service');
@@ -13,21 +13,21 @@ exports.create = async (req, res) => {
       });
     }
 
-    const resumeId = req.body.resumeId;
-    let firstName = req.body.firstName || '';
-    let lastName = req.body.lastName || '';
+    const resumeid = req.body.resumeid;
+    let firstname = req.body.firstname || '';
+    let lastname = req.body.lastname || '';
     let email = req.body.email || '';
     let phoneNumber = req.body.phoneNumber || '';
     let prevEmployed = req.body.prevEmployed || [];
 
-    // If a resumeId is provided, fetch the resume data to populate fields
-    if (resumeId) {
+    // If a resumeid is provided, fetch the resume data to populate fields
+    if (resumeid) {
       try {
-        const resume = await Resume.findByPk(resumeId);
+        const resume = await Resume.findByPk(resumeid);
         if (resume) {
           // Use resume data if not explicitly provided in the request
-          firstName = req.body.firstName || resume.firstName || '';
-          lastName = req.body.lastName || resume.lastName || '';
+          firstname = req.body.firstname || resume.firstname || '';
+          lastname = req.body.lastname || resume.lastname || '';
           email = req.body.email || resume.email || '';
           phoneNumber = req.body.phoneNumber || resume.phone || '';
           
@@ -55,17 +55,17 @@ exports.create = async (req, res) => {
       id: uuidv4(),
       title: req.body.title,
       content: req.body.content,
-      resumeId: resumeId,
-      jobTitle: req.body.jobTitle,
+      resumeid: resumeid,
+      jobtitle: req.body.jobtitle,
       company: req.body.company,
-      jobDescription: req.body.jobDescription || '',
-      firstName,
-      lastName,
+      jobdescription: req.body.jobdescription || '',
+      firstname,
+      lastname,
       email,
       phoneNumber,
       prevEmployed,
       createDate: new Date(),
-      generationOptions: req.body.generationOptions || null
+      generationoptions: req.body.generationoptions || null
     };
 
     const data = await CoverLetter.create(coverLetter);
@@ -118,14 +118,14 @@ exports.update = async (req, res) => {
   const id = req.params.id;
 
   try {
-    // If we're updating the resumeId, fetch resume data to populate fields
-    if (req.body.resumeId) {
+    // If we're updating the resumeid, fetch resume data to populate fields
+    if (req.body.resumeid) {
       try {
-        const resume = await Resume.findByPk(req.body.resumeId);
+        const resume = await Resume.findByPk(req.body.resumeid);
         if (resume) {
           // Only update fields from resume if they're not explicitly provided in the request
-          if (!req.body.firstName) req.body.firstName = resume.firstName || '';
-          if (!req.body.lastName) req.body.lastName = resume.lastName || '';
+          if (!req.body.firstname) req.body.firstname = resume.firstname || '';
+          if (!req.body.lastname) req.body.lastname = resume.lastname || '';
           if (!req.body.email) req.body.email = resume.email || '';
           if (!req.body.phoneNumber) req.body.phoneNumber = resume.phone || '';
           
@@ -149,9 +149,9 @@ exports.update = async (req, res) => {
       }
     }
 
-    // Make sure jobDescription is empty string not null for consistency
-    if (req.body.jobDescription === null) {
-      req.body.jobDescription = '';
+    // Make sure jobdescription is empty string not null for consistency
+    if (req.body.jobdescription === null) {
+      req.body.jobdescription = '';
     }
 
     const [num, updatedRows] = await CoverLetter.update(req.body, {
@@ -203,18 +203,18 @@ exports.delete = async (req, res) => {
 exports.generate = async (req, res) => {
   try {
     // Validate request
-    if (!req.body.resumeId || !req.body.jobTitle || !req.body.company) {
+    if (!req.body.resumeid || !req.body.jobtitle || !req.body.company) {
       return res.status(400).send({
         success: false,
         message: "Resume ID, job title, and company are required!"
       });
     }
 
-    const resumeId = req.body.resumeId;
+    const resumeid = req.body.resumeid;
     const jobDetails = {
-      jobTitle: req.body.jobTitle,
+      jobtitle: req.body.jobtitle,
       company: req.body.company,
-      jobDescription: req.body.jobDescription || ''
+      jobdescription: req.body.jobdescription || ''
     };
 
     const options = {
@@ -229,11 +229,11 @@ exports.generate = async (req, res) => {
     };
     
     // Fetch the resume data
-    const resume = await Resume.findByPk(resumeId);
+    const resume = await Resume.findByPk(resumeid);
     if (!resume) {
       return res.status(404).send({
         success: false,
-        message: `Resume with id=${resumeId} was not found.`
+        message: `Resume with id=${resumeid} was not found.`
       });
     }
 
@@ -259,19 +259,19 @@ exports.generate = async (req, res) => {
     // Create a new cover letter in the database
     const coverLetter = {
       id: uuidv4(),
-      title: `${jobDetails.jobTitle} at ${jobDetails.company}`,
+      title: `${jobDetails.jobtitle} at ${jobDetails.company}`,
       content: content,
-      resumeId: resumeId,
-      jobTitle: jobDetails.jobTitle,
+      resumeid: resumeid,
+      jobtitle: jobDetails.jobtitle,
       company: jobDetails.company,
-      jobDescription: jobDetails.jobDescription || '',
-      firstName: resume.firstName || '',
-      lastName: resume.lastName || '',
+      jobdescription: jobDetails.jobdescription || '',
+      firstname: resume.firstname || '',
+      lastname: resume.lastname || '',
       email: resume.email || '',
       phoneNumber: resume.phone || '',
       prevEmployed,
       createDate: new Date(),
-      generationOptions: options // Store the options used for reference
+      generationoptions: options // Store the options used for reference
     };
 
     const savedCoverLetter = await CoverLetter.create(coverLetter);

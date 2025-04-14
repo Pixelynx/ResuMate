@@ -66,7 +66,7 @@ const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Ce
 const ResumeForm: React.FC = () => {
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
-    const resumeId = searchParams.get('id');
+    const resumeid = searchParams.get('id');
     
     // Redux state
     const activeStep = useAppSelector(selectActiveStep);
@@ -87,8 +87,8 @@ const ResumeForm: React.FC = () => {
       validateWorkExperienceDates,
     } = useFormValidation({
       initialValidationState: {
-        firstName: { error: false, message: '', touched: false },
-        lastName: { error: false, message: '', touched: false },
+        firstname: { error: false, message: '', touched: false },
+        lastname: { error: false, message: '', touched: false },
         title: { error: false, message: '', touched: false },
         email: { error: false, message: '', touched: false },
         phone: { error: false, message: '', touched: false },
@@ -101,7 +101,7 @@ const ResumeForm: React.FC = () => {
         workExperience: [
           {
             companyName: { error: false, message: '', touched: false },
-            jobTitle: { error: false, message: '', touched: false },
+            jobtitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
             startDateValid: true,
@@ -124,10 +124,10 @@ const ResumeForm: React.FC = () => {
 
     // Fetch resume data if ID is provided
     useEffect(() => {
-      if (resumeId) {
-        dispatch(fetchResumeById(resumeId));
+      if (resumeid) {
+        dispatch(fetchResumeById(resumeid));
       }
-    }, [dispatch, resumeId]);
+    }, [dispatch, resumeid]);
 
     const submitResume = async () => {
       if (!formData) return;
@@ -254,7 +254,7 @@ const ResumeForm: React.FC = () => {
           const updatedWorkExperience = [...(prev.workExperience as WorkExperienceValidation[] || [])];
           updatedWorkExperience.push({
             companyName: { error: false, message: '', touched: false },
-            jobTitle: { error: false, message: '', touched: false },
+            jobtitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
             startDateValid: true,
@@ -305,13 +305,13 @@ const ResumeForm: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   required
-                  inputRef={el => fieldRefs.current['firstName'] = el}
+                  inputRef={el => fieldRefs.current['firstname'] = el}
                   placeholder="Enter your first name"
-                  value={formData.personalDetails.firstName}
-                  onChange={(e) => handleChange('personalDetails', 0, 'firstName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 0, 'firstName', e.target.value)}
-                  error={validationState.firstName.error && validationState.firstName.touched}
-                  helperText={validationState.firstName.touched ? validationState.firstName.message : ''}
+                  value={formData.personalDetails.firstname}
+                  onChange={(e) => handleChange('personalDetails', 0, 'firstname', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'firstname', e.target.value)}
+                  error={validationState.firstname.error && validationState.firstname.touched}
+                  helperText={validationState.firstname.touched ? validationState.firstname.message : ''}
                   InputProps={{
                     'aria-label': 'First Name',
                   }}
@@ -323,13 +323,13 @@ const ResumeForm: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   required
-                  inputRef={el => fieldRefs.current['lastName'] = el}
+                  inputRef={el => fieldRefs.current['lastname'] = el}
                   placeholder="Enter your last name"
-                  value={formData.personalDetails.lastName}
-                  onChange={(e) => handleChange('personalDetails', 0, 'lastName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 0, 'lastName', e.target.value)}
-                  error={validationState.lastName.error && validationState.lastName.touched}
-                  helperText={validationState.lastName.touched ? validationState.lastName.message : ''}
+                  value={formData.personalDetails.lastname}
+                  onChange={(e) => handleChange('personalDetails', 0, 'lastname', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'lastname', e.target.value)}
+                  error={validationState.lastname.error && validationState.lastname.touched}
+                  helperText={validationState.lastname.touched ? validationState.lastname.message : ''}
                   InputProps={{
                     'aria-label': 'Last Name',
                   }}
@@ -510,14 +510,14 @@ const ResumeForm: React.FC = () => {
                     label="Job Title"
                     variant="outlined"
                     fullWidth
-                    inputRef={el => fieldRefs.current[`workExperience_${index}_jobTitle`] = el}
-                    value={entry.jobTitle}
-                    onChange={(e) => handleChange('workExperience', index, 'jobTitle', e.target.value)}
-                    onBlur={(e) => handleBlur('workExperience', index, 'jobTitle', e.target.value)}
-                    error={validationState.workExperience?.[index]?.jobTitle.error && 
-                           validationState.workExperience?.[index]?.jobTitle.touched}
-                    helperText={validationState.workExperience?.[index]?.jobTitle.touched ? 
-                              validationState.workExperience?.[index]?.jobTitle.message : ''}
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_jobtitle`] = el}
+                    value={entry.jobtitle}
+                    onChange={(e) => handleChange('workExperience', index, 'jobtitle', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'jobtitle', e.target.value)}
+                    error={validationState.workExperience?.[index]?.jobtitle.error && 
+                           validationState.workExperience?.[index]?.jobtitle.touched}
+                    helperText={validationState.workExperience?.[index]?.jobtitle.touched ? 
+                              validationState.workExperience?.[index]?.jobtitle.message : ''}
                     InputProps={{
                       'aria-label': `Job Title for entry ${index + 1}`,
                     }}

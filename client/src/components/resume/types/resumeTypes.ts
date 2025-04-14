@@ -1,6 +1,6 @@
 export interface PersonalDetails {
-    firstName: string;
-    lastName: string;
+    firstname: string;
+    lastname: string;
     title?: string;
     email: string;
     phone: string;
@@ -13,7 +13,7 @@ export interface PersonalDetails {
   
   export interface WorkExperience {
     companyName: string;
-    jobTitle: string;
+    jobtitle: string;
     location: string;
     startDate: Date | string | null;
     endDate: Date | string | null;
