@@ -30,12 +30,24 @@ require('./routes/jobFit.routes')(app);
 
 const PORT = process.env.PORT || 5000;
 
+const checkSeedDatabase = async () => {
+  const seedDatabase = require('./seeders/index');
+  if (process.env.SEED_DB === 'true') {
+    console.log('Seeding database in progress...');
+    await seedDatabase();
+  } else {
+    console.log('Bypassing database seeding...')
+  }
+}
+
 const startServer = async () => {
   try {
     // Test the database connection
     await db.sequelize.authenticate();
     console.log('Database connection has been established successfully.');
-    
+
+    await checkSeedDatabase();
+
     // Force sync the database models (this will drop and recreate tables)
     // NOTE: To be removed in prod
     await db.sequelize.sync();
