@@ -10,7 +10,7 @@ const app = express();
 const allowedOrigins = [
   'https://resumate-ai.netlify.app',
   process.env.NODE_ENV === 'production'
-    ? 'https://resumate-ai.herokuapp.com'
+    ? 'https://resumate-ai-70da7c41ee80.herokuapp.com/resumes'
     : 'http://localhost:3000'
 ];
 
