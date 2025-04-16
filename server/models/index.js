@@ -1,20 +1,16 @@
 const { Sequelize } = require('sequelize');
-const config = require('../config/config.js');
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config.js')[env];
 
 let sequelize;
   
-if (process.env.NODE_ENV === 'production') {
+if (env === 'production') {
   console.log("PROD")
   sequelize = new Sequelize(
     config.DATABASE_URL,
     {
-      dialect: 'postgres',
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        }
-      }
+      dialect: config.DIALECT,
+      dialectOptions: config.DIALECT_OPTIONS,
     }
   );
 } else {
@@ -25,9 +21,9 @@ if (process.env.NODE_ENV === 'production') {
     config.PASSWORD,
     {
       host: config.HOST,
-      dialect: config.dialect,
-      port: config.port,
-      pool: config.pool
+      dialect: config.DIALECT,
+      port: config.PORT,
+      pool: config.POOL
     }
   ); // TODO: Test env
 }
