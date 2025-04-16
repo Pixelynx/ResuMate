@@ -9,7 +9,7 @@ if (env === 'production') {
   sequelize = new Sequelize(
     config.DATABASE_URL,
     {
-      dialect: config.DIALECT,
+      dialect: 'postgres',
       dialectOptions: config.DIALECT_OPTIONS,
     }
   );
