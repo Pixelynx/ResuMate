@@ -12,3 +12,6 @@ node_modules/
 .vscode/
 *.sublime-workspace
 *.sublime-project
+
+# Dev Configuration
+/server/config/dev.config.json
