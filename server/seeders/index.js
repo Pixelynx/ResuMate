@@ -5,14 +5,14 @@ const seedDatabase = async () => {
   try {
     console.log('Starting database seeding...');
     // Clear existing data (optional)
-    await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
+    await db.sequelize.query('SET session_replication_role = replica;');
     await db.resumes.destroy({ truncate: true, cascade: true });
-    await db.coverLetters.destroy({ truncate: true, cascade: true });
-    await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });
+    await db.coverletters.destroy({ truncate: true, cascade: true });
+    await db.sequelize.query('SET session_replication_role = DEFAULT;');
     console.log('Creating resume seed data...');
     await db.resumes.bulkCreate(resumeSeeds);
     console.log('Creating cover letter seed data...');
-    await db.coverLetters.bulkCreate(coverLetterSeeds);
+    await db.coverletters.bulkCreate(coverLetterSeeds);
     console.log('Database seeding completed successfully');
     return true;
   } catch (error) {

@@ -7,23 +7,23 @@ let sequelize;
 if (env === 'production') {
   console.log("PROD")
   sequelize = new Sequelize(
-    config.DATABASE_URL,
+    process.env[config.use_env_variable],
     {
       dialect: 'postgres',
-      dialectOptions: config.DIALECT_OPTIONS,
+      dialectOptions: config.dialectoptions,
     }
   );
 } else {
   console.log("NOT PROD")
   sequelize = new Sequelize(
-    config.DB,
-    config.USER,
-    config.PASSWORD,
+    config.database,
+    config.username,
+    config.password,
     {
-      host: config.HOST,
-      dialect: config.DIALECT,
-      port: config.PORT,
-      pool: config.POOL
+      host: config.host,
+      dialect: config.dialect,
+      port: config.port,
+      pool: config.pool
     }
   ); // TODO: Test env
 }
