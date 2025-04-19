@@ -115,12 +115,13 @@ class AIService {
     
         // Add a data verification section to ensure the model checks what data actually exists
         promptParts.push(`
-    Available Resume Data Verification:
-    - Work history available: ${workExperience.length > 0 ? 'Yes' : 'No'}
-    - Education history available: ${education.length > 0 ? 'Yes' : 'No'}
-    - Skills listed: ${skillsList ? 'Yes' : 'No'}
-    
-    IMPORTANT: This cover letter must strictly reference ONLY skills, experiences, and qualifications that are explicitly present in the resume data. Completely omit mentions of any qualifications or backgrounds that don't exist rather than noting their absence. DO NOT fabricate or embellish the candidate's background to better match the job requirements.`);
+                Available Resume Data Verification:
+                - Work history available: ${workExperience.length > 0 ? 'Yes' : 'No'}
+                - Education history available: ${education.length > 0 ? 'Yes' : 'No'}
+                - Skills listed: ${skillsList ? 'Yes' : 'No'}
+                
+                IMPORTANT: This cover letter must strictly reference ONLY skills, experiences, and qualifications that are explicitly present in the resume data. Completely omit mentions of any qualifications or backgrounds that don't exist rather than noting their absence. DO NOT fabricate or embellish the candidate's background to better match the job requirements.
+            `);
     
         return promptParts.filter(Boolean).join('\n');
     }

@@ -212,34 +212,34 @@ async function generateScoreExplanation(resume, coverLetter, score, componentSco
         console.log('Requesting AI explanation for score:', score);
         
         const prompt = `
-You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
+          You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
 
-Job Details:
-- Title: ${coverLetter.jobtitle || "Not specified"}
-- Company: ${coverLetter.company || "Not specified"}
-- Description: ${coverLetter.jobdescription || "Not provided"}
+          Job Details:
+          - Title: ${coverLetter.jobtitle || "Not specified"}
+          - Company: ${coverLetter.company || "Not specified"}
+          - Description: ${coverLetter.jobdescription || "Not provided"}
 
-Candidate's Resume:
-- Skills: ${resume.skills?.skills_ || "Not provided"}
-- Work Experience: ${resume.workExperience?.map(exp => `${exp.jobtitle} at ${exp.companyName}`).join(', ') || "Not provided"}
-- Projects: ${resume.projects?.map(proj => proj.title).join(', ') || "Not provided"}
-- Education: ${resume.education?.map(edu => `${edu.degree} in ${edu.fieldOfStudy}`).join(', ') || "Not provided"}
+          Candidate's Resume:
+          - Skills: ${resume.skills?.skills_ || "Not provided"}
+          - Work Experience: ${resume.workExperience?.map(exp => `${exp.jobtitle} at ${exp.companyName}`).join(', ') || "Not provided"}
+          - Projects: ${resume.projects?.map(proj => proj.title).join(', ') || "Not provided"}
+          - Education: ${resume.education?.map(edu => `${edu.degree} in ${edu.fieldOfStudy}`).join(', ') || "Not provided"}
 
-Component Match Scores (0-1 scale):
-- Skills match: ${componentScores.skills.toFixed(2)}
-- Work Experience match: ${componentScores.workExperience.toFixed(2)}
-- Projects match: ${componentScores.projects.toFixed(2)}
-- Job Title match: ${componentScores.jobtitle.toFixed(2)}
-- Education match: ${componentScores.education.toFixed(2)}
+          Component Match Scores (0-1 scale):
+          - Skills match: ${componentScores.skills.toFixed(2)}
+          - Work Experience match: ${componentScores.workExperience.toFixed(2)}
+          - Projects match: ${componentScores.projects.toFixed(2)}
+          - Job Title match: ${componentScores.jobtitle.toFixed(2)}
+          - Education match: ${componentScores.education.toFixed(2)}
 
-IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:
-1. Maintain a helpful, friendly tone throughout
-2. Specifically highlight details that make the candidate a good match for this role
-3. Provide specific, actionable suggestions for how they could improve their resume to better match this job description
-4. If their background doesn't align with the role (e.g., a frontend developer applying for a program manager position), suggest how they could highlight transferable skills or relevant experiences from their background
+          IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:
+          1. Maintain a helpful, friendly tone throughout
+          2. Specifically highlight details that make the candidate a good match for this role
+          3. Provide specific, actionable suggestions for how they could improve their resume to better match this job description
+          4. If their background doesn't align with the role (e.g., a frontend developer applying for a program manager position), suggest how they could highlight transferable skills or relevant experiences from their background
 
-Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
-`;
+          Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
+          `;
 
         console.log('Sending request to OpenAI...');
         const response = await axios.post(
