@@ -4,15 +4,22 @@ const coverLetterSeeds = require('./2025-03-31-create-cover-letters');
 const seedDatabase = async () => {
   try {
     console.log('Starting database seeding...');
+
     // Clear existing data (optional)
     await db.sequelize.query('SET session_replication_role = replica;');
     await db.resumes.destroy({ truncate: true, cascade: true });
     await db.coverletters.destroy({ truncate: true, cascade: true });
     await db.sequelize.query('SET session_replication_role = DEFAULT;');
+    
+    // Using the Sequelize queryInterface for seeding
+    const queryInterface = db.sequelize.getQueryInterface();
+    
     console.log('Creating resume seed data...');
-    await db.resumes.bulkCreate(resumeSeeds);
+    await resumeSeeds.up(queryInterface, db.Sequelize);
+    
     console.log('Creating cover letter seed data...');
-    await db.coverletters.bulkCreate(coverLetterSeeds);
+    await coverLetterSeeds.up(queryInterface, db.Sequelize);
+
     console.log('Database seeding completed successfully');
     return true;
   } catch (error) {
