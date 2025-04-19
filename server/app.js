@@ -46,13 +46,12 @@ const startServer = async () => {
     await db.sequelize.authenticate();
     console.log('Database connection has been established successfully.');
 
-    await checkSeedDatabase();
-
     // Force sync the database models (this will drop and recreate tables)
-    // NOTE: To be removed in prod
     await db.sequelize.sync();
     console.log('Database models synchronized successfully. Tables have been recreated.');
     
+    await checkSeedDatabase();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
