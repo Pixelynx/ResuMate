@@ -46,7 +46,7 @@ John Doe`,
 - Knowledge of frontend testing frameworks
 - Ability to work in an agile team environment
 - Experience with TypeScript and Redux is a plus`,
-          generationoptions: JSON.stringify({
+          generationOptions: JSON.stringify({
             tone: 'professional',
             length: 'medium',
             emphasis: ['experience', 'technical skills']
@@ -88,7 +88,7 @@ Jane Smith`,
 - Knowledge of machine learning algorithms and statistical modeling
 - Excellent communication skills to present findings to stakeholders
 - Experience with big data technologies (Hadoop, Spark) is a plus`,
-          generationoptions: JSON.stringify({
+          generationOptions: JSON.stringify({
             tone: 'professional',
             length: 'medium',
             emphasis: ['technical skills', 'experience']
@@ -131,7 +131,7 @@ Alice Johnson`,
 - Understanding of microservices architecture
 - Experience with AWS or other cloud platforms
 - Excellent problem-solving and communication skills`,
-          generationoptions: JSON.stringify({
+          generationOptions: JSON.stringify({
             tone: 'confident',
             length: 'medium',
             emphasis: ['technical skills', 'problem solving']
@@ -180,7 +180,7 @@ Requirements:
 - Strong social media and communication skills
 - Experience with digital marketing tools and analytics
 - Ability to manage multiple projects simultaneously`,
-          generationoptions: JSON.stringify({
+          generationOptions: JSON.stringify({
             tone: 'enthusiastic',
             length: 'medium',
             emphasis: ['experience', 'communication skills']

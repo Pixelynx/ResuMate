@@ -78,7 +78,6 @@ const Dashboard: React.FC = () => {
         // Fetch cover letters
         try {
           const coverLetterResponse = await coverLetterService.getAllCoverLetters();
-          console.log("COVERS: ", coverLetterResponse);
           
           // Check if response is an array (direct response) or has data property (wrapped response)
           if (Array.isArray(coverLetterResponse)) {

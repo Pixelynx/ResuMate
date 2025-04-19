@@ -65,7 +65,7 @@ exports.create = async (req, res) => {
       phoneNumber,
       prevEmployed,
       createDate: new Date(),
-      generationoptions: req.body.generationoptions || null
+      generationOptions: req.body.generationOptions || null
     };
 
     const data = await CoverLetter.create(coverLetter);
@@ -271,7 +271,7 @@ exports.generate = async (req, res) => {
       phoneNumber: resume.phone || '',
       prevEmployed,
       createDate: new Date(),
-      generationoptions: options // Store the options used for reference
+      generationOptions: options // Store the options used for reference
     };
 
     const savedCoverLetter = await CoverLetter.create(coverLetter);

@@ -53,7 +53,7 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      generationoptions: {
+      generationOptions: {
         type: Sequelize.TEXT,
         allowNull: false,
       },

@@ -64,7 +64,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     },
-    generationoptions: {
+    generationOptions: {
       type: Sequelize.JSON,
       allowNull: true,
       defaultValue: null
