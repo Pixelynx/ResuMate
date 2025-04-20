@@ -64,7 +64,7 @@ exports.create = async (req, res) => {
       email,
       phoneNumber,
       prevEmployed,
-      createDate: new Date(),
+      createdAt: new Date(),
       generationOptions: req.body.generationOptions || null
     };
 
@@ -270,7 +270,7 @@ exports.generate = async (req, res) => {
       email: resume.email || '',
       phoneNumber: resume.phone || '',
       prevEmployed,
-      createDate: new Date(),
+      createdAt: new Date(),
       generationOptions: options // Store the options used for reference
     };
 

@@ -53,6 +53,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      prevEmployed: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       generationOptions: {
         type: Sequelize.TEXT,
         allowNull: false,
