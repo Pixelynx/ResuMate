@@ -11,10 +11,9 @@ export interface CoverLetter {
   phoneNumber?: string;
   prevEmployed?: string[];
   jobdescription?: string;
-  createDate?: string;
+  createdAt?: string;
   updatedAt?: string;
   generationoptions?: GenerationOptions;
-  createdAt?: string;
 }
 
 export interface CoverLetterGenerationRequest {
