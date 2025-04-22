@@ -3,6 +3,13 @@
 ## Project Overview
 Resumate is an AI-powered resume and cover letter creation platform designed to help job seekers create professional documents that improve their chances of landing interviews. The application combines traditional document creation with advanced AI capabilities for job fit scoring, customized cover letter generation, and resume optimization.
 
+## Contents
+[Demo](./client/demo.md)
+[Key Features](#key-features)
+[Technical Implementation](#technical-implementation)
+[Getting Started](#getting-started)
+[Component Architechture](#component-architecture)
+
 ## Key Features
 - **Resume Builder**: Intuitive multi-step form with comprehensive validation for creating detailed resumes
 - **Cover Letter Generator**: AI-powered cover letter creation based on resume data and job details

@@ -4,16 +4,15 @@
 The Resumate client is the frontend application for Resumate, an AI-powered resume and cover letter creation platform. Built with React, TypeScript, and Material UI, it provides a comprehensive user interface for creating professional resumes, generating cover letters, and evaluating job fit with AI assistance.
 
 ## Contents
-![Demo](./demo.md)
-![Key Features](#key-features)
-![Tech Stack](#tech-stack)
-![Project Structure](./structure.md)
-![Component Features](#component-features)
-![State Management](#state-management)
-![API Intergration](#api-integration)
-![Validation](#validation)
-![Project Overview](#overview)
-![Client Roadmap](#development-roadmap)
+[Key Features](#key-features)
+[Tech Stack](#tech-stack)
+[Project Structure](./structure.md)
+[Component Features](#component-features)
+[State Management](#state-management)
+[API Intergration](#api-integration)
+[Validation](#validation)
+[Project Overview](#overview)
+[Client Roadmap](#development-roadmap)
 
 ## Key Features
 - **Multi-step Resume Builder**: Intuitive form with comprehensive validation for creating detailed resumes
