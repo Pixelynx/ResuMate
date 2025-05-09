@@ -1,8 +1,16 @@
+// @ts-ignore
 import React from 'react';
-import { Box, Typography, Paper, Grid } from '@mui/material';
+// @ts-ignore
+import { Box, Typography, Paper, Grid, useTheme, useMediaQuery } from '@mui/material';
+// @ts-ignore
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+// @ts-ignore
+import PersonIcon from '@mui/icons-material/Person';
+// @ts-ignore
+import BusinessIcon from '@mui/icons-material/Business';
+// @ts-ignore
 import WorkIcon from '@mui/icons-material/Work';
-import DescriptionIcon from '@mui/icons-material/Description';
+// @ts-ignore
 import RateReviewIcon from '@mui/icons-material/RateReview';
 
 interface CoverLetterFormStepperProps {
@@ -11,26 +19,48 @@ interface CoverLetterFormStepperProps {
 }
 
 const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeStep, steps }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const stepIcons = [
     <WorkIcon />,               // Job Details
-    <DescriptionIcon />,        // Generate Cover Letter
+    <PersonIcon />,             // Generate Cover Letter
     <RateReviewIcon />          // Review & Save
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', mr: 3, width: '250px' }}>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: isMobile ? 'row' : 'column',
+      mr: isMobile ? 0 : 3,
+      mb: isMobile ? 3 : 0,
+      width: isMobile ? '100%' : '250px',
+      overflowX: isMobile ? 'auto' : 'visible',
+      py: isMobile ? 1 : 0,
+      justifyContent: isMobile ? 'center' : 'flex-start'
+    }}>
+      <Grid 
+        container 
+        spacing={2} 
+        sx={{ 
+          mb: isMobile ? 0 : 2,
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          width: isMobile ? 'max-content' : '100%',
+          justifyContent: isMobile ? 'center' : 'flex-start'
+        }}
+      >
         {steps.map((label, index) => {
           const isCompleted = index < activeStep;
           const isActive = index === activeStep;
 
           return (
-            <Grid item xs={12} key={index}>
+            <Grid item xs={isMobile ? 'auto' : 12} key={index}>
               <Paper
                 elevation={3}
                 sx={{
-                  p: 2,
-                  height: '100px',
+                  p: isMobile ? 1 : 2,
+                  height: isMobile ? '64px' : '100px',
+                  width: isMobile ? '64px' : 'auto',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -46,6 +76,21 @@ const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeS
                     ? '0 3px 5px 2px rgba(106, 27, 154, .3)' 
                     : '0 1px 3px rgba(0, 0, 0, 0.12)',
                   transition: 'all 0.3s ease-in-out',
+                  position: 'relative',
+                  mx: isMobile ? 0.5 : 0,
+                  '&::after': isActive ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: isMobile ? '-8px' : 'auto',
+                    right: isMobile ? 'auto' : '-8px',
+                    left: isMobile ? '50%' : 'auto',
+                    top: isMobile ? 'auto' : '50%',
+                    transform: isMobile ? 'translateX(-50%) rotate(45deg)' : 'translateY(-50%) rotate(45deg)',
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: '#8e24aa',
+                    zIndex: -1
+                  } : {},
                   '&:hover': {
                     boxShadow: '0 5px 8px 2px rgba(142, 36, 170, .4)',
                     transform: 'translateY(-2px)',
@@ -57,18 +102,45 @@ const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeS
                   }
                 }}
               >
-                <Box sx={{ mb: 1, fontSize: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {isCompleted ? <CheckCircleIcon color="success" /> : stepIcons[index]}
+                <Box sx={{ 
+                  mb: isMobile ? 0.5 : 1, 
+                  fontSize: isMobile ? '24px' : '24px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }}>
+                  {isCompleted ? <CheckCircleIcon color="success" fontSize={isMobile ? "medium" : "inherit"} /> : stepIcons[index]}
                 </Box>
-                <Typography 
-                  variant="body2" 
-                  align="center" 
-                  sx={{ 
-                    fontWeight: isActive ? 'bold' : 'normal',
-                  }}
-                >
-                  {label}
-                </Typography>
+                {!isMobile && (
+                  <Typography 
+                    variant="body2" 
+                    align="center" 
+                    sx={{ 
+                      fontWeight: isActive ? 'bold' : 'normal',
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                )}
+                {isMobile && isActive && (
+                  <Typography 
+                    variant="caption" 
+                    align="center" 
+                    sx={{ 
+                      fontWeight: 'bold',
+                      lineHeight: 1,
+                      position: 'absolute',
+                      bottom: '-20px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      whiteSpace: 'nowrap',
+                      color: 'text.primary',
+                      fontSize: '0.65rem'
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                )}
               </Paper>
             </Grid>
           );
