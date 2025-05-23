@@ -1,8 +1,8 @@
 ## Dashboard
-[Resumate Dash](../demo/resumate-dash.jpg)
+![Resumate Dash](../demo/resumate-dash.jpg)
 
 ## Resume Builder
-[Resume Builder](../demo/resumate-resume-form.jpg)
+![Resume Builder](../demo/resumate-resume-form.jpg)
 
 ## Resume Print Example
 
@@ -11,4 +11,4 @@
 ## Cover Letter Print Example
 
 ## Job Score
-[Job Score](../demo/resumate-job-score-cropped.png)
+![Job Score](../demo/resumate-job-score-cropped.png)
