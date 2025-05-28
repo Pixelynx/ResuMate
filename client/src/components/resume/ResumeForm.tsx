@@ -79,14 +79,8 @@ const ResumeForm: React.FC = () => {
     // Local state for success message
     const [submitSuccess, setSubmitSuccess] = React.useState(false);
 
-    const {
-      setValidationState,
-      validationState,
-      fieldRefs,
-      handleBlur,
-      validateWorkExperienceDates,
-    } = useFormValidation({
-      initialValidationState: {
+    const defaultValidationState = {
+      personalDetails: {
         firstname: { error: false, message: '', touched: false },
         lastname: { error: false, message: '', touched: false },
         title: { error: false, message: '', touched: false },
@@ -96,31 +90,54 @@ const ResumeForm: React.FC = () => {
         linkedin: { error: false, message: '', touched: false },
         website: { error: false, message: '', touched: false },
         github: { error: false, message: '', touched: false },
-        instagram: { error: false, message: '', touched: false },
-        companyName: { error: false, message: '', touched: false },
-        workExperience: [
-          {
-            companyName: { error: false, message: '', touched: false },
-            jobtitle: { error: false, message: '', touched: false },
-            location: { error: false, message: '', touched: false },
-            description: { error: false, message: '', touched: false },
-            startDateValid: true,
-            endDateValid: true,
-            dateErrorMessage: '',
-          }
-        ]
+        instagram: { error: false, message: '', touched: false }
       },
+      workExperience: [
+        {
+          companyName: { error: false, message: '', touched: false },
+          jobtitle: { error: false, message: '', touched: false },
+          location: { error: false, message: '', touched: false },
+          description: { error: false, message: '', touched: false },
+          startDateValid: true,
+          endDateValid: true,
+          dateErrorMessage: ''
+        }
+      ],
+      education: [
+        {
+          institutionName: { error: false, message: '', touched: false },
+          degree: { error: false, message: '', touched: false },
+          fieldOfStudy: { error: false, message: '', touched: false },
+          location: { error: false, message: '', touched: false }
+        }
+      ]
+    };
+
+    const {
+      setValidationState,
+      validationState,
+      fieldRefs,
+      handleBlur,
+      validateWorkExperienceDates,
+    } = useFormValidation({
+      initialValidationState: defaultValidationState,
       onValidationChange: (isValid) => {
         console.log('Form validation state changed:', isValid);
       }
     });
 
-    // Initialize resume form
+    // Add cleanup for field refs only
     useEffect(() => {
-      if (!formData) {
+      // Clear any field refs for the previous step
+      fieldRefs.current = {};
+    }, [activeStep, fieldRefs]);
+
+    // Add effect to handle form data initialization
+    useEffect(() => {
+      if (!formData && !loading) {
         dispatch(initNewDraftResume());
       }
-    }, [dispatch, formData]);
+    }, [dispatch, formData, loading]);
 
     // Fetch resume data if ID is provided
     useEffect(() => {
@@ -198,45 +215,37 @@ const ResumeForm: React.FC = () => {
       // Special handling for date fields to ensure they're serializable
       const isDateField = ['startDate', 'endDate', 'graduationDate', 'dateObtained', 'expirationDate'].includes(field);
       
-      // Serialize date objects to ISO strings before storing in Redux
       let processedValue = formattedValue;
-      if (isDateField && formattedValue) {
-        console.log(`Processing date field ${field}:`, formattedValue);
-        try {
-          // Check if it's a dayjs object (has format method)
-          if (formattedValue.format) {
-            processedValue = formattedValue.toISOString();
-            console.log(`Converted dayjs to ISO string: ${processedValue}`);
-          } 
-          // For regular Date objects
-          else if (formattedValue instanceof Date) {
-            processedValue = formattedValue.toISOString();
-            console.log(`Converted Date to ISO string: ${processedValue}`);
+      if (isDateField) {
+        // If the value is null or undefined, keep it as is
+        if (!formattedValue) {
+          processedValue = null;
+        } else {
+          // Ensure we have a valid dayjs object
+          const dateObj = dayjs(formattedValue);
+          if (dateObj.isValid()) {
+            // Store as ISO string in Redux
+            processedValue = dateObj.toISOString();
+          } else {
+            console.warn(`Invalid date value for ${field}:`, formattedValue);
+            processedValue = null;
           }
-          // Otherwise try to create a dayjs object and convert
-          else {
-            const dayjsObj = dayjs(formattedValue);
-            if (dayjsObj.isValid()) {
-              processedValue = dayjsObj.toISOString();
-              console.log(`Converted to ISO string: ${processedValue}`);
-            } else {
-              console.log(`Invalid date, not converting: ${formattedValue}`);
-            }
-          }
-        } catch (error) {
-          console.error(`Error serializing date ${field}:`, error);
-          // Fall back to original value if conversion fails
-          processedValue = formattedValue;
         }
       }
 
       if (section === 'personalDetails') {
         dispatch(updatePersonalDetails({ field, value: processedValue }));
         setTimeout(() => {
-          handleBlur(section, 0, field, processedValue);
+          handleBlur('personalDetails', 0, field, processedValue);
         }, 300);
       } else if (section === 'workExperience') {
         dispatch(updateWorkExperience({ index, field, value: processedValue }));
+        if (isDateField) {
+          const currentEntry = formData?.workExperience[index];
+          const startDate = field === 'startDate' ? processedValue : currentEntry?.startDate;
+          const endDate = field === 'endDate' ? processedValue : currentEntry?.endDate;
+          validateWorkExperienceDates(index, startDate, endDate);
+        }
       } else if (section === 'education') {
         dispatch(updateEducation({ index, field, value: processedValue }));
       } else if (section === 'skills') {
@@ -310,8 +319,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.firstname}
                   onChange={(e) => handleChange('personalDetails', 0, 'firstname', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'firstname', e.target.value)}
-                  error={validationState.firstname.error && validationState.firstname.touched}
-                  helperText={validationState.firstname.touched ? validationState.firstname.message : ''}
+                  error={validationState.personalDetails.firstname.error && validationState.personalDetails.firstname.touched}
+                  helperText={validationState.personalDetails.firstname.touched ? validationState.personalDetails.firstname.message : ''}
                   InputProps={{
                     'aria-label': 'First Name',
                   }}
@@ -328,8 +337,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.lastname}
                   onChange={(e) => handleChange('personalDetails', 0, 'lastname', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'lastname', e.target.value)}
-                  error={validationState.lastname.error && validationState.lastname.touched}
-                  helperText={validationState.lastname.touched ? validationState.lastname.message : ''}
+                  error={validationState.personalDetails.lastname.error && validationState.personalDetails.lastname.touched}
+                  helperText={validationState.personalDetails.lastname.touched ? validationState.personalDetails.lastname.message : ''}
                   InputProps={{
                     'aria-label': 'Last Name',
                   }}
@@ -345,8 +354,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.title}
                   onChange={(e) => handleChange('personalDetails', 0, 'title', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'title', e.target.value)}
-                  error={validationState.title.error && validationState.title.touched}
-                  helperText={validationState.title.touched ? validationState.title.message : ''}
+                  error={validationState.personalDetails.title.error && validationState.personalDetails.title.touched}
+                  helperText={validationState.personalDetails.title.touched ? validationState.personalDetails.title.message : ''}
                   InputProps={{
                     'aria-label': 'Professional Title',
                   }}
@@ -364,8 +373,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.email}
                   onChange={(e) => handleChange('personalDetails', 0, 'email', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'email', e.target.value)}
-                  error={validationState.email.error && validationState.email.touched}
-                  helperText={validationState.email.touched ? validationState.email.message : ''}
+                  error={validationState.personalDetails.email.error && validationState.personalDetails.email.touched}
+                  helperText={validationState.personalDetails.email.touched ? validationState.personalDetails.email.message : ''}
                   InputProps={{
                     'aria-label': 'Email Address',
                   }}
@@ -382,8 +391,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.phone}
                   onChange={(e) => handleChange('personalDetails', 0, 'phone', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'phone', e.target.value)}
-                  error={validationState.phone.error && validationState.phone.touched}
-                  helperText={validationState.phone.touched ? validationState.phone.message : ''}
+                  error={validationState.personalDetails.phone.error && validationState.personalDetails.phone.touched}
+                  helperText={validationState.personalDetails.phone.touched ? validationState.personalDetails.phone.message : ''}
                   InputProps={{
                     'aria-label': 'Phone Number',
                   }}
@@ -400,8 +409,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.location}
                   onChange={(e) => handleChange('personalDetails', 0, 'location', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'location', e.target.value)}
-                  error={validationState.location.error && validationState.location.touched}
-                  helperText={validationState.location.touched ? validationState.location.message : ''}
+                  error={validationState.personalDetails.location.error && validationState.personalDetails.location.touched}
+                  helperText={validationState.personalDetails.location.touched ? validationState.personalDetails.location.message : ''}
                   InputProps={{
                     'aria-label': 'Location',
                   }}
@@ -418,8 +427,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.linkedin}
                   onChange={(e) => handleChange('personalDetails', 0, 'linkedin', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'linkedin', e.target.value)}
-                  error={validationState.linkedin.error && validationState.linkedin.touched}
-                  helperText={validationState.linkedin.touched ? validationState.linkedin.message : ''}
+                  error={validationState.personalDetails.linkedin.error && validationState.personalDetails.linkedin.touched}
+                  helperText={validationState.personalDetails.linkedin.touched ? validationState.personalDetails.linkedin.message : ''}
                   InputProps={{
                     'aria-label': 'LinkedIn Profile URL',
                   }}
@@ -436,8 +445,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.website}
                   onChange={(e) => handleChange('personalDetails', 0, 'website', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'website', e.target.value)}
-                  error={validationState.website.error && validationState.website.touched}
-                  helperText={validationState.website.touched ? validationState.website.message : ''}
+                  error={validationState.personalDetails.website.error && validationState.personalDetails.website.touched}
+                  helperText={validationState.personalDetails.website.touched ? validationState.personalDetails.website.message : ''}
                   InputProps={{
                     'aria-label': 'Website URL',
                   }}
@@ -454,8 +463,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.github}
                   onChange={(e) => handleChange('personalDetails', 0, 'github', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'github', e.target.value)}
-                  error={validationState.github.error && validationState.github.touched}
-                  helperText={validationState.github.touched ? validationState.github.message : ''}
+                  error={validationState.personalDetails.github.error && validationState.personalDetails.github.touched}
+                  helperText={validationState.personalDetails.github.touched ? validationState.personalDetails.github.message : ''}
                   InputProps={{
                     'aria-label': 'GitHub URL',
                   }}
@@ -472,8 +481,8 @@ const ResumeForm: React.FC = () => {
                   value={formData.personalDetails.instagram}
                   onChange={(e) => handleChange('personalDetails', 0, 'instagram', e.target.value)}
                   onBlur={(e) => handleBlur('personalDetails', 0, 'instagram', e.target.value)}
-                  error={validationState.instagram.error && validationState.instagram.touched}
-                  helperText={validationState.instagram.touched ? validationState.instagram.message : ''}
+                  error={validationState.personalDetails.instagram.error && validationState.personalDetails.instagram.touched}
+                  helperText={validationState.personalDetails.instagram.touched ? validationState.personalDetails.instagram.message : ''}
                   InputProps={{
                     'aria-label': 'Instagram URL',
                   }}

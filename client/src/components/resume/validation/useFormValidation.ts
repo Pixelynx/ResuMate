@@ -1,5 +1,4 @@
-// src/components/resume/validation/useFormValidation.ts
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { ValidationState, ValidationError } from '../types/validationTypes';
 import { validatePersonalDetails } from './personalDetailsValidation';
 import { validateWorkExperience } from './workExperienceValidation';
@@ -7,6 +6,8 @@ import { validateEducation } from './educationValidation';
 import { validateSkills } from './skillsValidation';
 import { validateCertification } from './certificationsValidation';
 import dayjs from 'dayjs';
+import { useAppSelector } from '../../../redux/hooks';
+import { selectActiveStep } from '../../../redux/selectors/resumeSelectors';
 
 interface UseFormValidationProps {
   initialValidationState: ValidationState;
@@ -16,6 +17,32 @@ interface UseFormValidationProps {
 export const useFormValidation = ({ initialValidationState, onValidationChange }: UseFormValidationProps) => {
   const [validationState, setValidationState] = useState<ValidationState>(initialValidationState);
   const fieldRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const activeStep = useAppSelector(selectActiveStep);
+  const prevStep = useRef(activeStep);
+
+  // Only reset validation state when moving to a new step
+  useEffect(() => {
+    if (prevStep.current !== activeStep) {
+      // Preserve validation state for the current step
+      setValidationState(prev => ({
+        ...initialValidationState,
+        ...(activeStep === 0 ? { personalDetails: prev.personalDetails } :
+            activeStep === 1 ? { workExperience: prev.workExperience } :
+            activeStep === 2 ? { education: prev.education } :
+            activeStep === 3 ? { skills: prev.skills } :
+            activeStep === 4 ? { certifications: prev.certifications } :
+            activeStep === 5 ? { projects: prev.projects } : {})
+      }));
+      prevStep.current = activeStep;
+    }
+  }, [activeStep, initialValidationState]);
+
+  // Cleanup refs when unmounting
+  useEffect(() => {
+    return () => {
+      fieldRefs.current = {};
+    };
+  }, []);
 
   const validateField = useCallback((section: string, index: number, field: string, value: any) => {
     switch (section) {
@@ -79,45 +106,21 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
   };
 
   const validateWorkExperienceDates = (index: number, startDate: any, endDate: any) => {
-    console.log(`Validating work experience dates at index ${index}:`, { startDate, endDate });
-    let isValid = true;
-    let errorMessage = '';
+    if (!startDate && !endDate) return true;
 
-    if (!startDate) {
-      isValid = false;
-      errorMessage = 'Start date is required';
-      console.log('Validation failed: Start date is required');
-    }
-    // Check if end date is after start date (if both are provided)
-    else if (startDate && endDate) {
-      try {
-        const validRange = isValidDateRange(startDate, endDate);
-        if (!validRange) {
-          isValid = false;
-          errorMessage = 'End date must be after start date';
-          console.log('Validation failed: End date must be after start date');
-        }
-      } catch (error) {
-        console.error('Error during date range validation:', error);
-        // Don't mark as invalid on error to prevent blocking the user
-      }
-    }
-
-    setValidationState(prev => {
-      const updatedWorkExperience = [...prev.workExperience];
-      if (updatedWorkExperience[index]) {
-        updatedWorkExperience[index] = {
-          ...updatedWorkExperience[index],
-          startDateValid: startDate ? true : false,
+    const isValid = isValidDateRange(startDate, endDate);
+    
+    setValidationState(prev => ({
+      ...prev,
+      workExperience: prev.workExperience.map((exp: any, i: number) => 
+        i === index ? {
+          ...exp,
+          startDateValid: isValid,
           endDateValid: isValid,
-          dateErrorMessage: errorMessage
-        };
-      }
-      return {
-        ...prev,
-        workExperience: updatedWorkExperience
-      };
-    });
+          dateErrorMessage: isValid ? '' : 'End date must be after start date'
+        } : exp
+      )
+    }));
 
     return isValid;
   };
@@ -125,18 +128,72 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
   const handleBlur = useCallback((section: string, index: number, field: string, value: any) => {
     const { isValid, message } = validateField(section, index, field, value);
 
-    setValidationState(prev => ({
-      ...prev,
-      [field]: {
-        error: !isValid,
-        message,
-        touched: true
+    setValidationState(prev => {
+      // Handle nested validation state based on section
+      if (section === 'personalDetails') {
+        return {
+          ...prev,
+          personalDetails: {
+            ...prev.personalDetails,
+            [field]: {
+              error: !isValid,
+              message,
+              touched: true
+            }
+          }
+        };
+      } else if (section === 'workExperience') {
+        const updatedWorkExperience = [...(prev.workExperience || [])];
+        if (!updatedWorkExperience[index]) {
+          updatedWorkExperience[index] = {};
+        }
+        updatedWorkExperience[index] = {
+          ...updatedWorkExperience[index],
+          [field]: {
+            error: !isValid,
+            message,
+            touched: true
+          }
+        };
+        return {
+          ...prev,
+          workExperience: updatedWorkExperience
+        };
+      } else if (section === 'education') {
+        const updatedEducation = [...(prev.education || [])];
+        if (!updatedEducation[index]) {
+          updatedEducation[index] = {};
+        }
+        updatedEducation[index] = {
+          ...updatedEducation[index],
+          [field]: {
+            error: !isValid,
+            message,
+            touched: true
+          }
+        };
+        return {
+          ...prev,
+          education: updatedEducation
+        };
       }
-    }));
+      
+      // Default case for other sections
+      return {
+        ...prev,
+        [field]: {
+          error: !isValid,
+          message,
+          touched: true
+        }
+      };
+    });
 
     if (onValidationChange) {
-      const isFormValid = Object.values(validationState).every(
-        field => !field.error || !field.touched
+      // Check validation state for the current section
+      const sectionState = validationState[section] as Record<string, { error: boolean; touched: boolean }>;
+      const isFormValid = Object.values(sectionState || {}).every(
+        (field) => !field.error || !field.touched
       );
       onValidationChange(isFormValid);
     }
