@@ -6,6 +6,7 @@ import { validateWorkExperience } from './workExperienceValidation';
 import { validateEducation } from './educationValidation';
 import { validateSkills } from './skillsValidation';
 import { validateCertification } from './certificationsValidation';
+import dayjs from 'dayjs';
 
 interface UseFormValidationProps {
   initialValidationState: ValidationState;
@@ -35,22 +36,71 @@ export const useFormValidation = ({ initialValidationState, onValidationChange }
 
   // Validate if end date is after start date
   const isValidDateRange = (startDate: any, endDate: any): boolean => {
-    if (!startDate || !endDate) return true; // If either date is missing, consider it valid
-    return new Date(endDate) >= new Date(startDate);
+    console.log('Checking date range:', { startDate, endDate });
+    
+    // If either date is missing, consider it valid
+    if (!startDate || !endDate) {
+      console.log('Missing date, returning valid');
+      return true;
+    }
+    
+    try {
+      // Convert to dayjs objects and check validity
+      const startDayjs = dayjs(startDate);
+      const endDayjs = dayjs(endDate);
+      
+      console.log('Date objects:', {
+        startDayjs: startDayjs.format ? startDayjs.format('YYYY-MM-DD') : 'Invalid date',
+        endDayjs: endDayjs.format ? endDayjs.format('YYYY-MM-DD') : 'Invalid date',
+        startValid: startDayjs.isValid(),
+        endValid: endDayjs.isValid()
+      });
+      
+      // Only compare if both are valid dayjs objects
+      if (!startDayjs.isValid() || !endDayjs.isValid()) {
+        console.log('Invalid date object detected, returning valid to avoid blocking');
+        return true; // Consider invalid dates as valid to avoid blocking progression
+      }
+      
+      // Safe comparison using timestamps instead of isBefore
+      const startTime = startDayjs.valueOf();
+      const endTime = endDayjs.valueOf();
+      
+      console.log('Date range comparison:', { startTime, endTime });
+      
+      // End date should not be before start date
+      const isValid = endTime >= startTime;
+      console.log('Date range comparison result:', isValid ? 'Valid' : 'Invalid');
+      return isValid;
+    } catch (error) {
+      console.error('Error in date validation:', error);
+      return true; // On error, return valid to avoid blocking user
+    }
   };
 
   const validateWorkExperienceDates = (index: number, startDate: any, endDate: any) => {
+    console.log(`Validating work experience dates at index ${index}:`, { startDate, endDate });
     let isValid = true;
     let errorMessage = '';
 
     if (!startDate) {
       isValid = false;
       errorMessage = 'Start date is required';
+      console.log('Validation failed: Start date is required');
     }
     // Check if end date is after start date (if both are provided)
-    else if (startDate && endDate && !isValidDateRange(startDate, endDate)) {
-      isValid = false;
-      errorMessage = 'End date must be after start date';
+    else if (startDate && endDate) {
+      try {
+        const validRange = isValidDateRange(startDate, endDate);
+        if (!validRange) {
+          isValid = false;
+          errorMessage = 'End date must be after start date';
+          console.log('Validation failed: End date must be after start date');
+        }
+      } catch (error) {
+        console.error('Error during date range validation:', error);
+        // Don't mark as invalid on error to prevent blocking the user
+      }
     }
 
     setValidationState(prev => {

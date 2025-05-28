@@ -2,20 +2,29 @@ export interface CoverLetter {
   id: string;
   title: string;
   content: string;
-  resumeId: string;
-  jobTitle: string;
-  company: string;
-  generationOptions?: GenerationOptions;
+  resumeid?: string;
+  jobtitle?: string;
+  company?: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phoneNumber?: string;
+  prevEmployed?: string[];
+  jobdescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  generationoptions?: GenerationOptions;
 }
 
 export interface CoverLetterGenerationRequest {
-  resumeId: string;
-  jobTitle: string;
-  company: string;
-  jobDescription?: string;
-  options?: GenerationOptions;
+  resumeid: string;
+  jobtitle?: string;
+  company?: string;
+  jobdescription?: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  phoneNumber?: string;
 }
 
 export interface CoverLetterResponse {
@@ -34,10 +43,15 @@ export interface CoverLetterListResponse {
 export interface CoverLetterFormData {
   title: string;
   content: string;
-  resumeId: string;
-  jobTitle: string;
-  company: string;
-  jobDescription?: string;
+  resumeid?: string;
+  jobtitle?: string;
+  company?: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phoneNumber?: string;
+  prevEmployed?: string[];
+  jobdescription?: string;
 }
 
 export interface CoverLetterGenerationStatus {
@@ -69,7 +83,7 @@ export interface APIResponse<T> {
 // export interface CoverLetterValidationErrors {
 //   title?: string;
 //   content?: string;
-//   jobTitle?: string;
+//   jobtitle?: string;
 //   company?: string;
 // }
 
@@ -86,8 +100,8 @@ export interface CoverLetterFormState {
 export interface GenerationOptions {
   tone?: 'professional' | 'casual' | 'enthusiastic';
   length?: 'short' | 'medium' | 'long';
-  emphasis?: string[]; // specific skills or experiences to emphasize
-  customInstructions?: string;
+  focusPoints?: string[];
+  includeReferences?: boolean;
   model?: string;
   temperature?: number;
   maxTokens?: number;
@@ -98,7 +112,7 @@ export interface GenerationOptions {
 export const DEFAULT_GENERATION_OPTIONS: GenerationOptions = {
   tone: 'professional',
   length: 'medium',
-  emphasis: [],
+  focusPoints: [],
   model: 'gpt-3.5-turbo',
   temperature: 0.7,
   maxTokens: 1000,

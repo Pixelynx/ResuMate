@@ -1,15 +1,15 @@
 import React from 'react';
-import { ResumeFormData } from './ResumeForm';
 import { 
   Box,
   Typography,
   Divider,
-  Grid, Paper,
+  Grid,
   List,
   ListItem,
   ListItemText,
   Chip,
-  Link
+  Link,
+  Container
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -18,6 +18,7 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
 import { formatDate } from '../../utils/validation';
+import { ResumeFormData } from './types/resumeTypes';
 
 const isSectionEmpty = (section: any[] | object): boolean => {
   if (Array.isArray(section)) {
@@ -46,11 +47,11 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
   const hasProjects = !isSectionEmpty(projects);
 
   return (
-    <Paper elevation={3} sx={{ p: 4, maxWidth: '100%', mx: 'auto' }}>
+    <Container maxWidth="md">
       {/* Personal Details */}
       <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h3" gutterBottom>
-          {personalDetails.firstName} {personalDetails.lastName}
+          {personalDetails.firstname} {personalDetails.lastname}
         </Typography>
         
         {personalDetails.title && (
@@ -116,12 +117,12 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
           </Typography>
           
           {workExperience
-            .filter(job => job.companyName.trim() || job.jobTitle.trim())
+            .filter(job => job.companyName.trim() || job.jobtitle.trim())
             .map((job, index) => (
               <Box key={index} sx={{ mb: 2 }}>
                 <Typography variant="h6">{job.companyName}</Typography>
-                {job.jobTitle && (
-                  <Typography variant="subtitle1" color="primary">{job.jobTitle}</Typography>
+                {job.jobtitle && (
+                  <Typography variant="subtitle1" color="primary">{job.jobtitle}</Typography>
                 )}
                 <Typography variant="body2" color="text.secondary">
                   {job.location}
@@ -135,7 +136,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                     {job.description}
                   </Typography>
                 )}
-                {index < workExperience.filter(j => j.companyName.trim() || j.jobTitle.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
+                {index < workExperience.filter(j => j.companyName.trim() || j.jobtitle.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
               </Box>
             ))}
         </Box>
@@ -295,7 +296,7 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
             ))}
         </Box>
       )}
-    </Paper>
+    </Container>
     );
   };
   

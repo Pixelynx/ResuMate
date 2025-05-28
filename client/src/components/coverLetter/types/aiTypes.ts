@@ -10,15 +10,15 @@ export interface AIServiceConfig {
 export interface AIGenerationRequest {
   resumeData: {
     personalDetails: {
-      firstName: string;
-      lastName: string;
+      firstname: string;
+      lastname: string;
       title?: string;
       email: string;
       phone: string;
       location: string;
     };
     workExperience?: Array<{
-      jobTitle: string;
+      jobtitle: string;
       company: string;
       description: string;
       startDate: string;
@@ -29,9 +29,9 @@ export interface AIGenerationRequest {
     };
   };
   jobDetails: {
-    jobTitle: string;
+    jobtitle: string;
     company: string;
-    jobDescription?: string;
+    jobdescription?: string;
   };
   options?: GenerationOptions;
 }

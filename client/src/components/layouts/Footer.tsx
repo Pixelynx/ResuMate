@@ -7,9 +7,8 @@ const Footer: React.FC = () => {
       component="footer"
       sx={{
         position: 'fixed',
-        bottom: 16,
+        bottom: '4px',
         left: '50%',
-        transform: 'translateX(-50%)',
         width: 'calc(100% - 32px)',
         maxWidth: '1200px',
         padding: '16px 24px',
@@ -17,15 +16,16 @@ const Footer: React.FC = () => {
         backgroundColor: 'rgba(106, 27, 154, 0.95)',
         backdropFilter: 'blur(8px)',
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        transform: 'translateX(-50%)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        zIndex: 1000,
         color: 'white',
+        zIndex: 10,
       }}
     >
       <Typography variant="body2" sx={{ opacity: 0.9 }}>
-        &copy; {new Date().getFullYear()} Resumate
+        {new Date().getFullYear()} Resumate
       </Typography>
       <Box sx={{ display: 'flex', gap: 3 }}>
         <Link

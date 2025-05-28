@@ -36,5 +36,6 @@ coverage/
 .yarn-integrity
 *.sublime-project
 
-# Ignore package-lock.json if you don't want to lock dependencies
-# package-lock.json
+# Misc files
+\example-job-comparison.js
+\queryCoverLetterWithResume.js

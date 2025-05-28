@@ -29,10 +29,10 @@ dayjs.extend(relativeTime);
 
 interface ResumeListProps {
   resumes: Resume[];
-  onView: (resumeId: string) => void;
-  onEdit: (resumeId: string) => void;
-  onDelete: (resumeId: string) => void;
-  onCreateCoverLetter: (resumeId: string) => void;
+  onView: (resumeid: string) => void;
+  onEdit: (resumeid: string) => void;
+  onDelete: (resumeid: string) => void;
+  onCreateCoverLetter: (resumeid: string) => void;
 }
 
 const ResumeList: React.FC<ResumeListProps> = ({
@@ -45,9 +45,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedResumeId, setSelectedResumeId] = React.useState<string | null>(null);
   
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, resumeId: string) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, resumeid: string) => {
     setAnchorEl(event.currentTarget);
-    setSelectedResumeId(resumeId);
+    setSelectedResumeId(resumeid);
   };
 
   const handleMenuClose = () => {
@@ -58,13 +58,6 @@ const ResumeList: React.FC<ResumeListProps> = ({
   const handleView = () => {
     if (selectedResumeId) {
       onView(selectedResumeId);
-      handleMenuClose();
-    }
-  };
-
-  const handleEdit = () => {
-    if (selectedResumeId) {
-      onEdit(selectedResumeId);
       handleMenuClose();
     }
   };
@@ -127,10 +120,10 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   }
                 }}
               >
-                <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2 } }}>
+                <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Typography variant="h6" component="div" noWrap>
-                      {resume.personalDetails.firstName} {resume.personalDetails.lastName}
+                      {resume.personalDetails.firstname} {resume.personalDetails.lastname}
                     </Typography>
                     <IconButton 
                       size="small" 
@@ -147,37 +140,19 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   
                   <Divider sx={{ my: 1 }} />
                   
-                  <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Skills:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {extractSkills(resume).map((skill: string, index: number) => (
-                        <Chip 
-                          key={index} 
-                          label={skill} 
-                          size="small" 
-                          sx={{ 
-                            backgroundColor: 'rgba(106, 27, 154, 0.1)',
-                            color: '#6a1b9a',
-                            height: '22px',
-                            fontSize: '0.75rem'
-                          }} 
-                        />
-                      ))}
-                      {resume.skills && resume.skills.skills_ && 
-                       resume.skills.skills_.split(',').length > 3 && (
-                        <Chip 
-                          label={`+${resume.skills.skills_.split(',').length - 3} more`} 
-                          size="small" 
-                          variant="outlined"
-                          sx={{ color: '#6a1b9a', borderColor: '#6a1b9a', height: '22px', fontSize: '0.75rem' }}
-                        />
-                      )}
-                    </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                    {extractSkills(resume).map((skill, index) => (
+                      <Chip 
+                        key={index} 
+                        label={skill} 
+                        size="small" 
+                        variant="outlined"
+                        sx={{ fontSize: '0.7rem' }}
+                      />
+                    ))}
                   </Box>
                   
-                  <Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
                       Experience: {resume.workExperience?.length || 0} entries
                     </Typography>
@@ -197,22 +172,29 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   <Tooltip title="View Resume">
                     <Button 
                       size="small" 
-                      startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
                       onClick={() => onView(resume.id)}
                       sx={{ py: 0.5 }}
                     >
                       View
                     </Button>
                   </Tooltip>
-                  <Tooltip title="Edit Resume">
-                    <Button 
-                      size="small" 
-                      startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
-                      onClick={() => onEdit(resume.id)}
-                      sx={{ py: 0.5 }}
-                    >
-                      Edit
-                    </Button>
+                  <Tooltip title="Edit functionality is temporarily disabled">
+                    <span>
+                      <Button 
+                        size="small" 
+                        startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
+                        disabled={true}
+                        sx={{ 
+                          py: 0.5,
+                          '&.Mui-disabled': {
+                            color: (theme) => theme.palette.grey[500]
+                          }
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </span>
                   </Tooltip>
                   <Box sx={{ flexGrow: 1 }} />
                   <Tooltip title="Generate Cover Letter">
@@ -244,11 +226,13 @@ const ResumeList: React.FC<ResumeListProps> = ({
           </ListItemIcon>
           <ListItemText>View Resume</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleEdit}>
+        <MenuItem disabled>
           <ListItemIcon>
-            <EditIcon fontSize="small" />
+            <EditIcon fontSize="small" sx={{ color: (theme) => theme.palette.grey[500] }} />
           </ListItemIcon>
-          <ListItemText>Edit Resume</ListItemText>
+          <ListItemText sx={{ color: (theme) => theme.palette.grey[500] }}>
+            Edit Resume (Temporarily Disabled)
+          </ListItemText>
         </MenuItem>
         <MenuItem onClick={handleCreateCoverLetter}>
           <ListItemIcon>

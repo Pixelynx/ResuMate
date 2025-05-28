@@ -7,6 +7,20 @@ import {
   LinearProgress
 } from '@mui/material';
 
+/**
+ * LoadingOverlay Component
+ * 
+ * A full-screen overlay that displays a loading message and optional progress bar.
+ * 
+ * The progress value is determined by the API operations that provide progress updates:
+ * - Resume parsing: Updates progress as each section is extracted (0-100%)
+ * - Cover letter generation: Updates as the AI processes different stages
+ * 
+ * Note: Progress is based on actual operation completion percentage reported by API calls,
+ * not an artificial counter. Some operations may complete at 70-80% if final steps are 
+ * handled asynchronously by the server, which is why the progress bar might not reach 100%
+ * before the overlay is closed.
+ */
 interface LoadingOverlayProps {
   message?: string;
   progress?: number;
@@ -43,7 +57,7 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           width: '400px'
         }}
       >
-        <CircularProgress size={48} />
+        <CircularProgress size={48} sx={{ color: '#6a1b9a' }} />
         <Typography variant="h6" align="center">
           {message}
         </Typography>
@@ -52,7 +66,13 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
             <LinearProgress
               variant="determinate"
               value={progress || 0}
-              sx={{ height: 8, borderRadius: 4 }}
+              sx={{ 
+                height: 8, 
+                borderRadius: 4,
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: '#6a1b9a'
+                }
+              }}
             />
             <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
               {Math.round(progress || 0)}%

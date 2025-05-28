@@ -6,11 +6,11 @@ module.exports = (sequelize, Sequelize) => {
       defaultValue: Sequelize.UUIDV4
     },
     // Personal Details
-    firstName: {
+    firstname: {
       type: Sequelize.STRING,
       allowNull: false
     },
-    lastName: {
+    lastname: {
       type: Sequelize.STRING,
       allowNull: false
     },

@@ -15,9 +15,6 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  Stepper,
-  Step,
-  StepLabel,
   Container,
 } from '@mui/material';
 import { coverLetterService, resumeService } from '../../utils/api';
@@ -28,9 +25,9 @@ import {
   GenerationOptions,
   CoverLetterGenerationStatus
 } from './types/coverLetterTypes';
-import { AIGenerationRequest, GenerationProgress } from './types/aiTypes';
 import { Resume } from '../resume/types/resumeTypes';
 import LoadingOverlay from '../common/LoadingOverlay';
+import CoverLetterFormStepper from './CoverLetterFormStepper';
 
 interface ResumeOption {
   id: string;
@@ -38,16 +35,16 @@ interface ResumeOption {
 }
 
 const CoverLetterForm: React.FC = () => {
-  const { resumeId } = useParams<{ resumeId?: string }>();
+  const { resumeid } = useParams<{ resumeid?: string }>();
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, ] = useState<string | null>(null);
   const [resumes, setResumes] = useState<ResumeOption[]>([]);
-  const [generatedContent, setGeneratedContent] = useState<string>('');
+  const [generatedContent, ] = useState<string>('');
   
-  const [formState, setFormState] = useState<CoverLetterFormState>({
+  const [, setFormState] = useState<CoverLetterFormState>({
     isSubmitting: false,
     isEditing: false,
     validationErrors: {}
@@ -62,15 +59,20 @@ const CoverLetterForm: React.FC = () => {
   const [formData, setFormData] = useState<CoverLetterFormData>({
     title: '',
     content: '',
-    resumeId: resumeId || '',
-    jobTitle: '',
-    company: ''
+    resumeid: resumeid || '',
+    jobtitle: '',
+    company: '',
+    firstname: '',
+    lastname: '',
+    email: '',
+    phoneNumber: '',
+    jobdescription: ''
   });
 
-  const [generationOptions, setGenerationOptions] = useState<GenerationOptions>({
+  const [generationoptions, ] = useState<GenerationOptions>({
     tone: 'professional',
     length: 'medium',
-    emphasis: []
+    focusPoints: []
   });
 
   const steps = ['Job Details', 'Generate Cover Letter', 'Review & Save'];
@@ -82,8 +84,8 @@ const CoverLetterForm: React.FC = () => {
         const resumes = await resumeService.getAllResumes();
         setResumes(resumes.map((resume: Resume) => ({
           id: resume.id,
-          title: resume.personalDetails.firstName && resume.personalDetails.lastName
-            ? `${resume.personalDetails.firstName} ${resume.personalDetails.lastName}'s Resume`
+          title: resume.personalDetails.firstname && resume.personalDetails.lastname
+            ? `${resume.personalDetails.firstname} ${resume.personalDetails.lastname}'s Resume`
             : 'Untitled Resume'
         })));
         setLoading(false);
@@ -107,19 +109,19 @@ const CoverLetterForm: React.FC = () => {
   const handleResumeChange = (e: SelectChangeEvent) => {
     setFormData(prev => ({
       ...prev,
-      resumeId: e.target.value,
+      resumeid: e.target.value,
     }));
   };
 
-  const handleGenerationOptionsChange = (
-    option: keyof GenerationOptions,
-    value: string | string[]
-  ) => {
-    setGenerationOptions(prev => ({
-      ...prev,
-      [option]: value,
-    }));
-  };
+  // const handleGenerationOptionsChange = (
+  //   option: keyof GenerationOptions,
+  //   value: string | string[]
+  // ) => {
+  //   setGenerationOptions(prev => ({
+  //     ...prev,
+  //     [option]: value,
+  //   }));
+  // };
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -132,7 +134,7 @@ const CoverLetterForm: React.FC = () => {
   const validateCurrentStep = () => {
     switch (activeStep) {
       case 0:
-        return formData.resumeId && formData.jobTitle && formData.company;
+        return formData.resumeid && formData.jobtitle && formData.company;
       case 1:
         return generatedContent.length > 0;
       case 2:
@@ -152,11 +154,14 @@ const CoverLetterForm: React.FC = () => {
       });
 
       const generationRequest: CoverLetterGenerationRequest = {
-        resumeId: formData.resumeId || '',
-        jobTitle: formData.jobTitle,
+        resumeid: formData.resumeid || '',
+        jobtitle: formData.jobtitle,
         company: formData.company,
-        jobDescription: formData.jobDescription,
-        options: generationOptions
+        jobdescription: formData.jobdescription,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber
       };
 
       // Start progress simulation
@@ -166,7 +171,7 @@ const CoverLetterForm: React.FC = () => {
           progress: Math.min(prev.progress + 10, 90),
           message: prev.progress < 30 
             ? 'Analyzing resume and job details...'
-            : prev.progress < 60
+            : prev.progress < 80
             ? 'Generating personalized content...'
             : 'Finalizing your cover letter...'
         }));
@@ -174,7 +179,7 @@ const CoverLetterForm: React.FC = () => {
 
       const response = await coverLetterService.generateCoverLetter(
         generationRequest,
-        generationOptions
+        generationoptions
       );
 
       clearInterval(progressInterval);
@@ -256,7 +261,7 @@ const CoverLetterForm: React.FC = () => {
                   <Select
                     labelId="resume-select-label"
                     id="resume-select"
-                    value={formData.resumeId}
+                    value={formData.resumeid}
                     label="Select Resume"
                     onChange={handleResumeChange}
                     disabled={loading}
@@ -273,10 +278,10 @@ const CoverLetterForm: React.FC = () => {
                 <TextField
                   required
                   fullWidth
-                  id="jobTitle"
-                  name="jobTitle"
+                  id="jobtitle"
+                  name="jobtitle"
                   label="Job Title"
-                  value={formData.jobTitle}
+                  value={formData.jobtitle}
                   onChange={handleInputChange}
                   disabled={loading}
                 />
@@ -296,12 +301,12 @@ const CoverLetterForm: React.FC = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  id="jobDescription"
-                  name="jobDescription"
+                  id="jobdescription"
+                  name="jobdescription"
                   label="Job Description (Optional)"
                   multiline
                   rows={6}
-                  value={formData.jobDescription}
+                  value={formData.jobdescription}
                   onChange={handleInputChange}
                   disabled={loading}
                   placeholder="Paste the job description here to create a more tailored cover letter"
@@ -388,53 +393,49 @@ const CoverLetterForm: React.FC = () => {
         />
       )}
       
-      <Paper elevation={3} sx={{ p: 4, mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Create Cover Letter
-        </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+        <CoverLetterFormStepper activeStep={activeStep} steps={steps} />
         
-        <Stepper activeStep={activeStep} sx={{ mb: 4, mt: 3 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            {success}
-          </Alert>
-        )}
-        
-        {renderStepContent()}
-        
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button
-            variant="outlined"
-            onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
-            disabled={loading}
-          >
-            {activeStep === 0 ? 'Cancel' : 'Back'}
-          </Button>
+        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Create Cover Letter
+          </Typography>
           
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
-            disabled={loading || !validateCurrentStep()}
-            startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
-          >
-            {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
-          </Button>
-        </Box>
-      </Paper>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert severity="success" sx={{ mb: 3 }}>
+              {success}
+            </Alert>
+          )}
+          
+          {renderStepContent()}
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+            <Button
+              variant="outlined"
+              onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
+              disabled={loading}
+            >
+              {activeStep === 0 ? 'Cancel' : 'Back'}
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
+              disabled={loading || !validateCurrentStep()}
+              startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
+            >
+              {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
     </Container>
   );
 };

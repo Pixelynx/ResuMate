@@ -3,8 +3,8 @@ import { validateName, validateEmail, validatePhone, validateUrl, validateLocati
 
 export const validatePersonalDetails = (field: string, value: string) => {
   switch (field) {
-    case 'firstName':
-    case 'lastName':
+    case 'firstname':
+    case 'lastname':
       return {
         isValid: !validateName(value, field),
         message: validateName(value, field) || ''

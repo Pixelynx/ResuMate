@@ -1,7 +1,6 @@
-
 export interface PersonalDetails {
-    firstName: string;
-    lastName: string;
+    firstname: string;
+    lastname: string;
     title?: string;
     email: string;
     phone: string;
@@ -14,10 +13,10 @@ export interface PersonalDetails {
   
   export interface WorkExperience {
     companyName: string;
-    jobTitle: string;
+    jobtitle: string;
     location: string;
-    startDate: Date | null;
-    endDate: Date | null;
+    startDate: Date | string | null;
+    endDate: Date | string | null;
     description: string;
   }
   
@@ -26,7 +25,7 @@ export interface PersonalDetails {
     degree: string;
     fieldOfStudy: string;
     location: string;
-    graduationDate: Date | null;
+    graduationDate: Date | string | null;
   }
   
   export interface Skills {
@@ -37,8 +36,8 @@ export interface PersonalDetails {
   export interface Certification {
     name: string;
     organization: string;
-    dateObtained: Date | null;
-    expirationDate: Date | null;
+    dateObtained: Date | string | null;
+    expirationDate: Date | string | null;
     credentialUrl?: string;
   }
   
@@ -61,6 +60,15 @@ export interface PersonalDetails {
     projects: Project[];
     createdAt?: string;
     updatedAt?: string;
+  }
+
+  export interface ResumeFormData {
+    personalDetails: PersonalDetails;
+    workExperience: WorkExperience[];
+    education: Education[];
+    skills: Skills;
+    certifications: Certification[];
+    projects: Project[];
   }
 
   export interface ResumeResponse {

@@ -1,5 +1,5 @@
 const db = require('../models');
-const CoverLetter = db.coverLetters;
+const CoverLetter = db.coverletters;
 const Resume = db.resumes;
 const { v4: uuidv4 } = require('uuid');
 const aiService = require('../services/ai.service');
@@ -13,18 +13,69 @@ exports.create = async (req, res) => {
       });
     }
 
+    const resumeid = req.body.resumeid;
+    let firstname = req.body.firstname || '';
+    let lastname = req.body.lastname || '';
+    let email = req.body.email || '';
+    let phoneNumber = req.body.phoneNumber || '';
+    let prevEmployed = req.body.prevEmployed || [];
+
+    // If a resumeid is provided, fetch the resume data to populate fields
+    if (resumeid) {
+      try {
+        const resume = await Resume.findByPk(resumeid);
+        if (resume) {
+          // Use resume data if not explicitly provided in the request
+          firstname = req.body.firstname || resume.firstname || '';
+          lastname = req.body.lastname || resume.lastname || '';
+          email = req.body.email || resume.email || '';
+          phoneNumber = req.body.phoneNumber || resume.phone || '';
+          
+          // Extract previous employment from work experience
+          if (!req.body.prevEmployed && resume.workExperience) {
+            try {
+              const workExp = typeof resume.workExperience === 'string' 
+                ? JSON.parse(resume.workExperience) 
+                : resume.workExperience;
+                
+              prevEmployed = workExp && Array.isArray(workExp)
+                ? workExp.map(job => job.companyName || '').filter(Boolean)
+                : [];
+            } catch (error) {
+              console.error('Error parsing work experience:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching resume:', error);
+      }
+    }
+
     const coverLetter = {
       id: uuidv4(),
       title: req.body.title,
       content: req.body.content,
-      resumeId: req.body.resumeId,
-      jobTitle: req.body.jobTitle,
+      resumeid: resumeid,
+      jobtitle: req.body.jobtitle,
       company: req.body.company,
+      jobdescription: req.body.jobdescription || '',
+      firstname,
+      lastname,
+      email,
+      phoneNumber,
+      prevEmployed,
+      createdAt: new Date(),
+      generationOptions: req.body.generationOptions || null
     };
 
     const data = await CoverLetter.create(coverLetter);
+    
+    // Log the created cover letter for debugging
+    console.log('Created cover letter:', JSON.stringify(data, null, 2));
+    
     res.status(201).send(data);
   } catch (err) {
+    console.error('Error in create cover letter:', err);
     res.status(500).send({
       message: err.message || "Some error occurred while creating the Cover Letter."
     });
@@ -67,20 +118,57 @@ exports.update = async (req, res) => {
   const id = req.params.id;
 
   try {
-    const num = await CoverLetter.update(req.body, {
-      where: { id: id }
+    // If we're updating the resumeid, fetch resume data to populate fields
+    if (req.body.resumeid) {
+      try {
+        const resume = await Resume.findByPk(req.body.resumeid);
+        if (resume) {
+          // Only update fields from resume if they're not explicitly provided in the request
+          if (!req.body.firstname) req.body.firstname = resume.firstname || '';
+          if (!req.body.lastname) req.body.lastname = resume.lastname || '';
+          if (!req.body.email) req.body.email = resume.email || '';
+          if (!req.body.phoneNumber) req.body.phoneNumber = resume.phone || '';
+          
+          // Extract previous employment from work experience if not provided
+          if (!req.body.prevEmployed && resume.workExperience) {
+            try {
+              const workExp = typeof resume.workExperience === 'string' 
+                ? JSON.parse(resume.workExperience) 
+                : resume.workExperience;
+                
+              req.body.prevEmployed = workExp && Array.isArray(workExp)
+                ? workExp.map(job => job.companyName || '').filter(Boolean)
+                : [];
+            } catch (error) {
+              console.error('Error parsing work experience:', error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching resume:', error);
+      }
+    }
+
+    // Make sure jobdescription is empty string not null for consistency
+    if (req.body.jobdescription === null) {
+      req.body.jobdescription = '';
+    }
+
+    const [num, updatedRows] = await CoverLetter.update(req.body, {
+      where: { id: id },
+      returning: true
     });
 
     if (num == 1) {
-      res.send({
-        message: "Cover Letter was updated successfully."
-      });
+      const updatedCoverLetter = await CoverLetter.findByPk(id);
+      res.send(updatedCoverLetter);
     } else {
       res.send({
         message: `Cannot update Cover Letter with id=${id}. Maybe Cover Letter was not found or req.body is empty!`
       });
     }
   } catch (err) {
+    console.error('Error updating cover letter:', err);
     res.status(500).send({
       message: `Error updating Cover Letter with id=${id}`
     });
@@ -115,18 +203,18 @@ exports.delete = async (req, res) => {
 exports.generate = async (req, res) => {
   try {
     // Validate request
-    if (!req.body.resumeId || !req.body.jobTitle || !req.body.company) {
+    if (!req.body.resumeid || !req.body.jobtitle || !req.body.company) {
       return res.status(400).send({
         success: false,
         message: "Resume ID, job title, and company are required!"
       });
     }
 
-    const resumeId = req.body.resumeId;
+    const resumeid = req.body.resumeid;
     const jobDetails = {
-      jobTitle: req.body.jobTitle,
+      jobtitle: req.body.jobtitle,
       company: req.body.company,
-      jobDescription: req.body.jobDescription || ''
+      jobdescription: req.body.jobdescription || ''
     };
 
     const options = {
@@ -141,25 +229,48 @@ exports.generate = async (req, res) => {
     };
     
     // Fetch the resume data
-    const resume = await Resume.findByPk(resumeId);
+    const resume = await Resume.findByPk(resumeid);
     if (!resume) {
       return res.status(404).send({
         success: false,
-        message: `Resume with id=${resumeId} was not found.`
+        message: `Resume with id=${resumeid} was not found.`
       });
     }
 
     // Generate cover letter using AI service
     const content = await aiService.generateCoverLetter(resume, jobDetails, options);
 
+    // Extract previous employment from work experience
+    let prevEmployed = [];
+    if (resume.workExperience) {
+      try {
+        const workExp = typeof resume.workExperience === 'string' 
+          ? JSON.parse(resume.workExperience) 
+          : resume.workExperience;
+          
+        prevEmployed = workExp && Array.isArray(workExp)
+          ? workExp.map(job => job.companyName || '').filter(Boolean)
+          : [];
+      } catch (error) {
+        console.error('Error parsing work experience:', error);
+      }
+    }
+
     // Create a new cover letter in the database
     const coverLetter = {
       id: uuidv4(),
-      title: `${jobDetails.jobTitle} at ${jobDetails.company}`,
+      title: `${jobDetails.jobtitle} at ${jobDetails.company}`,
       content: content,
-      resumeId: resumeId,
-      jobTitle: jobDetails.jobTitle,
+      resumeid: resumeid,
+      jobtitle: jobDetails.jobtitle,
       company: jobDetails.company,
+      jobdescription: jobDetails.jobdescription || '',
+      firstname: resume.firstname || '',
+      lastname: resume.lastname || '',
+      email: resume.email || '',
+      phoneNumber: resume.phone || '',
+      prevEmployed,
+      createdAt: new Date(),
       generationOptions: options // Store the options used for reference
     };
 
@@ -179,51 +290,3 @@ exports.generate = async (req, res) => {
     });
   }
 };
-
-// Helper function to generate cover letter content
-function generateCoverLetterContent(
-  fullName,
-  title,
-  skills,
-  recentExperience,
-  jobTitle,
-  company,
-  jobDescription
-) {
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const skillsText = skills.length > 0 
-    ? `My expertise includes ${skills.join(', ')}.` 
-    : '';
-
-  const experienceText = recentExperience 
-    ? `In my recent role as ${recentExperience.jobTitle || 'professional'} at ${recentExperience.company || 'my previous company'}, ${
-      recentExperience.description 
-        ? `I ${recentExperience.description.substring(0, 100)}...`
-        : 'I gained valuable experience in the field.'
-    }` 
-    : '';
-
-  return `${currentDate}
-
-Dear Hiring Manager,
-
-I am writing to express my interest in the ${jobTitle} position at ${company}. As a ${title} with a strong background in the field, I am excited about the opportunity to contribute my skills and experience to your team.
-
-${skillsText}
-
-${experienceText}
-
-${jobDescription ? `I was particularly drawn to this position because the job description aligns well with my background and career goals. ${jobDescription.length > 100 ? 'Your emphasis on ' + jobDescription.substring(0, 100) + '... resonates with my professional experience.' : ''}` : ''}
-
-I am confident that my skills and experience make me a strong candidate for this position. I am excited about the opportunity to contribute to ${company}'s success and would welcome the chance to discuss how my background, skills, and experience would be an asset to your team.
-
-Thank you for considering my application. I look forward to the possibility of discussing this opportunity with you further.
-
-Sincerely,
-${fullName}`;
-} 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Button,
   TextField,
@@ -11,67 +11,73 @@ import {
   Grid,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Divider
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
-import {
-  PersonalDetails,
-  WorkExperience,
-  Education,
-  Skills,
-  Certification,
-  Project,
-} from './types/resumeTypes';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
 import { WorkExperienceValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
-import { resumeService } from '../../utils/api';
-import { useParams, useSearchParams } from 'react-router-dom';
-
-export interface ResumeFormData {
-  personalDetails: PersonalDetails;
-  workExperience: WorkExperience[];
-  education: Education[];
-  skills: Skills;
-  certifications: Certification[];
-  projects: Project[];
-}
+import { useSearchParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
+import { 
+  fetchResumeById, 
+  createResume, 
+  updateResume,
+  nextStep,
+  prevStep,
+  updatePersonalDetails,
+  updateWorkExperience,
+  addWorkExperience,
+  removeWorkExperience,
+  updateEducation,
+  addEducation,
+  removeEducation,
+  updateSkills,
+  updateCertification,
+  addCertification,
+  removeCertification,
+  updateProject,
+  addProject,
+  removeProject,
+  initNewDraftResume,
+  clearError
+} from '../../redux/slices/resumeSlice';
+import { 
+  selectActiveStep, 
+  selectDraftResume, 
+  selectResumeLoading, 
+  selectResumeSubmitting, 
+  selectResumeError,
+  selectSavedResumeId
+} from '../../redux/selectors/resumeSelectors';
+import { ResumeFormData } from './types/resumeTypes';
+import ResumeParser from './ResumeParser';
+import ResumeFormStepper from './ResumeFormStepper';
+import dayjs from 'dayjs';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
 const ResumeForm: React.FC = () => {
+    const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
-    const resumeId = searchParams.get('id');
-    const [activeStep, setActiveStep] = useState(0);
-    const [submitting, setSubmitting] = useState(false);
-    const [submitSuccess, setSubmitSuccess] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
-    const [savedResumeId, setSavedResumeId] = useState<string | null>(resumeId || null);
-    const [loading, setLoading] = useState(!!resumeId);
-    const [formData, setFormData] = useState<ResumeFormData> ({
-      personalDetails: {
-        firstName: '',
-        lastName: '',
-        title: '',
-        email: '',
-        phone: '',
-        location: '',
-        linkedin: '',
-        website: '',
-        github: '',
-        instagram: '',
-      },
-      workExperience: [{ companyName: '', jobTitle: '', location: '', startDate: null, endDate: null, description: '' }],
-      education: [{ institutionName: '', degree: '', fieldOfStudy: '', location: '', graduationDate: null }],
-      skills: { skills_: '', languages: '' },
-      certifications: [{ name: '', organization: '', dateObtained: null, expirationDate: null, credentialUrl: '' }],
-      projects: [{ title: '', role: '', duration: '', description: '', technologies: '', projectUrl: '' }],
-    });
+    const resumeid = searchParams.get('id');
+    
+    // Redux state
+    const activeStep = useAppSelector(selectActiveStep);
+    const formData = useAppSelector(selectDraftResume);
+    const loading = useAppSelector(selectResumeLoading);
+    const submitting = useAppSelector(selectResumeSubmitting);
+    const submitError = useAppSelector(selectResumeError);
+    const savedResumeId = useAppSelector(selectSavedResumeId);
+    
+    // Local state for success message
+    const [submitSuccess, setSubmitSuccess] = React.useState(false);
 
     const {
       setValidationState,
@@ -81,8 +87,8 @@ const ResumeForm: React.FC = () => {
       validateWorkExperienceDates,
     } = useFormValidation({
       initialValidationState: {
-        firstName: { error: false, message: '', touched: false },
-        lastName: { error: false, message: '', touched: false },
+        firstname: { error: false, message: '', touched: false },
+        lastname: { error: false, message: '', touched: false },
         title: { error: false, message: '', touched: false },
         email: { error: false, message: '', touched: false },
         phone: { error: false, message: '', touched: false },
@@ -95,7 +101,7 @@ const ResumeForm: React.FC = () => {
         workExperience: [
           {
             companyName: { error: false, message: '', touched: false },
-            jobTitle: { error: false, message: '', touched: false },
+            jobtitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
             startDateValid: true,
@@ -109,118 +115,136 @@ const ResumeForm: React.FC = () => {
       }
     });
 
+    // Initialize resume form
     useEffect(() => {
-      const fetchResume = async () => {
-        if (resumeId) {
-          try {
-            setLoading(true);
-            const resumeData = await resumeService.getResumeById(resumeId);
-            if (resumeData) {
-              setFormData(resumeData);
-              setSavedResumeId(resumeId);
-            } else {
-              throw new Error('Failed to load resume data');
-            }
-          } catch (error) {
-            console.error('Error fetching resume:', error);
-            setSubmitError('Failed to load resume data. Please try again.');
-          } finally {
-            setLoading(false);
-          }
-        }
-      };
+      if (!formData) {
+        dispatch(initNewDraftResume());
+      }
+    }, [dispatch, formData]);
 
-      fetchResume();
-    }, [resumeId]);
+    // Fetch resume data if ID is provided
+    useEffect(() => {
+      if (resumeid) {
+        dispatch(fetchResumeById(resumeid));
+      }
+    }, [dispatch, resumeid]);
 
     const submitResume = async () => {
+      if (!formData) return;
+      console.log("Starting resume submission");
+      
+      // Create a serialized copy of form data to ensure all dates are in ISO format
+      const serializedFormData = {
+        ...formData,
+        workExperience: formData.workExperience.map(exp => ({
+          ...exp,
+          startDate: exp.startDate ? 
+            (typeof exp.startDate === 'string' ? exp.startDate : dayjs(exp.startDate).toISOString()) : null,
+          endDate: exp.endDate ? 
+            (typeof exp.endDate === 'string' ? exp.endDate : dayjs(exp.endDate).toISOString()) : null
+        })),
+        education: formData.education.map(edu => ({
+          ...edu,
+          graduationDate: edu.graduationDate ? 
+            (typeof edu.graduationDate === 'string' ? edu.graduationDate : dayjs(edu.graduationDate).toISOString()) : null
+        })),
+        certifications: formData.certifications.map(cert => ({
+          ...cert,
+          dateObtained: cert.dateObtained ? 
+            (typeof cert.dateObtained === 'string' ? cert.dateObtained : dayjs(cert.dateObtained).toISOString()) : null,
+          expirationDate: cert.expirationDate ? 
+            (typeof cert.expirationDate === 'string' ? cert.expirationDate : dayjs(cert.expirationDate).toISOString()) : null
+        }))
+      };
+      
+      if (serializedFormData.workExperience && serializedFormData.workExperience.length > 0) {
+        console.log("Serialized work experience date formats:");
+        serializedFormData.workExperience.forEach((exp, i) => {
+          const startDate = exp.startDate;
+          const endDate = exp.endDate;
+          
+          console.log(`Entry ${i+1}:`);
+          console.log(` - startDate:`, startDate, typeof startDate);
+          console.log(` - endDate:`, endDate, typeof endDate);
+        });
+      }
+      
       try {
-        setSubmitting(true);
-        setSubmitError(null);
-        
         if (savedResumeId) {
-          await resumeService.updateResume(savedResumeId, formData);
-          setSubmitSuccess(true);
-          console.log('Resume updated successfully');
+          console.log("Updating existing resume with ID:", savedResumeId);
+          await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
+          console.log("Resume updated successfully");
         } else {
-          const response = await resumeService.createResume(formData);
-          if (response && response.id) {
-            setSavedResumeId(response.id);
+          console.log("Creating new resume");
+          const result = await dispatch(createResume(serializedFormData)).unwrap();
+          if (result) {
+            console.log("Resume created successfully with ID:", result.id);
             setSubmitSuccess(true);
-            console.log('Resume created successfully:', response);
-          } else {
-            throw new Error('Failed to create resume - no ID returned');
           }
         }
       } catch (error) {
         console.error('Error submitting resume:', error);
-        setSubmitError('Failed to submit resume. Please try again.');
-      } finally {
-        setSubmitting(false);
       }
     };
   
-    const handleNext = () => {
-      // if (activeStep === 0) {
-      //   const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'location'];
-      //   const allFieldsValid = requiredFields.every(field => 
-      //     !validationState[field].error && validationState[field].touched
-      //   );
-        
-      //   if (!allFieldsValid) {
-      //     console.log('Please complete all required fields before proceeding');
-      //     return;
-      //   }
-      // }
+    const handleNext = () => dispatch(nextStep());
+    const handleBack = () => dispatch(prevStep());
+    const handleFinish = () => submitResume();
 
-      // if (activeStep === 1) {
-      //   const allDatesValid = formData.workExperience.every((entry, index) => {
-      //     return validateWorkExperienceDates(index, entry.startDate, entry.endDate);
-      //   });
-        
-      //   if (!allDatesValid) {
-      //     console.log('Please fix date errors before proceeding');
-      //     return;
-      //   }
-      // }
-      
-      setActiveStep((prev) => prev + 1);
-    };
-
-    const handleBack = () => setActiveStep((prev) => prev - 1);
-
-    const handleFinish = () => {
-      submitResume();
-    };
-
-    const isArraySection = (
-      section: keyof ResumeFormData
-    ): section is "workExperience" | "education" | "certifications" | "projects" => {
-      return ['workExperience', 'education', 'certifications', 'projects'].includes(section);
-    }
-  
     const handleChange = (section: keyof ResumeFormData, index: number, field: string, value: any) => {
+      // Format phone numbers
       const formattedValue = field === 'phone' ? formatPhone(value) : value;
 
-      if (isArraySection(section)) {
-        type SectionTypeMap = {
-          workExperience: WorkExperience;
-          education: Education;
-          certifications: Certification;
-          projects: Project;
-        };
-
-        const updatedSection = [...formData[section]] as SectionTypeMap[typeof section][];
-        (updatedSection[index] as any)[field] = value;
-        setFormData({ ...formData, [section]: updatedSection });
-      } else {
-        setFormData({ ...formData, [section]: { ...formData[section], [field]: formattedValue } });
+      // Special handling for date fields to ensure they're serializable
+      const isDateField = ['startDate', 'endDate', 'graduationDate', 'dateObtained', 'expirationDate'].includes(field);
+      
+      // Serialize date objects to ISO strings before storing in Redux
+      let processedValue = formattedValue;
+      if (isDateField && formattedValue) {
+        console.log(`Processing date field ${field}:`, formattedValue);
+        try {
+          // Check if it's a dayjs object (has format method)
+          if (formattedValue.format) {
+            processedValue = formattedValue.toISOString();
+            console.log(`Converted dayjs to ISO string: ${processedValue}`);
+          } 
+          // For regular Date objects
+          else if (formattedValue instanceof Date) {
+            processedValue = formattedValue.toISOString();
+            console.log(`Converted Date to ISO string: ${processedValue}`);
+          }
+          // Otherwise try to create a dayjs object and convert
+          else {
+            const dayjsObj = dayjs(formattedValue);
+            if (dayjsObj.isValid()) {
+              processedValue = dayjsObj.toISOString();
+              console.log(`Converted to ISO string: ${processedValue}`);
+            } else {
+              console.log(`Invalid date, not converting: ${formattedValue}`);
+            }
+          }
+        } catch (error) {
+          console.error(`Error serializing date ${field}:`, error);
+          // Fall back to original value if conversion fails
+          processedValue = formattedValue;
+        }
       }
 
       if (section === 'personalDetails') {
+        dispatch(updatePersonalDetails({ field, value: processedValue }));
         setTimeout(() => {
-          handleBlur(section, 0, field, formattedValue);
+          handleBlur(section, 0, field, processedValue);
         }, 300);
+      } else if (section === 'workExperience') {
+        dispatch(updateWorkExperience({ index, field, value: processedValue }));
+      } else if (section === 'education') {
+        dispatch(updateEducation({ index, field, value: processedValue }));
+      } else if (section === 'skills') {
+        dispatch(updateSkills({ field, value: processedValue }));
+      } else if (section === 'certifications') {
+        dispatch(updateCertification({ index, field, value: processedValue }));
+      } else if (section === 'projects') {
+        dispatch(updateProject({ index, field, value: processedValue }));
       }
     };
   
@@ -230,7 +254,7 @@ const ResumeForm: React.FC = () => {
           const updatedWorkExperience = [...(prev.workExperience as WorkExperienceValidation[] || [])];
           updatedWorkExperience.push({
             companyName: { error: false, message: '', touched: false },
-            jobTitle: { error: false, message: '', touched: false },
+            jobtitle: { error: false, message: '', touched: false },
             location: { error: false, message: '', touched: false },
             description: { error: false, message: '', touched: false },
             startDateValid: true,
@@ -242,44 +266,52 @@ const ResumeForm: React.FC = () => {
             workExperience: updatedWorkExperience
           };
         });
-      }
-    
-      if (isArraySection(section) && formData[section].length > 0) {
-        const newEntry = { ...formData[section][0] };
-        const typedNewEntry = newEntry as Record<string, any>;
-        Object.keys(typedNewEntry).forEach(key => {
-          typedNewEntry[key] = key.includes('Date') ? null : '';
-        });
-        setFormData({ ...formData, [section]: [...formData[section], typedNewEntry] });
+        dispatch(addWorkExperience());
+      } else if (section === 'education') {
+        dispatch(addEducation());
+      } else if (section === 'certifications') {
+        dispatch(addCertification());
+      } else if (section === 'projects') {
+        dispatch(addProject());
       }
     };
   
     const removeEntry = (section: keyof ResumeFormData, index: number) => {
-      if (isArraySection(section)) {
-        const sectionArray = formData[section] as any[];
-        const updatedSection = sectionArray.filter((_: any, i: number) => i !== index);
-        setFormData({ ...formData, [section]: updatedSection });
+      if (section === 'workExperience') {
+        dispatch(removeWorkExperience(index));
+      } else if (section === 'education') {
+        dispatch(removeEducation(index));
+      } else if (section === 'certifications') {
+        dispatch(removeCertification(index));
+      } else if (section === 'projects') {
+        dispatch(removeProject(index));
       }
     };
   
     const renderStepContent = (step: number) => {
+      if (!formData) return null;
+      
       switch (step) {
         case 0:
           return (
             <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <ResumeParser />
+                <Divider sx={{ my: 2 }} />
+              </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField 
                   label="First Name"
                   variant="outlined"
                   fullWidth
                   required
-                  inputRef={el => fieldRefs.current['firstName'] = el}
+                  inputRef={el => fieldRefs.current['firstname'] = el}
                   placeholder="Enter your first name"
-                  value={formData.personalDetails.firstName}
-                  onChange={(e) => handleChange('personalDetails', 0, 'firstName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 0, 'firstName', e.target.value)}
-                  error={validationState.firstName.error && validationState.firstName.touched}
-                  helperText={validationState.firstName.touched ? validationState.firstName.message : ''}
+                  value={formData.personalDetails.firstname}
+                  onChange={(e) => handleChange('personalDetails', 0, 'firstname', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'firstname', e.target.value)}
+                  error={validationState.firstname.error && validationState.firstname.touched}
+                  helperText={validationState.firstname.touched ? validationState.firstname.message : ''}
                   InputProps={{
                     'aria-label': 'First Name',
                   }}
@@ -291,13 +323,13 @@ const ResumeForm: React.FC = () => {
                   variant="outlined"
                   fullWidth
                   required
-                  inputRef={el => fieldRefs.current['lastName'] = el}
+                  inputRef={el => fieldRefs.current['lastname'] = el}
                   placeholder="Enter your last name"
-                  value={formData.personalDetails.lastName}
-                  onChange={(e) => handleChange('personalDetails', 0, 'lastName', e.target.value)}
-                  onBlur={(e) => handleBlur('personalDetails', 0, 'lastName', e.target.value)}
-                  error={validationState.lastName.error && validationState.lastName.touched}
-                  helperText={validationState.lastName.touched ? validationState.lastName.message : ''}
+                  value={formData.personalDetails.lastname}
+                  onChange={(e) => handleChange('personalDetails', 0, 'lastname', e.target.value)}
+                  onBlur={(e) => handleBlur('personalDetails', 0, 'lastname', e.target.value)}
+                  error={validationState.lastname.error && validationState.lastname.touched}
+                  helperText={validationState.lastname.touched ? validationState.lastname.message : ''}
                   InputProps={{
                     'aria-label': 'Last Name',
                   }}
@@ -454,6 +486,8 @@ const ResumeForm: React.FC = () => {
             <Box>
               {formData.workExperience.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
+                  <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
                   <TextField
                     label="Company Name"
                     variant="outlined"
@@ -470,22 +504,26 @@ const ResumeForm: React.FC = () => {
                       'aria-label': `Company Name for entry ${index + 1}`,
                     }}
                   />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                   <TextField
                     label="Job Title"
                     variant="outlined"
                     fullWidth
-                    inputRef={el => fieldRefs.current[`workExperience_${index}_jobTitle`] = el}
-                    value={entry.jobTitle}
-                    onChange={(e) => handleChange('workExperience', index, 'jobTitle', e.target.value)}
-                    onBlur={(e) => handleBlur('workExperience', index, 'jobTitle', e.target.value)}
-                    error={validationState.workExperience?.[index]?.jobTitle.error && 
-                           validationState.workExperience?.[index]?.jobTitle.touched}
-                    helperText={validationState.workExperience?.[index]?.jobTitle.touched ? 
-                              validationState.workExperience?.[index]?.jobTitle.message : ''}
+                    inputRef={el => fieldRefs.current[`workExperience_${index}_jobtitle`] = el}
+                    value={entry.jobtitle}
+                    onChange={(e) => handleChange('workExperience', index, 'jobtitle', e.target.value)}
+                    onBlur={(e) => handleBlur('workExperience', index, 'jobtitle', e.target.value)}
+                    error={validationState.workExperience?.[index]?.jobtitle.error && 
+                           validationState.workExperience?.[index]?.jobtitle.touched}
+                    helperText={validationState.workExperience?.[index]?.jobtitle.touched ? 
+                              validationState.workExperience?.[index]?.jobtitle.message : ''}
                     InputProps={{
                       'aria-label': `Job Title for entry ${index + 1}`,
                     }}
                   />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                   <TextField
                     label="Location"
                     variant="outlined"
@@ -502,6 +540,8 @@ const ResumeForm: React.FC = () => {
                       'aria-label': `Location for entry ${index + 1}`,
                     }}
                   />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment Start Date"
@@ -522,6 +562,9 @@ const ResumeForm: React.FC = () => {
                       }}
                     />
                   </LocalizationProvider>
+                  </Grid>
+                  <Grid item xs={12} sm={6}></Grid> {/* To position start and end date input on top one another */}
+                  <Grid item xs={12} sm={6}>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment End Date"
@@ -541,6 +584,8 @@ const ResumeForm: React.FC = () => {
                       }}
                     />
                   </LocalizationProvider>
+                  </Grid>
+                  <Grid item xs={12}>
                   <TextField
                     label="Job Description"
                     variant="outlined"
@@ -559,6 +604,8 @@ const ResumeForm: React.FC = () => {
                       'aria-label': `Job Description for entry ${index + 1}`,
                     }}
                   />
+                  </Grid>
+                  </Grid>
                   <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                     <IconButton 
                       onClick={() => removeEntry('workExperience', index)}
@@ -746,6 +793,16 @@ const ResumeForm: React.FC = () => {
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField 
+                        label="Project URL" 
+                        variant="outlined" 
+                        fullWidth 
+                        type="url"
+                        value={entry.projectUrl}
+                        onChange={(e) => handleChange('projects', index, 'projectUrl', e.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField 
                         label="Role" 
                         variant="outlined" 
                         fullWidth 
@@ -782,16 +839,6 @@ const ResumeForm: React.FC = () => {
                         onChange={(e) => handleChange('projects', index, 'description', e.target.value)}
                       />
                     </Grid>
-                    <Grid item xs={12}>
-                      <TextField 
-                        label="Project URL" 
-                        variant="outlined" 
-                        fullWidth 
-                        type="url"
-                        value={entry.projectUrl}
-                        onChange={(e) => handleChange('projects', index, 'projectUrl', e.target.value)}
-                      />
-                    </Grid>
                   </Grid>
                   <IconButton onClick={() => removeEntry('projects', index)}><RemoveCircleOutlineIcon /></IconButton>
                 </Box>
@@ -811,7 +858,8 @@ const ResumeForm: React.FC = () => {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          paddingBottom: '80px'
         }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -820,8 +868,12 @@ const ResumeForm: React.FC = () => {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-            <Card sx={{ maxWidth: 800,
-                width: '100%', p: 3,
+            <ResumeFormStepper activeStep={activeStep} steps={steps} />
+            
+            <Card sx={{ 
+                maxWidth: 800,
+                width: '100%', 
+                p: 3,
                 borderRadius: 2,
                 boxShadow: 3
               }}>
@@ -832,13 +884,13 @@ const ResumeForm: React.FC = () => {
                 {renderStepContent(activeStep)}
               </CardContent>
               <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Button color="primary" onClick={handleBack} disabled={activeStep === 0}>
+                <Button variant="outlined" color="primary" onClick={handleBack} disabled={activeStep === 0}>
                   Back
                 </Button>
                 <Box sx={{ flex: '1 1 auto' }} />
                 {activeStep === steps.length - 1 ? (
-                  <Button 
-                    color="primary" 
+                  <Button
+                    color="primary"
                     onClick={handleFinish}
                     disabled={submitting}
                     startIcon={submitting ? <CircularProgress size={20} /> : null}
@@ -846,7 +898,7 @@ const ResumeForm: React.FC = () => {
                     {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
                   </Button>
                 ) : (
-                  <Button color="primary" onClick={handleNext}>
+                  <Button variant="contained" color="primary" onClick={handleNext}>
                     {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
                   </Button>
                 )}
@@ -863,7 +915,7 @@ const ResumeForm: React.FC = () => {
             setSubmitSuccess(false);
             // Navigate to the preview step after successful submission
             if (activeStep !== steps.length - 1) {
-              setActiveStep(steps.length - 1);
+              handleNext();
             }
           }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
@@ -876,10 +928,10 @@ const ResumeForm: React.FC = () => {
         <Snackbar 
           open={!!submitError} 
           autoHideDuration={6000} 
-          onClose={() => setSubmitError(null)}
+          onClose={() => dispatch(clearError())}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={() => setSubmitError(null)} severity="error">
+          <Alert onClose={() => dispatch(clearError())} severity="error">
             {submitError}
           </Alert>
         </Snackbar>
