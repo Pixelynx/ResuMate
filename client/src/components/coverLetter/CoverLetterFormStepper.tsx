@@ -7,8 +7,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 // @ts-ignore
 import PersonIcon from '@mui/icons-material/Person';
 // @ts-ignore
-import BusinessIcon from '@mui/icons-material/Business';
-// @ts-ignore
 import WorkIcon from '@mui/icons-material/Work';
 // @ts-ignore
 import RateReviewIcon from '@mui/icons-material/RateReview';
