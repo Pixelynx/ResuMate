@@ -2,8 +2,6 @@ import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder }
 import { ResumeState } from '../types';
 import { Resume, ResumeFormData } from '../../components/resume/types/resumeTypes';
 import { resumeService } from '../../utils/api';
-import { validatePersonalDetails } from '../../components/resume/validation/personalDetailsValidation';
-import dayjs from 'dayjs';
 
 // Async thunks
 export const fetchResumes = createAsyncThunk<Resume[], void>(
@@ -108,27 +106,6 @@ export const deleteResume = createAsyncThunk<string, string>(
     }
   }
 );
-
-const validatePersonalDetailsSection = (personalDetails: any) => {
-  const requiredFields = ['firstname', 'lastname', 'email', 'phone', 'location'];
-  const validationResults: Record<string, { error: boolean; message: string; touched: boolean }> = {};
-  let isValid = true;
-
-  for (const field of requiredFields) {
-    const value = personalDetails[field];
-    const result = validatePersonalDetails(field, value);
-    validationResults[field] = {
-      error: !result.isValid,
-      message: result.message,
-      touched: true
-    };
-    if (!result.isValid) {
-      isValid = false;
-    }
-  }
-
-  return { isValid, validationResults };
-};
 
 // Initial state
 const initialState: ResumeState = {
