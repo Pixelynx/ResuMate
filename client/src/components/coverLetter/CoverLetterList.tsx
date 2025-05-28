@@ -8,8 +8,6 @@ import {
   Card,
   CardContent,
   CardActions,
-  IconButton,
-  Tooltip,
   Divider,
   Chip,
   CircularProgress,
@@ -49,8 +47,8 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
   error: propsError,
   onRefresh 
 }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [loading, setLoading] = useState(false);
