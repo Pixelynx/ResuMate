@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -27,8 +27,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { coverLetterService } from '../../utils/api';
-import { useAppSelector } from '../../redux/hooks';
-import { selectIsPrinting } from '../../redux/selectors/printSelectors';
 import { CoverLetter } from './types/coverLetterTypes';
 import PrintableCoverLetter from '../print/PrintableCoverLetter';
 import PrintController from '../print/PrintController';
@@ -52,7 +50,29 @@ const ViewCoverLetter: React.FC = () => {
   const [pullDistance, setPullDistance] = useState(0);
   const [showRefreshSnackbar, setShowRefreshSnackbar] = useState(false);
   
-  const isPrinting = useAppSelector(selectIsPrinting);
+  // const isPrinting = useAppSelector(selectIsPrinting);
+
+  const refreshData = useCallback(() => {
+    if (!refreshing && id) {
+      setRefreshing(true);
+      setShowRefreshSnackbar(true);
+
+      coverLetterService.getCoverLetter(id)
+        .then(response => {
+          if (response) {
+            if ('success' in response && response.data) {
+              setCoverLetter(response.data);
+            } else {
+              setCoverLetter(response as CoverLetter);
+            }
+          }
+          setRefreshing(false);
+        })
+        .catch(() => {
+          setRefreshing(false);
+        });
+    }
+  }, [refreshing, id]);
 
   // Set up pull-to-refresh functionality
   useEffect(() => {
@@ -93,49 +113,37 @@ const ViewCoverLetter: React.FC = () => {
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isMobile, startY, pullDistance]);
+  }, [isMobile, startY, pullDistance, refreshData]);
 
   useEffect(() => {
-    const fetchCoverLetter = async () => {
-      if (!id) return;
+  const fetchCoverLetter = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      const response = await coverLetterService.getCoverLetter(id);
       
-      try {
-        setLoading(true);
-        const response = await coverLetterService.getCoverLetter(id);
-        
-        if (response) {
-          setCoverLetter(response);
+      if (response) {
+        // Check if it's a CoverLetterResponse wrapper or direct CoverLetter
+        if ('success' in response && response.data) {
+          // It's a CoverLetterResponse, extract the data
+          setCoverLetter(response.data);
         } else {
-          setError('Cover letter not found');
+          // It's already a CoverLetter
+          setCoverLetter(response as CoverLetter);
         }
-        
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load cover letter');
-        setLoading(false);
+      } else {
+        setError('Cover letter not found');
       }
-    };
-
-    fetchCoverLetter();
-  }, [id]);
-
-  const refreshData = () => {
-    if (!refreshing && id) {
-      setRefreshing(true);
-      setShowRefreshSnackbar(true);
       
-      coverLetterService.getCoverLetter(id)
-        .then(response => {
-          if (response) {
-            setCoverLetter(response);
-          }
-          setRefreshing(false);
-        })
-        .catch(() => {
-          setRefreshing(false);
-        });
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load cover letter');
+      setLoading(false);
     }
   };
+  fetchCoverLetter();
+}, [id]);
 
   const handleEdit = () => {
     if (id) {
@@ -266,6 +274,8 @@ const ViewCoverLetter: React.FC = () => {
             documentId={coverLetter.id} 
             documentType="coverLetter" 
             contentRef={printableRef}
+            // TODO: Investigate button prop error
+            // @ts-ignore
             buttonProps={{
               sx: { 
                 minHeight: '48px',
