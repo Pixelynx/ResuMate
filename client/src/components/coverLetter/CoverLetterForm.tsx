@@ -16,6 +16,8 @@ import {
   MenuItem,
   SelectChangeEvent,
   Container,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { coverLetterService, resumeService } from '../../utils/api';
 import {
@@ -37,6 +39,9 @@ interface ResumeOption {
 const CoverLetterForm: React.FC = () => {
   const { resumeid } = useParams<{ resumeid?: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -384,7 +389,7 @@ const CoverLetterForm: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" sx={{ px: isMobile ? 2 : 3 }}>
       {generationStatus.isGenerating && (
         <LoadingOverlay
           message={generationStatus.message}
@@ -393,10 +398,29 @@ const CoverLetterForm: React.FC = () => {
         />
       )}
       
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
-        <CoverLetterFormStepper activeStep={activeStep} steps={steps} />
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'center', 
+        alignItems: isMobile ? 'center' : 'flex-start',
+        mt: isMobile ? 2 : 4, 
+        mb: 4 
+      }}>
+        {/* Stepper component */}
+        <Box sx={{ 
+          width: isMobile ? '100%' : 'auto',
+          mb: isMobile ? 4 : 0,
+          overflow: 'hidden'
+        }}>
+          <CoverLetterFormStepper activeStep={activeStep} steps={steps} />
+        </Box>
         
-        <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+        {/* Form content */}
+        <Paper elevation={3} sx={{ 
+          p: { xs: 2, sm: 4 }, 
+          width: '100%',
+          maxWidth: isMobile ? '100%' : 'auto'
+        }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Create Cover Letter
           </Typography>
@@ -420,6 +444,7 @@ const CoverLetterForm: React.FC = () => {
               variant="outlined"
               onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
               disabled={loading}
+              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
             >
               {activeStep === 0 ? 'Cancel' : 'Back'}
             </Button>
@@ -430,6 +455,7 @@ const CoverLetterForm: React.FC = () => {
               onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
               disabled={loading || !validateCurrentStep()}
               startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
+              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
             >
               {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
             </Button>

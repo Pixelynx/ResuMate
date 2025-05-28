@@ -18,7 +18,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Alert
+  Alert,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DescriptionIcon from '@mui/icons-material/Description';
@@ -26,9 +28,13 @@ import WorkIcon from '@mui/icons-material/Work';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import LinkIcon from '@mui/icons-material/Link';
 import { coverLetterService } from '../../utils/api';
 import { CoverLetter } from './types/coverLetterTypes';
 import { formatDate } from '../../utils/validation';
+
+const MAX_TITLE_LENGTH = 40;
+const MAX_JOB_INFO_LENGTH = 50;
 
 interface CoverLetterListProps {
   coverLetters?: CoverLetter[];
@@ -43,6 +49,8 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
   error: propsError,
   onRefresh 
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [loading, setLoading] = useState(false);
@@ -128,6 +136,12 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
     setSelectedCoverLetterId(null);
   };
 
+  // Function to truncate text with ellipsis
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
   const isLoading = propsLoading !== undefined ? propsLoading : loading;
   const displayError = propsError || error;
 
@@ -157,7 +171,11 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
           startIcon={<AddIcon />}
           onClick={handleCreateCoverLetter}
           size="small"
-          sx={{ py: 0.75 }}
+          sx={{ 
+            py: 0.75,
+            minHeight: '44px',
+            minWidth: '44px'
+          }}
         >
           Create Cover Letter
         </Button>
@@ -176,135 +194,199 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
             color="primary" 
             startIcon={<AddIcon />}
             onClick={handleCreateCoverLetter}
-            sx={{ mt: 1 }}
+            sx={{ 
+              mt: 1,
+              minHeight: '44px',
+              minWidth: '44px'
+            }}
           >
             Generate Cover Letter
           </Button>
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {coverLetters.map((coverLetter) => (
-            <Grid item xs={12} sm={6} md={4} key={coverLetter.id}>
-              <Card 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6,
-                  }
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2 } }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Typography variant="h6" component="div" noWrap sx={{ maxWidth: '80%' }}>
-                      {coverLetter.title}
-                    </Typography>
-                    <DescriptionIcon color="primary" fontSize="small" />
-                  </Box>
+          {coverLetters.map((coverLetter) => {
+            const hasTitle = coverLetter.title && coverLetter.title.trim() !== '';
+            const displayTitle = hasTitle ? truncateText(coverLetter.title, MAX_TITLE_LENGTH) : 'Untitled Cover Letter';
+            
+            const jobInfo = coverLetter.jobtitle && coverLetter.company 
+              ? `${coverLetter.jobtitle} at ${coverLetter.company}`
+              : '';
+            const displayJobInfo = jobInfo ? truncateText(jobInfo, MAX_JOB_INFO_LENGTH) : '';
+            
+            const hasResume = coverLetter.resumeid && coverLetter.resumeid.trim() !== '';
+
+            return (
+              <Grid item xs={12} sm={6} md={4} key={coverLetter.id}>
+                <Card 
+                  sx={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    position: 'relative',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 6,
+                    }
+                  }}
+                >
+                  {/* Resume indicator */}
+                  {hasResume && (
+                    <Box 
+                      sx={{ 
+                        position: 'absolute', 
+                        top: 0, 
+                        right: 0, 
+                        width: '12px', 
+                        height: '12px',
+                        backgroundColor: 'primary.main',
+                        borderRadius: '0 4px 0 4px',
+                        zIndex: 1
+                      }} 
+                      title="Linked to a resume"
+                    />
+                  )}
                   
-                  {coverLetter.jobtitle && coverLetter.company && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {coverLetter.jobtitle} at {coverLetter.company}
+                  <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 2 } }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Typography 
+                        variant="h6" 
+                        component="div" 
+                        sx={{
+                          maxWidth: '80%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 'bold'
+                        }}
+                        title={coverLetter.title}
+                      >
+                        {displayTitle}
                       </Typography>
+                      <DescriptionIcon color="primary" fontSize="small" />
                     </Box>
-                  )}
-                  
-                  <Divider sx={{ my: 1 }} />
-                  
-                  {coverLetter.resumeid && (
-                    <Box sx={{ mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Based on:
+                    
+                    {displayJobInfo && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title={jobInfo}
+                        >
+                          {displayJobInfo}
+                        </Typography>
+                      </Box>
+                    )}
+                    
+                    <Divider sx={{ my: 1 }} />
+                    
+                    {hasResume && (
+                      <Box sx={{ mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                            Based on:
+                          </Typography>
+                          <Chip 
+                            icon={<LinkIcon sx={{ fontSize: '0.9rem !important' }} />}
+                            label="Resume" 
+                            size="small" 
+                            sx={{ 
+                              backgroundColor: 'rgba(106, 27, 154, 0.1)',
+                              color: '#6a1b9a',
+                              height: '24px',
+                              fontSize: '0.75rem'
+                            }} 
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    
+                    {coverLetter.createdAt && (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.75rem' }}>
+                        Created: {formatDate(new Date(coverLetter.createdAt))}
                       </Typography>
-                      <Chip 
-                        label="Resume" 
-                        size="small" 
-                        sx={{ 
-                          backgroundColor: 'rgba(106, 27, 154, 0.1)',
-                          color: '#6a1b9a',
-                          height: '22px',
-                          fontSize: '0.75rem'
-                        }} 
-                      />
-                    </Box>
-                  )}
+                    )}
+                  </CardContent>
                   
-                  {coverLetter.createdAt && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Created: {formatDate(new Date(coverLetter.createdAt))}
-                    </Typography>
-                  )}
-                </CardContent>
-                
-                <CardActions sx={{ p: 1 }}>
-                  <Tooltip title="View Cover Letter">
+                  <CardActions sx={{ p: 1.5, pt: 0 }}>
                     <Button 
                       size="small" 
-                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                      startIcon={<VisibilityIcon />} 
                       onClick={() => handleViewCoverLetter(coverLetter.id)}
-                      sx={{ py: 0.5 }}
+                      sx={{ 
+                        minHeight: '44px',
+                        borderRadius: '8px'
+                      }}
                     >
                       View
                     </Button>
-                  </Tooltip>
-                  <Tooltip title="Edit Cover Letter">
                     <Button 
                       size="small" 
-                      startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
+                      startIcon={<EditIcon />} 
                       onClick={() => handleEditCoverLetter(coverLetter.id)}
-                      sx={{ py: 0.5 }}
+                      sx={{ 
+                        minHeight: '44px',
+                        borderRadius: '8px'
+                      }}
                     >
                       Edit
                     </Button>
-                  </Tooltip>
-                  <Box sx={{ flexGrow: 1 }} />
-                  <Tooltip title="Delete Cover Letter">
-                    <IconButton 
+                    <Button 
                       size="small" 
                       color="error"
+                      startIcon={<DeleteIcon />} 
                       onClick={() => handleDeleteClick(coverLetter.id)}
-                      sx={{ p: 0.5 }}
+                      sx={{ 
+                        minHeight: '44px',
+                        borderRadius: '8px',
+                        ml: 'auto'
+                      }}
                     >
-                      <DeleteIcon sx={{ fontSize: '1.2rem' }} />
-                    </IconButton>
-                  </Tooltip>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
+                      Delete
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
+      {/* Deletion confirmation dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          Delete cover letter?
-        </DialogTitle>
+        <DialogTitle id="alert-dialog-title">Delete Cover Letter</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             Are you sure you want to delete this cover letter? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={handleDeleteCancel} 
+            sx={{ minHeight: '44px', minWidth: '88px' }}
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleDeleteConfirm} 
             color="error" 
+            variant="contained" 
             autoFocus
-            disabled={isLoading}
+            sx={{ minHeight: '44px', minWidth: '88px' }}
           >
-            {isLoading ? 'Deleting...' : 'Delete'}
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
