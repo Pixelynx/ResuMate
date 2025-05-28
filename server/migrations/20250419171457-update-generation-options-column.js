@@ -4,8 +4,8 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
       const result = await queryInterface.sequelize.query(
-        `SELECT data_type FROM information_schema.columns 
-         WHERE table_name = 'coverletters' 
+        `SELECT data_type FROM information_schema.columns
+         WHERE table_name = 'coverletters'
          AND column_name = 'generationOptions'`
       );
       
@@ -19,18 +19,18 @@ module.exports = {
       }
       
       // If column exists but needs conversion
-      // First ensure data is safe by converting any NULL or empty strings to valid JSON
+      // First ensure data is safe by converting any NULL to valid JSON
       await queryInterface.sequelize.query(`
-        UPDATE "coverletters" 
-        SET "generationOptions" = '{}' 
-        WHERE "generationOptions" IS NOT NULL AND "generationOptions" = ''
+        UPDATE "coverletters"
+        SET "generationOptions" = '{}'
+        WHERE "generationOptions" IS NULL
       `);
       
       // Convert the column to JSON with safe casting
       return queryInterface.sequelize.query(`
-        ALTER TABLE "coverletters" 
-        ALTER COLUMN "generationOptions" 
-        TYPE JSON USING CASE 
+        ALTER TABLE "coverletters"
+        ALTER COLUMN "generationOptions"
+        TYPE JSON USING CASE
           WHEN "generationOptions" IS NULL THEN NULL
           ELSE "generationOptions"::json
         END
