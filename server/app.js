@@ -9,13 +9,18 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   'https://resumate-ai.netlify.app',
-  process.env.NODE_ENV === 'production'
-    ? 'https://resumate-ai-70da7c41ee80.herokuapp.com/resumes'
-    : 'http://localhost:3000'
+  'https://resumate-ai-70da7c41ee80.herokuapp.com',
+  'http://localhost:3000'
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
