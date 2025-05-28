@@ -1,21 +1,31 @@
 const OpenAI = require('openai');
-const NodeCache = require('node-cache');
 
 class AIService {
     constructor() {
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-        this.cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
+        try {
+            // Only initialize OpenAI if we're not in test mode
+            if (process.env.NODE_ENV !== 'test') {
+                this.openai = new OpenAI({
+                    apiKey: process.env.OPENAI_API_KEY
+                });
+            }
+        } catch (error) {
+            console.warn('OpenAI client initialization failed:', error.message);
+            console.warn('API functionality will be limited to prompt generation only.');
+        }
+        
+        this.cache = new Map();
         this.retryLimit = 3;
         this.retryDelay = 1000;
-    }
-
-    generateCacheKey(resumeData, jobDetails) {
-        return `${resumeData.id}-${jobDetails.jobtitle}-${jobDetails.company}`.toLowerCase();
+        this.isTestMode = process.env.NODE_ENV === 'test';
     }
 
     async generateCoverLetter(resumeData, jobDetails, options = {}) {
+        // If in test mode and no mock mode specified, return test output
+        if (this.isTestMode && !options.mockMode) {
+            return "This is a mock cover letter for testing purposes. The real AI service is not being called.";
+        }
+        
         const cacheKey = this.generateCacheKey(resumeData, jobDetails);
         
         // Check cache first
@@ -25,8 +35,20 @@ class AIService {
         }
 
         try {
-            const prompt = this.constructPrompt(resumeData, jobDetails, options);
-            const response = await this.makeAPIRequestWithRetry(prompt, options);
+            // Preprocess data to remove empty fields and find relevant skills
+            const processedResumeData = this.preprocessResumeData(resumeData, jobDetails);
+            const relevantSkills = this.extractRelevantSkills(processedResumeData.skills?.skills_, jobDetails);
+            
+            // Construct the optimized prompt
+            const prompt = this.constructPrompt(processedResumeData, jobDetails, relevantSkills, options);
+            
+            // If in test mode with mockMode=true, just return the prompt
+            if (this.isTestMode && options.mockMode === 'prompt') {
+                return prompt;
+            }
+            
+            // Generate the cover letter
+            const response = await this.makeAPIRequestWithRetry(prompt);
             
             // Cache the successful response
             this.cache.set(cacheKey, response);
@@ -37,112 +59,241 @@ class AIService {
         }
     }
 
-    constructPrompt(resumeData, jobDetails, options = {}) {
-        const {
-            personalDetails = {},
-            workExperience = [],
-            skills = {},
-            education = []
-        } = resumeData;
-    
-        const {
-            firstname,
-            lastname,
-            title,
-            email,
-            phone,
-            location
-        } = personalDetails;
-    
-        const recentExperience = workExperience[0] || {};
-        const skillsList = Array.isArray(skills?.skills_) 
-            ? skills.skills_.join(', ')
-            : '';
-    
-        const { tone = 'professional', emphasis = [] } = options;
-    
-        // Build candidate details, only including fields that actually exist
-        const candidateDetailsParts = [`Candidate Details:`];
+    // Preprocess resume data to remove empty fields and null values
+    preprocessResumeData(resumeData, jobDetails) {
+        // Deep clone the resume data to avoid modifying the original
+        const processed = JSON.parse(JSON.stringify(resumeData));
         
-        if (firstname || lastname) {
-            candidateDetailsParts.push(`- Name: ${firstname || ''} ${lastname || ''}`.trim());
+        // Clean up personal details
+        if (processed.personalDetails) {
+            processed.firstName = processed.personalDetails.firstName || processed.firstName || '';
+            processed.lastName = processed.personalDetails.lastName || processed.lastName || '';
+            processed.title = processed.personalDetails.title || processed.title || '';
         }
-        
-        if (title) {
-            candidateDetailsParts.push(`- Current Title: ${title}`);
+
+        // Clean up work experience
+        if (processed.workExperience && Array.isArray(processed.workExperience)) {
+            processed.workExperience = processed.workExperience
+                .filter(exp => exp && exp.jobTitle && exp.company)
+                .map(exp => ({
+                    ...exp,
+                    description: exp.description || ''
+                }));
+        } else {
+            processed.workExperience = [];
         }
-        
-        if (location) {
-            candidateDetailsParts.push(`- Location: ${location}`);
+
+        // Clean up education
+        if (processed.education && Array.isArray(processed.education)) {
+            processed.education = processed.education
+                .filter(edu => edu && (edu.institutionName || edu.degree || edu.fieldOfStudy));
+        } else {
+            processed.education = [];
         }
-        
-        if (skillsList) {
-            candidateDetailsParts.push(`- Key Skills: ${skillsList}`);
-        }
-        
-        if (recentExperience.jobtitle && recentExperience.company) {
-            candidateDetailsParts.push(`- Recent Role: ${recentExperience.jobtitle} at ${recentExperience.company}`);
-        }
-        
-        if (education.length > 0 && education[0].degree && education[0].institution) {
-            candidateDetailsParts.push(`- Education: ${education[0].degree} from ${education[0].institution}`);
-        }
-    
-        // Only include emphasis areas that actually exist in the resume
-        const validEmphasis = emphasis.filter(item => 
-            (skillsList && skillsList.toLowerCase().includes(item.toLowerCase())) || 
-            workExperience.some(exp => exp.description && exp.description.toLowerCase().includes(item.toLowerCase()))
-        );
-    
-        const promptParts = [
-            `Write a ${tone} cover letter for a ${jobDetails.jobtitle} position at ${jobDetails.company}.`,
-            ...candidateDetailsParts,
-            `Job Details:`,
-            `- Company: ${jobDetails.company}`,
-            `- Position: ${jobDetails.jobtitle}`,
-            jobDetails.jobdescription ? `- Job Description: ${jobDetails.jobdescription}` : '',
-            `Guidelines:`,
-            `- Maintain a ${tone} tone throughout the letter`,
-            `- CRITICAL: NEVER invent or fabricate qualifications, degrees, skills, or experiences that are not explicitly provided in the resume data`,
-            `- Only reference skills and experiences that are explicitly mentioned in the resume data`,
-            `- Completely omit any mentions of qualifications, education, or experiences that don't exist in the resume`,
-            `- If the candidate lacks specific experience or education relevant to the position, focus only on what they genuinely have to offer`,
-            `- Do not make assumptions about the candidate's background or fill in missing information`,
-            validEmphasis.length > 0 ? `- Focus on these verified skills/experiences that appear in the resume: ${validEmphasis.join(', ')}` : `- Do not emphasize any specific skills as none of the requested emphasis areas match the resume`,
-            `- Format with proper spacing and paragraphs`,
-            options.customInstructions ? `Additional Instructions: ${options.customInstructions}` : ''
-        ];
-    
-        // Add a data verification section to ensure the model checks what data actually exists
-        promptParts.push(`
-                Available Resume Data Verification:
-                - Work history available: ${workExperience.length > 0 ? 'Yes' : 'No'}
-                - Education history available: ${education.length > 0 ? 'Yes' : 'No'}
-                - Skills listed: ${skillsList ? 'Yes' : 'No'}
-                
-                IMPORTANT: This cover letter must strictly reference ONLY skills, experiences, and qualifications that are explicitly present in the resume data. Completely omit mentions of any qualifications or backgrounds that don't exist rather than noting their absence. DO NOT fabricate or embellish the candidate's background to better match the job requirements.
-            `);
-    
-        return promptParts.filter(Boolean).join('\n');
+
+        return processed;
     }
 
-    async makeAPIRequestWithRetry(prompt, options = {}, attempt = 1) {
+    // Extract skills that might be relevant to the job
+    extractRelevantSkills(skills, jobDetails) {
+        if (!skills || typeof skills !== 'string' || !jobDetails.jobDescription) {
+            return skills || '';
+        }
+
+        // Split skills into an array
+        const skillArray = skills.split(',').map(skill => skill.trim());
+        
+        // If the job description is available, try to find relevant skills
+        if (jobDetails.jobDescription) {
+            const jobDescLower = jobDetails.jobDescription.toLowerCase();
+            
+            // Find skills mentioned in the job description
+            const relevantSkills = skillArray.filter(skill => 
+                jobDescLower.includes(skill.toLowerCase())
+            );
+            
+            // If we found relevant skills, prioritize them
+            if (relevantSkills.length > 0) {
+                // Return relevant skills first, then add a few others if needed
+                const otherSkills = skillArray.filter(skill => 
+                    !relevantSkills.includes(skill)
+                );
+                
+                // Combine relevant skills with some others, up to 5 total
+                const combinedSkills = [
+                    ...relevantSkills,
+                    ...otherSkills.slice(0, Math.max(0, 5 - relevantSkills.length))
+                ];
+                
+                return combinedSkills.join(', ');
+            }
+        }
+        
+        // If no relevant skills found or no job description provided,
+        // return up to 5 skills from the original list
+        return skillArray.slice(0, 5).join(', ');
+    }
+
+    constructPrompt(resumeData, jobDetails, relevantSkills, options = {}) {
+        const {
+            firstName = '',
+            lastName = '',
+            title = '',
+            workExperience = [],
+            education = []
+        } = resumeData;
+
+        const hasName = firstName && lastName;
+        const hasTitle = Boolean(title);
+        const hasSkills = Boolean(relevantSkills);
+        const hasWorkExperience = workExperience.length > 0;
+        const hasEducation = education.length > 0;
+        const hasJobDescription = Boolean(jobDetails.jobDescription);
+
+        // Build instructions and examples for the prompt
+        const systemInstructions = `
+            IMPORTANT INSTRUCTIONS FOR COVER LETTER GENERATION:
+            1. Only include information that is actually provided in the data below.
+            2. NEVER use placeholder text like [Previous Company], [Degree], or [Key Skill].
+            3. If a field is missing, do not mention it at all rather than creating a generic version.
+            4. Completely omit sections (like education or skills) if no data is provided.
+            5. Focus on making the letter flow naturally with only the information available.
+            6. Keep the cover letter concise and professional.
+            If projects are listed:
+
+            - Carefully review the project list
+                - Identify the project(s) most relevant to the target job's industry or tech stack
+                - Explicitly reference specific work, technologies, or achievements from the most relevant project(s)
+                - Demonstrate how the project experience directly aligns with the job requirements
+
+
+            - If a tone parameter is provided:
+                - Adapt the cover letter's language, style, and emotional tenor to match the specified tone
+                - Ensure the tone remains professional while reflecting the requested style
+                - Examples of possible tones: professional, enthusiastic, confident, innovative, empathetic
+
+
+
+            EXAMPLES OF HOW TO HANDLE MISSING DATA:
+            - If education details are not provided, don't mention education at all.
+            - If work experience is missing, focus on skills and enthusiasm for the role instead.
+            - If the candidate has no title, do not attempt to create one; simply introduce them by name.
+            - If no skills are listed, do not make up generic skills or include a skills section.
+
+            PROJECT RELEVANCE GUIDELINES:
+
+            - Prioritize projects that:
+                - Use similar technologies to the job description
+                - Demonstrate relevant skills for the target role
+                - Show direct industry or domain experience
+
+
+            - When referencing a project, include:
+                - Specific technologies used
+                - Key challenges addressed
+                - Measurable outcomes or impacts
+                - Direct relevance to the job applied for
+            `;
+
+        // Build candidate details section only with available information
+        const candidateDetails = [
+            'Candidate Details:',
+            hasName ? `- Name: ${firstName} ${lastName}` : '',
+            hasTitle ? `- Current Title: ${title}` : '',
+            hasSkills ? `- Key Skills: ${relevantSkills}` : ''
+        ].filter(Boolean);
+
+        // Add work experience only if available
+        const experienceDetails = [];
+        if (hasWorkExperience) {
+            experienceDetails.push('Work Experience:');
+            workExperience.slice(0, 2).forEach(exp => {
+                experienceDetails.push(`- ${exp.jobTitle} at ${exp.company}`);
+                if (exp.description) {
+                    experienceDetails.push(`  ${exp.description.substring(0, 150)}${exp.description.length > 150 ? '...' : ''}`);
+                }
+            });
+        }
+
+        // Add education only if available
+        const educationDetails = [];
+        if (hasEducation) {
+            educationDetails.push('Education:');
+            education.slice(0, 2).forEach(edu => {
+                const parts = [
+                    edu.degree, 
+                    edu.fieldOfStudy, 
+                    edu.institutionName
+                ].filter(Boolean);
+                if (parts.length > 0) {
+                    educationDetails.push(`- ${parts.join(', ')}`);
+                }
+            });
+        }
+
+        // Job details section
+        const jobDetails_ = [
+            'Job Details:',
+            `- Company: ${jobDetails.company}`,
+            `- Position: ${jobDetails.jobTitle}`
+        ];
+        
+        if (hasJobDescription) {
+            jobDetails_.push(`- Job Description Overview: ${jobDetails.jobDescription.substring(0, 300)}${jobDetails.jobDescription.length > 300 ? '...' : ''}`);
+        }
+
+        // Build the complete prompt
+        const prompt = [
+            systemInstructions,
+            '',
+            `Write a professional cover letter for a ${jobDetails.jobTitle} position at ${jobDetails.company}.`,
+            '',
+            ...candidateDetails,
+            '',
+            ...(experienceDetails.length > 0 ? [...experienceDetails, ''] : []),
+            ...(educationDetails.length > 0 ? [...educationDetails, ''] : []),
+            ...jobDetails_,
+            '',
+            'Additional Guidelines:',
+            '- Highlight relevant skills and experience that match the job requirements',
+            '- Show enthusiasm for the role and company',
+            '- Include a strong closing statement',
+            '- Do not fabricate information or use placeholders for missing data',
+            '- Only mention skills, experience, and education that are explicitly provided above',
+            options.tone ? `- Use a ${options.tone} tone throughout the letter` : '',
+            options.length ? `- Keep the letter ${options.length === 'short' ? 'brief and concise' : options.length === 'long' ? 'detailed and comprehensive' : 'moderately detailed'}` : '',
+            ...(options.emphasis && options.emphasis.length > 0 ? [`- Emphasize these aspects if mentioned in the data: ${options.emphasis.join(', ')}`] : [])
+        ].filter(Boolean).join('\n');
+
+        return prompt;
+    }
+
+    async makeAPIRequestWithRetry(prompt, attempt = 1) {
+        // If in test mode, return mock response
+        if (this.isTestMode) {
+            return "This is a mock API response for testing purposes.";
+        }
+        
         try {
+            if (!this.openai) {
+                throw new Error("OpenAI client not initialized. API key may be missing.");
+            }
+            
             const completion = await this.openai.chat.completions.create({
                 messages: [
                     {
                         role: "system",
-                        content: "You are a professional cover letter writer. Create engaging, personalized cover letters that highlight the candidate's relevant skills and experience. Always use the actual values provided in the prompt (like name, email, etc.) and never use placeholders like [Your Name] or [Email Address]."
+                        content: "You are a professional cover letter writer who creates personalized, tailored cover letters. You NEVER include placeholder text or mention missing information. If data is unavailable, you gracefully work around it and focus on what IS available."
                     },
                     {
                         role: "user",
                         content: prompt
                     }
                 ],
-                model: options.model || "gpt-3.5-turbo",
-                temperature: options.temperature || 0.7,
-                max_tokens: options.maxTokens || 1000,
-                top_p: options.topP || 1,
+                model: "gpt-3.5-turbo",
+                temperature: 0.7,
+                max_tokens: 1000,
+                top_p: 1,
             });
 
             return completion.choices[0].message.content;
@@ -150,39 +301,40 @@ class AIService {
             if (attempt < this.retryLimit && this.shouldRetry(error)) {
                 console.log(`Retrying API request, attempt ${attempt + 1}`);
                 await this.delay(this.retryDelay * attempt);
-                return this.makeAPIRequestWithRetry(prompt, options, attempt + 1);
+                return this.makeAPIRequestWithRetry(prompt, attempt + 1);
             }
             throw error;
         }
     }
 
-    shouldRetry(error) {
-        // Retry on rate limiting or temporary server errors
-        return (
-            error.status === 429 || // Rate limit
-            error.status === 500 || // Server error
-            error.status === 503    // Service unavailable
-        );
+    generateCacheKey(resumeData, jobDetails) {
+        // Create a unique key based on resume and job details
+        return JSON.stringify({
+            resumeId: resumeData.id,
+            jobTitle: jobDetails.jobTitle,
+            company: jobDetails.company,
+            timestamp: new Date().toDateString() // Cache expires daily
+        });
     }
 
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    shouldRetry(error) {
+        // Retry on rate limits or temporary server issues
+        return error.status === 429 || // Rate limit
+               error.status >= 500;    // Server errors
     }
 
     handleError(error) {
-        if (error.response) {
-            switch (error.response.status) {
-                case 401:
-                    return new Error('Invalid API key. Please check your OpenAI API configuration.');
-                case 429:
-                    return new Error('Rate limit exceeded. Please try again later.');
-                case 500:
-                    return new Error('OpenAI service error. Please try again later.');
-                default:
-                    return new Error(`AI service error: ${error.response.data.error || 'Unknown error'}`);
-            }
+        if (error.status === 429) {
+            return new Error('Rate limit exceeded. Please try again later.');
         }
-        return new Error('Failed to generate cover letter. Please try again later.');
+        if (error.status === 401) {
+            return new Error('Authentication error. Please check API key.');
+        }
+        return new Error('Failed to generate cover letter. Please try again.');
+    }
+
+    async delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
