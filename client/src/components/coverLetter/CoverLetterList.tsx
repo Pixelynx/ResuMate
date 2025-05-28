@@ -17,8 +17,8 @@ import {
   DialogContentText,
   DialogTitle,
   Alert,
-  useTheme,
-  useMediaQuery
+  // useTheme,
+  // useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DescriptionIcon from '@mui/icons-material/Description';
