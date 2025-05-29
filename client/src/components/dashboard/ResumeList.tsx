@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -14,25 +14,36 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  useTheme,
+  useMediaQuery,
+  Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Resume } from '../resume/types/resumeTypes';
 
 dayjs.extend(relativeTime);
 
+// Maximum length for title display
+const MAX_TITLE_LENGTH = 40;
+
 interface ResumeListProps {
   resumes: Resume[];
-  onView: (resumeid: string) => void;
-  onEdit: (resumeid: string) => void;
-  onDelete: (resumeid: string) => void;
-  onCreateCoverLetter: (resumeid: string) => void;
+  onView: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  onCreateCoverLetter: (id: string) => void;
 }
 
 const ResumeList: React.FC<ResumeListProps> = ({
@@ -42,8 +53,12 @@ const ResumeList: React.FC<ResumeListProps> = ({
   onDelete,
   onCreateCoverLetter
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [selectedResumeId, setSelectedResumeId] = React.useState<string | null>(null);
+  const [skillsDialogOpen, setSkillsDialogOpen] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, resumeid: string) => {
     setAnchorEl(event.currentTarget);
@@ -58,6 +73,13 @@ const ResumeList: React.FC<ResumeListProps> = ({
   const handleView = () => {
     if (selectedResumeId) {
       onView(selectedResumeId);
+      handleMenuClose();
+    }
+  };
+
+  const handleEdit = () => {
+    if (selectedResumeId) {
+      onEdit(selectedResumeId);
       handleMenuClose();
     }
   };
@@ -79,13 +101,24 @@ const ResumeList: React.FC<ResumeListProps> = ({
   // Extract skills from resume data
   const extractSkills = (resume: Resume) => {
     if (resume.skills && resume.skills.skills_) {
-      return resume.skills.skills_.split(',').slice(0, 3).map((skill: string) => skill.trim());
+      return resume.skills.skills_.split(',').map((skill: string) => skill.trim());
     }
     return [];
   };
 
   const formatDate = (date: string | undefined) => {
     return date ? dayjs(date).fromNow() : 'Never';
+  };
+
+  const handleShowAllSkills = (skills: string[]) => {
+    setSelectedSkills(skills);
+    setSkillsDialogOpen(true);
+  };
+
+  // Function to truncate text with ellipsis
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
   return (
@@ -99,14 +132,26 @@ const ResumeList: React.FC<ResumeListProps> = ({
             variant="contained" 
             color="primary" 
             onClick={() => onEdit('')}
-            sx={{ mt: 1 }}
+            sx={{ 
+              mt: 1,
+              minHeight: '44px', 
+              minWidth: '44px',
+              px: 2
+            }}
           >
             Create Your First Resume
           </Button>
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {resumes.map((resume) => (
+          {resumes.map((resume) => {
+            const skills = extractSkills(resume);
+            const visibleSkills = skills.slice(0, 3);
+            const hiddenSkillsCount = skills.length - visibleSkills.length;
+            const hasTitle = resume.personalDetails.title && resume.personalDetails.title.trim() !== '';
+            const displayTitle = hasTitle ? truncateText(resume.personalDetails.title, MAX_TITLE_LENGTH) : 'No title specified';
+
+            return (
             <Grid item xs={12} sm={6} md={4} key={resume.id}>
               <Card 
                 sx={{ 
@@ -120,28 +165,48 @@ const ResumeList: React.FC<ResumeListProps> = ({
                   }
                 }}
               >
-                <CardContent>
+                <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 2 } }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Typography variant="h6" component="div" noWrap>
+                    <Typography variant="h6" component="div" sx={{
+                      maxWidth: '80%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
                       {resume.personalDetails.firstname} {resume.personalDetails.lastname}
                     </Typography>
                     <IconButton 
-                      size="small" 
+                      size={isMobile ? "medium" : "small"} 
                       onClick={(e) => handleMenuOpen(e, resume.id)}
                       aria-label="resume options"
+                      sx={{ 
+                        minWidth: '44px', 
+                        minHeight: '44px', 
+                        ml: 1 
+                      }}
                     >
                       <MoreVertIcon />
                     </IconButton>
                   </Box>
                   
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {resume.personalDetails.title || 'No title specified'}
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    gutterBottom
+                    sx={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title={resume.personalDetails.title || 'No title specified'}
+                  >
+                    {displayTitle}
                   </Typography>
                   
                   <Divider sx={{ my: 1 }} />
                   
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                    {extractSkills(resume).map((skill, index) => (
+                    {visibleSkills.map((skill, index) => (
                       <Chip 
                         key={index} 
                         label={skill} 
@@ -150,6 +215,20 @@ const ResumeList: React.FC<ResumeListProps> = ({
                         sx={{ fontSize: '0.7rem' }}
                       />
                     ))}
+                    {hiddenSkillsCount > 0 && (
+                      <Chip
+                        label={`+${hiddenSkillsCount} more`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        onClick={() => handleShowAllSkills(skills)}
+                        sx={{ 
+                          fontSize: '0.7rem',
+                          minHeight: '24px',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    )}
                   </Box>
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -161,64 +240,49 @@ const ResumeList: React.FC<ResumeListProps> = ({
                     </Typography>
                   </Box>
                 </CardContent>
-                
-                <Box sx={{ mt: 'auto', p: 0.75, backgroundColor: 'rgba(106, 27, 154, 0.05)' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Last updated: {formatDate(resume.updatedAt)}
-                  </Typography>
-                </Box>
-                
-                <CardActions sx={{ p: 1 }}>
-                  <Tooltip title="View Resume">
-                    <Button 
-                      size="small" 
-                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
-                      onClick={() => onView(resume.id)}
-                      sx={{ py: 0.5 }}
-                    >
-                      View
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Edit functionality is temporarily disabled">
-                    <span>
-                      <Button 
-                        size="small" 
-                        startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
-                        disabled={true}
-                        sx={{ 
-                          py: 0.5,
-                          '&.Mui-disabled': {
-                            color: (theme) => theme.palette.grey[500]
-                          }
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    </span>
-                  </Tooltip>
-                  <Box sx={{ flexGrow: 1 }} />
-                  <Tooltip title="Generate Cover Letter">
-                    <Button 
-                      size="small" 
-                      color="secondary"
-                      startIcon={<NoteAddIcon sx={{ fontSize: '0.9rem' }} />}
-                      onClick={() => onCreateCoverLetter(resume.id)}
-                      sx={{ py: 0.5 }}
-                    >
-                      Cover Letter
-                    </Button>
-                  </Tooltip>
+                <CardActions sx={{ p: 1.5, pt: 0 }}>
+                  <Button 
+                    size="small" 
+                    startIcon={<VisibilityIcon />} 
+                    onClick={() => onView(resume.id)}
+                    sx={{ 
+                      minHeight: '44px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    View
+                  </Button>
+                  <Button 
+                    size="small" 
+                    startIcon={<EditIcon />} 
+                    onClick={() => onEdit(resume.id)}
+                    sx={{ 
+                      minHeight: '44px',
+                      borderRadius: '8px' 
+                    }}
+                  >
+                    Edit
+                  </Button>
                 </CardActions>
               </Card>
             </Grid>
-          ))}
+          )})}
         </Grid>
       )}
-      
+
+      {/* Menu for resume actions */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            '& .MuiMenuItem-root': {
+              minHeight: '44px', // Ensure menu items are touchable
+            }
+          }
+        }}
       >
         <MenuItem onClick={handleView}>
           <ListItemIcon>
@@ -226,28 +290,58 @@ const ResumeList: React.FC<ResumeListProps> = ({
           </ListItemIcon>
           <ListItemText>View Resume</ListItemText>
         </MenuItem>
-        <MenuItem disabled>
+        <MenuItem onClick={handleEdit}>
           <ListItemIcon>
-            <EditIcon fontSize="small" sx={{ color: (theme) => theme.palette.grey[500] }} />
+            <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText sx={{ color: (theme) => theme.palette.grey[500] }}>
-            Edit Resume (Temporarily Disabled)
-          </ListItemText>
+          <ListItemText>Edit Resume</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleCreateCoverLetter}>
           <ListItemIcon>
             <NoteAddIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Generate Cover Letter</ListItemText>
+          <ListItemText>Create Cover Letter</ListItemText>
         </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDelete}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>Delete Resume</ListItemText>
+          <ListItemText sx={{ color: 'error.main' }}>Delete Resume</ListItemText>
         </MenuItem>
       </Menu>
+
+      {/* Dialog to show all skills */}
+      <Dialog 
+        open={skillsDialogOpen} 
+        onClose={() => setSkillsDialogOpen(false)}
+        aria-labelledby="skills-dialog-title"
+      >
+        <DialogTitle id="skills-dialog-title">All Skills</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, pt: 1 }}>
+            {selectedSkills.map((skill, index) => (
+              <Chip 
+                key={index} 
+                label={skill} 
+                size={isMobile ? "medium" : "small"} 
+                sx={{ 
+                  height: isMobile ? '32px' : '24px',
+                  fontSize: isMobile ? '0.875rem' : '0.75rem'
+                }}
+              />
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setSkillsDialogOpen(false)} 
+            color="primary"
+            sx={{ minHeight: '44px' }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

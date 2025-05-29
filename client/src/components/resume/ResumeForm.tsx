@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Button,
   TextField,
@@ -12,7 +12,9 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
-  Divider
+  Divider,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -862,6 +864,9 @@ const ResumeForm: React.FC = () => {
         }
     };
   
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
     return (
       <Box sx={{ 
           minHeight: '100vh',
@@ -876,13 +881,28 @@ const ResumeForm: React.FC = () => {
             <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-            <ResumeFormStepper activeStep={activeStep} steps={steps} />
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: isMobile ? 'column' : 'row',
+            justifyContent: 'center', 
+            alignItems: isMobile ? 'center' : 'flex-start',
+            mt: isMobile ? 2 : 5,
+            px: isMobile ? 2 : 0
+          }}>
+            {/* Stepper component */}
+            <Box sx={{ 
+              width: isMobile ? '100%' : 'auto',
+              mb: isMobile ? 4 : 0,
+              overflow: 'hidden'
+            }}>
+              <ResumeFormStepper activeStep={activeStep} steps={steps} />
+            </Box>
             
+            {/* Form content */}
             <Card sx={{ 
-                maxWidth: 800,
+                maxWidth: isMobile ? '100%' : 800,
                 width: '100%', 
-                p: 3,
+                p: { xs: 2, sm: 3 },
                 borderRadius: 2,
                 boxShadow: 3
               }}>
@@ -892,8 +912,14 @@ const ResumeForm: React.FC = () => {
                 </Typography>
                 {renderStepContent(activeStep)}
               </CardContent>
-              <CardActions sx={{ justifyContent: 'space-between' }}>
-                <Button variant="outlined" color="primary" onClick={handleBack} disabled={activeStep === 0}>
+              <CardActions sx={{ justifyContent: 'space-between', p: isMobile ? 2 : 1 }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  onClick={handleBack} 
+                  disabled={activeStep === 0}
+                  sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+                >
                   Back
                 </Button>
                 <Box sx={{ flex: '1 1 auto' }} />
@@ -903,11 +929,17 @@ const ResumeForm: React.FC = () => {
                     onClick={handleFinish}
                     disabled={submitting}
                     startIcon={submitting ? <CircularProgress size={20} /> : null}
+                    sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
                   >
                     {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
                   </Button>
                 ) : (
-                  <Button variant="contained" color="primary" onClick={handleNext}>
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleNext}
+                    sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+                  >
                     {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
                   </Button>
                 )}

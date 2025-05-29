@@ -120,5 +120,66 @@ Resumate is an AI-powered resume and cover letter creation platform designed to 
 - **Date Management**: Day.js for consistent date handling
 - **Form Management**: Custom validation system with React hooks
 
+# ResuMate Mobile Responsiveness Enhancement
+
+This document outlines the mobile responsiveness enhancements implemented in the ResuMate application to improve the user experience on mobile devices.
+
+## Key Enhancements
+
+### Resume Dashboard Tab
+- Added title fields with character limits (40 chars) to prevent overflow issues
+- Implemented text truncation with ellipsis for long titles
+- Increased touch targets to at least 44×44px for all interactive elements
+- Optimized skills display:
+  - Limited to 3 most relevant skills on mobile to conserve space
+  - Added tappable "+X more" chip to expand the full skills list in a dialog
+- Improved menu button positioning with adequate touch area
+
+### Cover Letter Dashboard Tab
+- Implemented consistent card height with resume components for visual harmony
+- Enhanced visual hierarchy with bold headers and subtle creation dates
+- Added proper text truncation for all header elements
+- Included visual indicator showing whether a cover letter is linked to a specific resume
+
+### Builder Pages (Resume & Cover Letter)
+- Converted steppers to a more mobile-friendly layout:
+  - Icon-only squares in mobile view
+  - Clear visual indicators for active/completed states
+  - Horizontal scrollable layout on mobile
+  - Improved touch targets
+
+### Viewer Pages
+- Implemented minimum button sizes of 48×48px with proper spacing between interactive elements
+- Added pinch-to-zoom functionality for document viewing
+- Implemented pull-to-refresh capability to reload documents
+- Added floating action buttons (FABs) for mobile views:
+  - Positioned in easily accessible locations
+  - Provided adequate spacing between buttons
+  - Implemented proper visual hierarchy through color and positioning
+- Added haptic feedback for button interactions (vibration)
+
+### Technical Improvements
+- Added responsive layout adaptations based on viewport size
+- Implemented content-aware breakpoints rather than device-specific ones
+- Added skeleton loading states during data fetching
+- Enhanced touch interaction handling for mobile gestures
+- Improved accessibility with proper ARIA attributes
+- Created a consistent spacing system across components
+
+## Usage Notes
+
+- **Pinch-to-zoom**: On mobile devices, you can use the standard pinch gesture to zoom in on resume and cover letter content
+- **Pull-to-refresh**: Pull down from the top of the screen to refresh content when viewing resumes and cover letters
+- **Floating Action Buttons**: On mobile, the primary actions are available as floating buttons at the bottom of the screen
+- **Skills Expansion**: Tap the "+X more" chip on resume cards to view all skills in a dialog
+
+## Browser Compatibility
+
+These enhancements have been tested and are compatible with:
+- Chrome (latest versions)
+- Safari on iOS (latest versions)
+- Firefox (latest versions)
+- Chrome on Android (latest versions)
+
 ## Development Roadmap
 - [ ] Implement user authentication
