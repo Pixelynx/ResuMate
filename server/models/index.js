@@ -7,10 +7,11 @@ let sequelize;
 if (env === 'production') {
   console.log("PROD")
   sequelize = new Sequelize(
-    process.env[config.use_env_variable],
+    config.url,
     {
       dialect: 'postgres',
-      dialectOptions: config.dialectoptions,
+      dialectOptions: config.dialectOptions,
+      native: true,
     }
   );
 } else {
