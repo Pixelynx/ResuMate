@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### [2025-05-29]
+- Resolved Heroku Postgres SSL connection issues with Sequelize
+  - Added expected `url` key in production config to hold full DB connection string with `?sslmode=require`
+  - Corrected `dialectOptions` casing in config.js to ensure SSL options are recognized
+  - Added `pg-native` dependency and enabled native bindings for improved SSL handling
+  - Ensured consistent use of config.js by Sequelize CLI and app runtime for migrations and production
+  - Changes fixed `pg_hba.conf` SSL off errors and certificate verification failures, enabling successful migrations and DB connections in production
+
 ### [2025-04-03]
 ### Added
 
