@@ -4,6 +4,15 @@
 
 ### [2025-05-31]
 ### Added
+- Penalty threshold management system:
+  - Minimum penalty enforcement for fundamental gaps:
+    - Severe skill mismatch (<20% match): 30% minimum penalty
+    - Technical role mismatch: 40% minimum penalty
+    - Critical experience gap: 25% minimum penalty
+    - Education mismatch: 20% minimum penalty
+  - Graduated penalty scaling using exponential curves
+  - Detailed penalty reasoning and suggestions
+  - Comprehensive penalty analysis and logging
 - Project-based compensation system:
   - Intelligent project relevance assessment
   - Technology and keyword matching
@@ -77,6 +86,11 @@
 - Made scoring system more flexible with experience-based compensation
 - Enhanced penalty system with skill-based reductions
 - Improved skill matching with core/peripheral skill differentiation
+- Enhanced penalty system with minimum thresholds
+- Improved penalty analysis with detailed reasoning
+- Added graduated penalty scaling
+- Implemented strict bounds on penalty reductions
+- Enhanced logging with penalty decision explanations
 
 ### Fixed
 - Over-compensation in cases with multiple strong areas
@@ -88,6 +102,9 @@
 - Over-reliance on semantic embeddings for job compatibility scoring
 - Overly rigid penalty system not reflecting real-world recruitment practices
 - Excessive penalties for candidates with strong skills but less experience
+- Unrealistic penalty reductions for fundamental mismatches
+- Missing minimum thresholds for critical gaps
+- Inconsistent penalty scaling across categories
 
 ### [2025-05-29]
 ### Changed
