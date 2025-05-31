@@ -2,7 +2,34 @@
 
 ## [Unreleased]
 
+### [2025-05-31]
+### Added
+- Comprehensive technical keyword library with categorized skills (languages, frameworks, databases, cloud/devops)
+- Enhanced component-based job fit scoring system with configurable weights:
+  - Skills match (30%)
+  - Work Experience relevance (25%)
+  - Project alignment (20%)
+  - Education relevance (15%)
+  - Job Title compatibility (10%)
+- Advanced penalty system for technical and experience level mismatches
+- Detailed technical density analysis for both job descriptions and resumes
+- Confidence-based technical role detection system
+
+### Changed
+- Reduced embedding similarity influence to 20% maximum impact on final score
+- Improved technical role detection with graduated confidence scoring
+- Enhanced score explanations with detailed component breakdowns
+- Consolidated technical keyword definitions into a single source of truth
+- Modernized type definitions with TypeScript-style JSDoc annotations
+
+### Fixed
+- Unrealistic scoring for role mismatches (e.g., HR → Developer now scores 1.5-3.0)
+- Duplicate technical keyword definitions across services
+- Inconsistent type definitions for Resume and WorkExperience
+- Over-reliance on semantic embeddings for job compatibility scoring
+
 ### [2025-05-29]
+### Changed
 - Resolved Heroku Postgres SSL connection issues with Sequelize
   - Added expected `url` key in production config to hold full DB connection string with `?sslmode=require`
   - Corrected `dialectOptions` casing in config.js to ensure SSL options are recognized
