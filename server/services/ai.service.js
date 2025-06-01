@@ -1,5 +1,6 @@
 // @ts-check
 const { OpenAI } = require('openai');
+const { generateEnhancedCoverLetter } = require('./generation/coverLetterGenerator');
 const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
 /**
@@ -24,6 +25,15 @@ const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
 /**
  * @typedef {'EXPERIENCED' | 'TECHNICAL' | 'CAREER_CHANGER' | 'NEW_GRADUATE'} CandidateProfile
+ */
+
+/**
+ * @typedef {Object} GenerationOptions
+ * @property {string} [tone] - Desired tone (professional, enthusiastic, etc.)
+ * @property {string[]} [emphasisAreas] - Areas to emphasize
+ * @property {'short' | 'standard' | 'detailed'} [length] - Desired length
+ * @property {'basic' | 'strict' | 'thorough'} [validationLevel] - Content validation level
+ * @property {boolean} [mockMode] - Whether to run in mock mode
  */
 
 /** @type {Map<string, string>} */
@@ -115,103 +125,74 @@ const handleContentGaps = (resumeData, jobDetails) => {
 };
 
 /**
- * Builds dynamic prompt based on content analysis
- * @param {ResumeData} resumeData - Resume data
- * @param {JobDetails} jobDetails - Job details
- * @param {import('./generation/content/contentAnalysis').ContentAllocation} contentPriority
- * @returns {string} Generated prompt
- */
-const buildDynamicPrompt = (resumeData, jobDetails, contentPriority) => {
-  const profile = detectCandidateProfile(resumeData);
-  const spaceAllocation = allocateContentSpace(contentPriority.sections);
-  const gapStrategies = handleContentGaps(resumeData, jobDetails);
-  
-  const profileGuidance = {
-    EXPERIENCED: 'Emphasize career progression and key achievements',
-    TECHNICAL: 'Focus on technical expertise and project implementations',
-    CAREER_CHANGER: 'Highlight transferable skills and relevant projects',
-    NEW_GRADUATE: 'Emphasize academic projects and technical capabilities'
-  }[profile];
-
-  return `
-    DYNAMIC COVER LETTER GENERATION INSTRUCTIONS:
-    
-    Profile Type: ${profile}
-    Primary Strategy: ${profileGuidance}
-    
-    Content Priority Structure:
-    ${contentPriority.suggestedOrder.map(section => 
-      `- ${section} (${contentPriority.sections[section].allocationPercentage}% focus, ~${spaceAllocation[section]} chars)`
-    ).join('\n    ')}
-    
-    Section-Specific Guidance:
-    ${Object.entries(contentPriority.sections)
-      .filter(([, priority]) => priority.tier === 'PRIMARY')
-      .map(([section, priority]) => `
-    ${section}:
-    - Focus Points: ${priority.focusPoints.join(', ')}
-    - Key Transitions: "${priority.suggestedTransitions[0]}"
-    - Emphasis Keywords: ${contentPriority.emphasisKeywords[section].join(', ')}
-    `).join('\n')}
-    
-    ${Object.entries(gapStrategies).length > 0 ? `
-    Gap Compensation Strategies:
-    ${Object.entries(gapStrategies)
-      .map(([section, strategies]) => `
-    ${section}:
-    ${strategies.map(strategy => `- ${strategy}`).join('\n    ')}
-    `).join('\n')}
-    ` : ''}
-    
-    Content Quality Requirements:
-    - Only include sections meeting quality thresholds
-    - Maintain natural flow between sections
-    - Use provided transition phrases
-    - Focus on concrete examples and metrics
-    - Adapt tone to match company culture
-    
-    DO NOT:
-    - Include placeholder text
-    - Mention missing information
-    - Exceed allocated section lengths
-    - Use generic statements without context
-  `;
-};
-
-/**
  * Generates a cover letter using OpenAI
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @param {Object} [options] - Generation options
+ * @param {GenerationOptions} [options] - Generation options
+ * @returns {Promise<Object>} Generated cover letter with metadata
  */
 const generateCoverLetter = async (resumeData, jobDetails, options = {}) => {
+  // Validate inputs
+  if (!resumeData) {
+    throw new Error('Resume data is required');
+  }
+  if (!jobDetails?.company || !jobDetails?.jobTitle || !jobDetails?.jobDescription) {
+    throw new Error('Job details must include company, jobTitle, and jobDescription');
+  }
+
   if (IS_TEST_MODE && !options.mockMode) {
-    return "This is a mock cover letter for testing purposes.";
+    return {
+      content: "This is a mock cover letter for testing purposes.",
+      metadata: {
+        processingTime: 0,
+        validation: {
+          isValid: true,
+          errors: [],
+          warnings: [],
+          metrics: {}
+        }
+      }
+    };
   }
   
   const cacheKey = JSON.stringify({
     resumeId: resumeData.id,
     jobTitle: jobDetails.jobTitle,
     company: jobDetails.company,
+    options,
     timestamp: new Date().toDateString()
   });
   
   if (cache.has(cacheKey)) {
     console.log('Returning cached cover letter');
-    return cache.get(cacheKey);
+    return {
+      content: cache.get(cacheKey),
+      metadata: {
+        fromCache: true,
+        timestamp: new Date().toDateString()
+      }
+    };
   }
 
   try {
-    const contentPriority = prioritizeContent(resumeData, jobDetails);
-    const prompt = buildDynamicPrompt(resumeData, jobDetails, contentPriority);
+    // Create a content generation function that uses OpenAI
+    const generateContent = async (prompt) => {
+      const content = await makeAPIRequestWithRetry(prompt);
+      if (!content) {
+        throw new Error('Failed to generate content');
+      }
+      return content;
+    };
+
+    // Use the enhanced cover letter generation with our content generator
+    const result = await generateEnhancedCoverLetter(resumeData, jobDetails, generateContent, options);
     
-    if (IS_TEST_MODE && options.mockMode === 'prompt') {
-      return prompt;
+    // Only cache valid content
+    if (result.metadata.validation.isValid) {
+      cache.set(cacheKey, result.content);
     }
     
-    const response = await makeAPIRequestWithRetry(prompt);
-    cache.set(cacheKey, response);
-    return response;
+    return result;
   } catch (error) {
     console.error('Error generating cover letter:', error);
     throw handleError(error);
@@ -279,7 +260,6 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 module.exports = {
   generateCoverLetter,
-  buildDynamicPrompt,
   detectCandidateProfile,
   allocateContentSpace,
   handleContentGaps

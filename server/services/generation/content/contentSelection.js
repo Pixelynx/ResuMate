@@ -107,6 +107,8 @@ const calculateSpecificityScore = (content) => {
  * @returns {number} Relevance score (0-1)
  */
 const calculateRelevanceScore = (content, jobDescription) => {
+  if (!content || !jobDescription) return 0;
+
   const contentWords = new Set(content.toLowerCase().match(/\b\w+\b/g) || []);
   const jobWords = new Set(jobDescription.toLowerCase().match(/\b\w+\b/g) || []);
   

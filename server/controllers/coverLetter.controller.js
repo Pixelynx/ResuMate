@@ -212,9 +212,9 @@ exports.generate = async (req, res) => {
 
     const resumeid = req.body.resumeid;
     const jobDetails = {
-      jobtitle: req.body.jobtitle,
+      jobTitle: req.body.jobtitle,
       company: req.body.company,
-      jobdescription: req.body.jobdescription || ''
+      jobDescription: req.body.jobdescription || ''
     };
 
     const options = {
@@ -238,7 +238,8 @@ exports.generate = async (req, res) => {
     }
 
     // Generate cover letter using AI service
-    const content = await aiService.generateCoverLetter(resume, jobDetails, options);
+    const aiReponse = await aiService.generateCoverLetter(resume, jobDetails, options);
+    const content = aiReponse.content;
 
     // Extract previous employment from work experience
     let prevEmployed = [];
@@ -259,12 +260,12 @@ exports.generate = async (req, res) => {
     // Create a new cover letter in the database
     const coverLetter = {
       id: uuidv4(),
-      title: `${jobDetails.jobtitle} at ${jobDetails.company}`,
+      title: `${jobDetails.jobTitle} at ${jobDetails.company}`,
       content: content,
       resumeid: resumeid,
-      jobtitle: jobDetails.jobtitle,
+      jobtitle: req.body.jobtitle,
       company: jobDetails.company,
-      jobdescription: jobDetails.jobdescription || '',
+      jobdescription: jobDetails.jobDescription || '',
       firstname: resume.firstname || '',
       lastname: resume.lastname || '',
       email: resume.email || '',
