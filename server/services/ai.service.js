@@ -1,6 +1,6 @@
 // @ts-check
 const { OpenAI } = require('openai');
-const { prioritizeContent } = require('./scoring/coverLetterAnalysis/contentAnalysis');
+const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
 /**
  * @typedef {Object} ResumeData
@@ -65,7 +65,7 @@ const detectCandidateProfile = (resumeData) => {
 
 /**
  * Allocates content space based on section priorities
- * @param {Object.<string, import('./scoring/coverLetterAnalysis/contentAnalysis').SectionPriority>} sections
+ * @param {Object.<string, import('./generation/content/contentAnalysis').SectionPriority>} sections
  * @returns {Object.<string, number>} Character limits per section
  */
 const allocateContentSpace = (sections) => {
@@ -118,7 +118,7 @@ const handleContentGaps = (resumeData, jobDetails) => {
  * Builds dynamic prompt based on content analysis
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @param {import('./scoring/coverLetterAnalysis/contentAnalysis').ContentAllocation} contentPriority
+ * @param {import('./generation/content/contentAnalysis').ContentAllocation} contentPriority
  * @returns {string} Generated prompt
  */
 const buildDynamicPrompt = (resumeData, jobDetails, contentPriority) => {

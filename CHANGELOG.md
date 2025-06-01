@@ -38,6 +38,19 @@
   - Files Added:
     - toneConfigs.js
 
+- Improved code organization and directory structure:
+  - Created `/assessment` directory for job fit scoring and analysis:
+    - Consolidated scoring logic and algorithms
+    - Organized analysis tools and libraries
+    - Improved separation of scoring components
+  - Created `/generation` directory for content creation:
+    - Centralized cover letter generation logic
+    - Organized content analysis and prioritization
+    - Improved prompt generation architecture
+  - Enhanced modularity and maintainability
+  - Better separation of concerns
+  - Clearer code organization
+
 ### Changed
 - Refactored AIService to functional architecture:
   - Converted class-based implementation to functional module

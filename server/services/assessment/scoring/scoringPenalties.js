@@ -1,5 +1,5 @@
 // @ts-check
-const { calculateTechnicalDensity, isTechnicalRole } = require('./technicalKeywordLibrary');
+const { calculateTechnicalDensity, isTechnicalRole } = require('../analysis/technicalKeywordLibrary');
 
 /**
  * Calculates technical mismatch penalty
