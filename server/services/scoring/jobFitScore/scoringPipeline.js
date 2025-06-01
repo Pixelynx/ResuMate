@@ -4,7 +4,7 @@ const { PenaltyThresholdManager } = require('./penaltyThresholds');
 const { assessSkillMatchQuality, applySkillCompensation } = require('./skillsCompensation');
 const { calculateProjectCompensation, calculateSynergyBonuses, stackCompensation } = require('./projectCompensation');
 const { calculateCompensation } = require('./compensationSystem');
-const { classifyJob } = require('../jobCategories');
+const { classifyJob } = require('../../jobCategories');
 
 /** @typedef {import('./skillsCompensation').SkillMatchQuality} SkillMatchQuality */
 /** @typedef {import('./projectCompensation').ProjectRelevance} ProjectRelevance */
