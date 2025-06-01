@@ -1,341 +1,266 @@
-const OpenAI = require('openai');
+// @ts-check
+const { OpenAI } = require('openai');
+const { generateEnhancedCoverLetter } = require('./generation/coverLetterGenerator');
+const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
-class AIService {
-    constructor() {
-        try {
-            // Only initialize OpenAI if we're not in test mode
-            if (process.env.NODE_ENV !== 'test') {
-                this.openai = new OpenAI({
-                    apiKey: process.env.OPENAI_API_KEY
-                });
-            }
-        } catch (error) {
-            console.warn('OpenAI client initialization failed:', error.message);
-            console.warn('API functionality will be limited to prompt generation only.');
-        }
-        
-        this.cache = new Map();
-        this.retryLimit = 3;
-        this.retryDelay = 1000;
-        this.isTestMode = process.env.NODE_ENV === 'test';
-    }
+/**
+ * @typedef {Object} ResumeData
+ * @property {Object} [personalDetails]
+ * @property {string} [firstName]
+ * @property {string} [lastName]
+ * @property {string} [title]
+ * @property {Array<Object>} [workExperience]
+ * @property {Array<Object>} [education]
+ * @property {Object} [skills]
+ * @property {Array<Object>} [projects]
+ * @property {string} [id] - Resume identifier
+ */
 
-    async generateCoverLetter(resumeData, jobDetails, options = {}) {
-        // If in test mode and no mock mode specified, return test output
-        if (this.isTestMode && !options.mockMode) {
-            return "This is a mock cover letter for testing purposes. The real AI service is not being called.";
-        }
-        
-        const cacheKey = this.generateCacheKey(resumeData, jobDetails);
-        
-        // Check cache first
-        if (this.cache.has(cacheKey)) {
-            console.log('Returning cached cover letter');
-            return this.cache.get(cacheKey);
-        }
+/**
+ * @typedef {Object} JobDetails
+ * @property {string} company - Company name
+ * @property {string} jobTitle - Job title
+ * @property {string} jobDescription - Job description
+ */
 
-        try {
-            // Preprocess data to remove empty fields and find relevant skills
-            const processedResumeData = this.preprocessResumeData(resumeData, jobDetails);
-            const relevantSkills = this.extractRelevantSkills(processedResumeData.skills?.skills_, jobDetails);
-            
-            // Construct the optimized prompt
-            const prompt = this.constructPrompt(processedResumeData, jobDetails, relevantSkills, options);
-            
-            // If in test mode with mockMode=true, just return the prompt
-            if (this.isTestMode && options.mockMode === 'prompt') {
-                return prompt;
-            }
-            
-            // Generate the cover letter
-            const response = await this.makeAPIRequestWithRetry(prompt);
-            
-            // Cache the successful response
-            this.cache.set(cacheKey, response);
-            return response;
-        } catch (error) {
-            console.error('Error generating cover letter:', error);
-            throw this.handleError(error);
-        }
-    }
+/**
+ * @typedef {'EXPERIENCED' | 'TECHNICAL' | 'CAREER_CHANGER' | 'NEW_GRADUATE'} CandidateProfile
+ */
 
-    // Preprocess resume data to remove empty fields and null values
-    preprocessResumeData(resumeData, jobDetails) {
-        // Deep clone the resume data to avoid modifying the original
-        const processed = JSON.parse(JSON.stringify(resumeData));
-        
-        // Clean up personal details
-        if (processed.personalDetails) {
-            processed.firstName = processed.personalDetails.firstName || processed.firstName || '';
-            processed.lastName = processed.personalDetails.lastName || processed.lastName || '';
-            processed.title = processed.personalDetails.title || processed.title || '';
-        }
+/**
+ * @typedef {Object} GenerationOptions
+ * @property {string} [tone] - Desired tone (professional, enthusiastic, etc.)
+ * @property {string[]} [emphasisAreas] - Areas to emphasize
+ * @property {'short' | 'standard' | 'detailed'} [length] - Desired length
+ * @property {'basic' | 'strict' | 'thorough'} [validationLevel] - Content validation level
+ * @property {boolean} [mockMode] - Whether to run in mock mode
+ */
 
-        // Clean up work experience
-        if (processed.workExperience && Array.isArray(processed.workExperience)) {
-            processed.workExperience = processed.workExperience
-                .filter(exp => exp && exp.jobTitle && exp.company)
-                .map(exp => ({
-                    ...exp,
-                    description: exp.description || ''
-                }));
-        } else {
-            processed.workExperience = [];
-        }
+/** @type {Map<string, string>} */
+const cache = new Map();
+const RETRY_LIMIT = 3;
+const RETRY_DELAY = 1000;
+const IS_TEST_MODE = process.env.NODE_ENV === 'test';
 
-        // Clean up education
-        if (processed.education && Array.isArray(processed.education)) {
-            processed.education = processed.education
-                .filter(edu => edu && (edu.institutionName || edu.degree || edu.fieldOfStudy));
-        } else {
-            processed.education = [];
-        }
-
-        return processed;
-    }
-
-    // Extract skills that might be relevant to the job
-    extractRelevantSkills(skills, jobDetails) {
-        if (!skills || typeof skills !== 'string' || !jobDetails.jobDescription) {
-            return skills || '';
-        }
-
-        // Split skills into an array
-        const skillArray = skills.split(',').map(skill => skill.trim());
-        
-        // If the job description is available, try to find relevant skills
-        if (jobDetails.jobDescription) {
-            const jobDescLower = jobDetails.jobDescription.toLowerCase();
-            
-            // Find skills mentioned in the job description
-            const relevantSkills = skillArray.filter(skill => 
-                jobDescLower.includes(skill.toLowerCase())
-            );
-            
-            // If we found relevant skills, prioritize them
-            if (relevantSkills.length > 0) {
-                // Return relevant skills first, then add a few others if needed
-                const otherSkills = skillArray.filter(skill => 
-                    !relevantSkills.includes(skill)
-                );
-                
-                // Combine relevant skills with some others, up to 5 total
-                const combinedSkills = [
-                    ...relevantSkills,
-                    ...otherSkills.slice(0, Math.max(0, 5 - relevantSkills.length))
-                ];
-                
-                return combinedSkills.join(', ');
-            }
-        }
-        
-        // If no relevant skills found or no job description provided,
-        // return up to 5 skills from the original list
-        return skillArray.slice(0, 5).join(', ');
-    }
-
-    constructPrompt(resumeData, jobDetails, relevantSkills, options = {}) {
-        const {
-            firstName = '',
-            lastName = '',
-            title = '',
-            workExperience = [],
-            education = []
-        } = resumeData;
-
-        const hasName = firstName && lastName;
-        const hasTitle = Boolean(title);
-        const hasSkills = Boolean(relevantSkills);
-        const hasWorkExperience = workExperience.length > 0;
-        const hasEducation = education.length > 0;
-        const hasJobDescription = Boolean(jobDetails.jobDescription);
-
-        // Build instructions and examples for the prompt
-        const systemInstructions = `
-            IMPORTANT INSTRUCTIONS FOR COVER LETTER GENERATION:
-            1. Only include information that is actually provided in the data below.
-            2. NEVER use placeholder text like [Previous Company], [Degree], or [Key Skill].
-            3. If a field is missing, do not mention it at all rather than creating a generic version.
-            4. Completely omit sections (like education or skills) if no data is provided.
-            5. Focus on making the letter flow naturally with only the information available.
-            6. Keep the cover letter concise and professional.
-            If projects are listed:
-
-            - Carefully review the project list
-                - Identify the project(s) most relevant to the target job's industry or tech stack
-                - Explicitly reference specific work, technologies, or achievements from the most relevant project(s)
-                - Demonstrate how the project experience directly aligns with the job requirements
-
-
-            - If a tone parameter is provided:
-                - Adapt the cover letter's language, style, and emotional tenor to match the specified tone
-                - Ensure the tone remains professional while reflecting the requested style
-                - Examples of possible tones: professional, enthusiastic, confident, innovative, empathetic
-
-
-
-            EXAMPLES OF HOW TO HANDLE MISSING DATA:
-            - If education details are not provided, don't mention education at all.
-            - If work experience is missing, focus on skills and enthusiasm for the role instead.
-            - If the candidate has no title, do not attempt to create one; simply introduce them by name.
-            - If no skills are listed, do not make up generic skills or include a skills section.
-
-            PROJECT RELEVANCE GUIDELINES:
-
-            - Prioritize projects that:
-                - Use similar technologies to the job description
-                - Demonstrate relevant skills for the target role
-                - Show direct industry or domain experience
-
-
-            - When referencing a project, include:
-                - Specific technologies used
-                - Key challenges addressed
-                - Measurable outcomes or impacts
-                - Direct relevance to the job applied for
-            `;
-
-        // Build candidate details section only with available information
-        const candidateDetails = [
-            'Candidate Details:',
-            hasName ? `- Name: ${firstName} ${lastName}` : '',
-            hasTitle ? `- Current Title: ${title}` : '',
-            hasSkills ? `- Key Skills: ${relevantSkills}` : ''
-        ].filter(Boolean);
-
-        // Add work experience only if available
-        const experienceDetails = [];
-        if (hasWorkExperience) {
-            experienceDetails.push('Work Experience:');
-            workExperience.slice(0, 2).forEach(exp => {
-                experienceDetails.push(`- ${exp.jobTitle} at ${exp.company}`);
-                if (exp.description) {
-                    experienceDetails.push(`  ${exp.description.substring(0, 150)}${exp.description.length > 150 ? '...' : ''}`);
-                }
-            });
-        }
-
-        // Add education only if available
-        const educationDetails = [];
-        if (hasEducation) {
-            educationDetails.push('Education:');
-            education.slice(0, 2).forEach(edu => {
-                const parts = [
-                    edu.degree, 
-                    edu.fieldOfStudy, 
-                    edu.institutionName
-                ].filter(Boolean);
-                if (parts.length > 0) {
-                    educationDetails.push(`- ${parts.join(', ')}`);
-                }
-            });
-        }
-
-        // Job details section
-        const jobDetails_ = [
-            'Job Details:',
-            `- Company: ${jobDetails.company}`,
-            `- Position: ${jobDetails.jobTitle}`
-        ];
-        
-        if (hasJobDescription) {
-            jobDetails_.push(`- Job Description Overview: ${jobDetails.jobDescription.substring(0, 300)}${jobDetails.jobDescription.length > 300 ? '...' : ''}`);
-        }
-
-        // Build the complete prompt
-        const prompt = [
-            systemInstructions,
-            '',
-            `Write a professional cover letter for a ${jobDetails.jobTitle} position at ${jobDetails.company}.`,
-            '',
-            ...candidateDetails,
-            '',
-            ...(experienceDetails.length > 0 ? [...experienceDetails, ''] : []),
-            ...(educationDetails.length > 0 ? [...educationDetails, ''] : []),
-            ...jobDetails_,
-            '',
-            'Additional Guidelines:',
-            '- Highlight relevant skills and experience that match the job requirements',
-            '- Show enthusiasm for the role and company',
-            '- Include a strong closing statement',
-            '- Do not fabricate information or use placeholders for missing data',
-            '- Only mention skills, experience, and education that are explicitly provided above',
-            options.tone ? `- Use a ${options.tone} tone throughout the letter` : '',
-            options.length ? `- Keep the letter ${options.length === 'short' ? 'brief and concise' : options.length === 'long' ? 'detailed and comprehensive' : 'moderately detailed'}` : '',
-            ...(options.emphasis && options.emphasis.length > 0 ? [`- Emphasize these aspects if mentioned in the data: ${options.emphasis.join(', ')}`] : [])
-        ].filter(Boolean).join('\n');
-
-        return prompt;
-    }
-
-    async makeAPIRequestWithRetry(prompt, attempt = 1) {
-        // If in test mode, return mock response
-        if (this.isTestMode) {
-            return "This is a mock API response for testing purposes.";
-        }
-        
-        try {
-            if (!this.openai) {
-                throw new Error("OpenAI client not initialized. API key may be missing.");
-            }
-            
-            const completion = await this.openai.chat.completions.create({
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a professional cover letter writer who creates personalized, tailored cover letters. You NEVER include placeholder text or mention missing information. If data is unavailable, you gracefully work around it and focus on what IS available."
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                model: "gpt-3.5-turbo",
-                temperature: 0.7,
-                max_tokens: 1000,
-                top_p: 1,
-            });
-
-            return completion.choices[0].message.content;
-        } catch (error) {
-            if (attempt < this.retryLimit && this.shouldRetry(error)) {
-                console.log(`Retrying API request, attempt ${attempt + 1}`);
-                await this.delay(this.retryDelay * attempt);
-                return this.makeAPIRequestWithRetry(prompt, attempt + 1);
-            }
-            throw error;
-        }
-    }
-
-    generateCacheKey(resumeData, jobDetails) {
-        // Create a unique key based on resume and job details
-        return JSON.stringify({
-            resumeId: resumeData.id,
-            jobTitle: jobDetails.jobTitle,
-            company: jobDetails.company,
-            timestamp: new Date().toDateString() // Cache expires daily
-        });
-    }
-
-    shouldRetry(error) {
-        // Retry on rate limits or temporary server issues
-        return error.status === 429 || // Rate limit
-               error.status >= 500;    // Server errors
-    }
-
-    handleError(error) {
-        if (error.status === 429) {
-            return new Error('Rate limit exceeded. Please try again later.');
-        }
-        if (error.status === 401) {
-            return new Error('Authentication error. Please check API key.');
-        }
-        return new Error('Failed to generate cover letter. Please try again.');
-    }
-
-    async delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
+let openaiClient;
+try {
+  if (!IS_TEST_MODE) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || ''
+    });
+  }
+} catch (error) {
+  console.warn('OpenAI client initialization failed:', error.message);
+  console.warn('API functionality will be limited to prompt generation only.');
 }
 
-module.exports = new AIService(); 
+/**
+ * Detects the candidate's profile type based on resume content
+ * @param {ResumeData} resumeData - Resume data
+ * @returns {CandidateProfile} Detected profile type
+ */
+const detectCandidateProfile = (resumeData) => {
+  const hasStrongExperience = (resumeData.workExperience?.length ?? 0) >= 3;
+  const hasTechnicalSkills = resumeData.skills?.skills_?.toLowerCase().includes('programming') ||
+    resumeData.skills?.skills_?.toLowerCase().includes('software');
+  const isRecentGraduate = resumeData.education?.some(edu => 
+    edu.endDate && new Date(edu.endDate).getFullYear() >= new Date().getFullYear() - 1
+  );
+
+  if (hasStrongExperience) return 'EXPERIENCED';
+  if (hasTechnicalSkills) return 'TECHNICAL';
+  if (isRecentGraduate) return 'NEW_GRADUATE';
+  return 'CAREER_CHANGER';
+};
+
+/**
+ * Allocates content space based on section priorities
+ * @param {Object.<string, import('./generation/content/contentAnalysis').SectionPriority>} sections
+ * @returns {Object.<string, number>} Character limits per section
+ */
+const allocateContentSpace = (sections) => {
+  const TOTAL_CHARS = 2500; // Standard cover letter length
+  const MIN_SECTION_CHARS = 200;
+  
+  return Object.fromEntries(
+    Object.entries(sections)
+      .filter(([, priority]) => priority.allocationPercentage > 0)
+      .map(([section, priority]) => [
+        section,
+        Math.max(
+          MIN_SECTION_CHARS,
+          Math.floor(TOTAL_CHARS * (priority.allocationPercentage / 100))
+        )
+      ])
+  );
+};
+
+/**
+ * Handles missing content sections with strategic alternatives
+ * @param {ResumeData} resumeData - Resume data
+ * @param {JobDetails} jobDetails - Job details
+ * @returns {Object.<string, string[]>} Alternative content strategies
+ */
+const handleContentGaps = (resumeData, jobDetails) => {
+  /** @type {Object.<string, string[]>} */
+  const strategies = {};
+  
+  if (!(resumeData.workExperience?.length ?? 0)) {
+    strategies.experience = [
+      'Focus on relevant projects and technical skills',
+      'Emphasize academic achievements and internships',
+      'Highlight volunteer work or personal projects'
+    ];
+  }
+  
+  if (!(resumeData.projects?.length ?? 0)) {
+    strategies.projects = [
+      'Emphasize hands-on experience from work',
+      'Focus on technical skills and certifications',
+      'Highlight relevant coursework and academic achievements'
+    ];
+  }
+  
+  return strategies;
+};
+
+/**
+ * Generates a cover letter using OpenAI
+ * @param {ResumeData} resumeData - Resume data
+ * @param {JobDetails} jobDetails - Job details
+ * @param {GenerationOptions} [options] - Generation options
+ * @returns {Promise<Object>} Generated cover letter with metadata
+ */
+const generateCoverLetter = async (resumeData, jobDetails, options = {}) => {
+  // Validate inputs
+  if (!resumeData) {
+    throw new Error('Resume data is required');
+  }
+  if (!jobDetails?.company || !jobDetails?.jobTitle || !jobDetails?.jobDescription) {
+    throw new Error('Job details must include company, jobTitle, and jobDescription');
+  }
+
+  if (IS_TEST_MODE && !options.mockMode) {
+    return {
+      content: "This is a mock cover letter for testing purposes.",
+      metadata: {
+        processingTime: 0,
+        validation: {
+          isValid: true,
+          errors: [],
+          warnings: [],
+          metrics: {}
+        }
+      }
+    };
+  }
+  
+  const cacheKey = JSON.stringify({
+    resumeId: resumeData.id,
+    jobTitle: jobDetails.jobTitle,
+    company: jobDetails.company,
+    options,
+    timestamp: new Date().toDateString()
+  });
+  
+  if (cache.has(cacheKey)) {
+    console.log('Returning cached cover letter');
+    return {
+      content: cache.get(cacheKey),
+      metadata: {
+        fromCache: true,
+        timestamp: new Date().toDateString()
+      }
+    };
+  }
+
+  try {
+    // Create a content generation function that uses OpenAI
+    const generateContent = async (prompt) => {
+      const content = await makeAPIRequestWithRetry(prompt);
+      if (!content) {
+        throw new Error('Failed to generate content');
+      }
+      return content;
+    };
+
+    // Use the enhanced cover letter generation with our content generator
+    const result = await generateEnhancedCoverLetter(resumeData, jobDetails, generateContent, options);
+    
+    // Only cache valid content
+    if (result.metadata.validation.isValid) {
+      cache.set(cacheKey, result.content);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error generating cover letter:', error);
+    throw handleError(error);
+  }
+};
+
+/**
+ * Makes API request with retry logic
+ * @param {string} prompt - Generation prompt
+ * @param {number} [attempt] - Current attempt number
+ */
+const makeAPIRequestWithRetry = async (prompt, attempt = 1) => {
+  if (IS_TEST_MODE) {
+    return "This is a mock API response for testing purposes.";
+  }
+  
+  try {
+    if (!openaiClient) {
+      throw new Error("OpenAI client not initialized.");
+    }
+    
+    const completion = await openaiClient.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional cover letter writer who creates personalized, tailored cover letters. You NEVER include placeholder text or mention missing information. If data is unavailable, you gracefully work around it and focus on what IS available."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      model: "gpt-3.5-turbo",
+      temperature: 0.7,
+      max_tokens: 1000,
+      top_p: 1,
+    });
+
+    return completion.choices[0].message.content;
+  } catch (error) {
+    if (attempt < RETRY_LIMIT && shouldRetry(error)) {
+      console.log(`Retrying API request, attempt ${attempt + 1}`);
+      await delay(RETRY_DELAY * attempt);
+      return makeAPIRequestWithRetry(prompt, attempt + 1);
+    }
+    throw error;
+  }
+};
+
+const shouldRetry = (error) => {
+  return error.status === 429 || error.status >= 500;
+};
+
+const handleError = (error) => {
+  if (error.status === 429) {
+    return new Error('Rate limit exceeded. Please try again later.');
+  }
+  if (error.status === 401) {
+    return new Error('Authentication error. Please check API key.');
+  }
+  return new Error('Failed to generate cover letter. Please try again.');
+};
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+module.exports = {
+  generateCoverLetter,
+  detectCandidateProfile,
+  allocateContentSpace,
+  handleContentGaps
+}; 

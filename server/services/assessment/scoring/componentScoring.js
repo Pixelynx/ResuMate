@@ -1,10 +1,10 @@
 // @ts-check
-const { calculateTechnicalDensity, isTechnicalRole } = require('./technicalKeywordLibrary');
-const { scoreExperience } = require('./experienceScoring');
+const { calculateTechnicalDensity, isTechnicalRole } = require('../analysis/technicalKeywordLibrary');
+const { scoreExperience } = require('../scoring/experienceScoring');
 
-/** @typedef {import('./technicalKeywordLibrary').Resume} Resume */
-/** @typedef {import('./technicalKeywordLibrary').WorkExperience} WorkExperience */
-/** @typedef {import('./technicalKeywordLibrary').CategoryScore} CategoryScore */
+/** @typedef {import('../analysis/technicalKeywordLibrary').Resume} Resume */
+/** @typedef {import('../analysis/technicalKeywordLibrary').WorkExperience} WorkExperience */
+/** @typedef {import('../analysis/technicalKeywordLibrary').CategoryScore} CategoryScore */
 
 /**
  * Component weights for overall score calculation
