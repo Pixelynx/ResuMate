@@ -29,6 +29,15 @@
   - Comprehensive skill extraction from job descriptions
   - Cached skill comparisons for performance
 
+- Scalable tone configuration system:
+  - Extensible tone architecture for future additions
+  - Professional tone configuration with comprehensive attributes
+  - Tone-specific vocabulary and content guidelines
+  - Dynamic prompt modification based on tone
+  - Content filtering and emphasis adjustments
+  - Files Added:
+    - toneConfigs.js
+
 ### Changed
 - Refactored AIService to functional architecture:
   - Converted class-based implementation to functional module
