@@ -1,4 +1,17 @@
 const OpenAI = require('openai');
+const { prioritizeContent } = require('./scoring/contentAnalysis');
+
+/**
+ * @typedef {Object} ResumeData
+ * @property {Object} [personalDetails]
+ * @property {string} [firstName]
+ * @property {string} [lastName]
+ * @property {string} [title]
+ * @property {Array<Object>} [workExperience]
+ * @property {Array<Object>} [education]
+ * @property {Object} [skills]
+ * @property {Array<Object>} [projects]
+ */
 
 class AIService {
     constructor() {
@@ -135,6 +148,36 @@ class AIService {
     }
 
     constructPrompt(resumeData, jobDetails, relevantSkills, options = {}) {
+        // Get content prioritization
+        const contentPriority = prioritizeContent(resumeData, jobDetails);
+        
+        // Build instructions with prioritized content guidance
+        const systemInstructions = `
+            IMPORTANT INSTRUCTIONS FOR COVER LETTER GENERATION:
+            1. Only include information that is actually provided in the data below.
+            2. NEVER use placeholder text like [Previous Company], [Degree], or [Key Skill].
+            3. Follow this content priority structure:
+               ${contentPriority.suggestedOrder.map(section => 
+                 `- ${section} (${contentPriority.sections[section].allocationPercentage}% focus)`
+               ).join('\n               ')}
+            4. For each section priority:
+               - PRIMARY (${contentPriority.sections[contentPriority.suggestedOrder[0]]?.focusPoints.join(', ')})
+               - SECONDARY (${contentPriority.sections[contentPriority.suggestedOrder[1]]?.focusPoints.join(', ')})
+               - MINIMAL (Brief mention if relevant)
+            5. Use suggested transitions naturally:
+               ${Object.entries(contentPriority.sections)
+                 .filter(([,priority]) => priority.tier === 'PRIMARY')
+                 .map(([section, priority]) => 
+                   `- ${section}: "${priority.suggestedTransitions[0]}"`
+                 ).join('\n               ')}
+            6. Emphasize these keywords where relevant:
+               ${Object.entries(contentPriority.emphasisKeywords)
+                 .filter(([,keywords]) => keywords.length > 0)
+                 .map(([section, keywords]) => 
+                   `- ${section}: ${keywords.join(', ')}`
+                 ).join('\n               ')}
+            `;
+
         const {
             firstName = '',
             lastName = '',
@@ -149,51 +192,6 @@ class AIService {
         const hasWorkExperience = workExperience.length > 0;
         const hasEducation = education.length > 0;
         const hasJobDescription = Boolean(jobDetails.jobDescription);
-
-        // Build instructions and examples for the prompt
-        const systemInstructions = `
-            IMPORTANT INSTRUCTIONS FOR COVER LETTER GENERATION:
-            1. Only include information that is actually provided in the data below.
-            2. NEVER use placeholder text like [Previous Company], [Degree], or [Key Skill].
-            3. If a field is missing, do not mention it at all rather than creating a generic version.
-            4. Completely omit sections (like education or skills) if no data is provided.
-            5. Focus on making the letter flow naturally with only the information available.
-            6. Keep the cover letter concise and professional.
-            If projects are listed:
-
-            - Carefully review the project list
-                - Identify the project(s) most relevant to the target job's industry or tech stack
-                - Explicitly reference specific work, technologies, or achievements from the most relevant project(s)
-                - Demonstrate how the project experience directly aligns with the job requirements
-
-
-            - If a tone parameter is provided:
-                - Adapt the cover letter's language, style, and emotional tenor to match the specified tone
-                - Ensure the tone remains professional while reflecting the requested style
-                - Examples of possible tones: professional, enthusiastic, confident, innovative, empathetic
-
-
-
-            EXAMPLES OF HOW TO HANDLE MISSING DATA:
-            - If education details are not provided, don't mention education at all.
-            - If work experience is missing, focus on skills and enthusiasm for the role instead.
-            - If the candidate has no title, do not attempt to create one; simply introduce them by name.
-            - If no skills are listed, do not make up generic skills or include a skills section.
-
-            PROJECT RELEVANCE GUIDELINES:
-
-            - Prioritize projects that:
-                - Use similar technologies to the job description
-                - Demonstrate relevant skills for the target role
-                - Show direct industry or domain experience
-
-
-            - When referencing a project, include:
-                - Specific technologies used
-                - Key challenges addressed
-                - Measurable outcomes or impacts
-                - Direct relevance to the job applied for
-            `;
 
         // Build candidate details section only with available information
         const candidateDetails = [
@@ -240,6 +238,15 @@ class AIService {
         
         if (hasJobDescription) {
             jobDetails_.push(`- Job Description Overview: ${jobDetails.jobDescription.substring(0, 300)}${jobDetails.jobDescription.length > 300 ? '...' : ''}`);
+        }
+
+        // Add emphasis on highest priority content
+        const primarySection = contentPriority.suggestedOrder[0];
+        if (primarySection && contentPriority.sections[primarySection].tier === 'PRIMARY') {
+            options.emphasis = [
+                ...(options.emphasis || []),
+                ...contentPriority.sections[primarySection].focusPoints
+            ];
         }
 
         // Build the complete prompt
