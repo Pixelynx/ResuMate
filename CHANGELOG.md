@@ -4,6 +4,22 @@
 
 ### [2025-05-31]
 ### Added
+- Integrated scoring pipeline with comprehensive analytics:
+  - Unified scoring flow with proper component ordering
+  - Performance monitoring and caching
+  - Detailed analytics and timing information
+  - Comprehensive error handling and validation
+- Job title bonus system:
+  - Direct match: 1.0 point bonus
+  - Partial match: Up to 0.5 points based on relevance
+  - Efficient caching of title comparisons
+  - No penalties for mismatched titles
+- Enhanced scoring components:
+  - Skills (30%): Core vs peripheral skill weighting
+  - Experience (25%): Role relevance and duration
+  - Projects (20%): Technology and description matching
+  - Education (15%): Level and field relevance
+  - Job Title (10%): Direct and partial matching
 - Penalty threshold management system:
   - Minimum penalty enforcement for fundamental gaps:
     - Severe skill mismatch (<20% match): 30% minimum penalty

@@ -3,6 +3,9 @@
 /** @typedef {'NONE' | 'MODERATE' | 'HIGH' | 'VERY_HIGH'} SkillMatchLevel */
 /** @typedef {'ENTRY' | 'JUNIOR' | 'MID' | 'SENIOR' | 'EXPERT'} ExperienceLevel */
 
+/** @typedef {import('./skillsCompensation').SkillMatchQuality} SkillMatchQuality */
+const { PenaltyThresholdManager } = require('./penaltyThresholds');
+
 /**
  * @typedef {Object} SkillMatchThresholds
  * @property {number} MODERATE_MIN - Minimum threshold for moderate match (50%)
@@ -30,6 +33,8 @@ const SKILL_MATCH_THRESHOLDS = {
  * @property {string[]} compensatedPenalties - Which penalties were compensated
  * @property {Object.<string, number>} originalPenalties - Original penalty values
  * @property {Object.<string, number>} adjustedPenalties - Adjusted penalty values after compensation
+ * @property {Object.<string, number>} reductions - Applied penalty reductions
+ * @property {Object} analysis - Comprehensive analysis of penalties
  */
 
 /**
@@ -109,11 +114,21 @@ const determineCompensationPower = (yearsExperience) => {
  * Applies compensation to penalties based on experience and skill levels
  * @param {Object} penalties - Original penalties
  * @param {CompensationPower} compensationPower - Compensation power levels
- * @returns {Object} Adjusted penalties
+ * @param {SkillMatchQuality} skillMatch - Skill match assessment
+ * @param {boolean} isTechnicalRole - Whether this is a technical role
+ * @param {number} requiredYears - Required years of experience
+ * @param {number} actualYears - Actual years of experience
+ * @returns {Object} Adjusted penalties and analysis
  */
-const applyCompensation = (penalties, compensationPower) => {
+const applyCompensation = (penalties, compensationPower, skillMatch, isTechnicalRole, requiredYears, actualYears) => {
+  const penaltyManager = new PenaltyThresholdManager();
   const adjustedPenalties = { ...penalties };
   const compensatedPenalties = [];
+
+  // Get penalty reasons
+  const skillReasons = penaltyManager.analyzeSkillMatch(skillMatch, isTechnicalRole);
+  const experienceReasons = penaltyManager.analyzeExperienceGap(requiredYears, actualYears);
+  const allReasons = [...skillReasons, ...experienceReasons];
 
   // Apply education penalty reduction
   if (adjustedPenalties.education && compensationPower.educationPenaltyReduction > 0) {
@@ -137,9 +152,20 @@ const applyCompensation = (penalties, compensationPower) => {
     }
   }
 
+  // Enforce minimum penalties
+  const finalPenalties = penaltyManager.enforceMinimumPenalties(adjustedPenalties, allReasons);
+
+  // Generate comprehensive analysis
+  const analysis = penaltyManager.generatePenaltyAnalysis(
+    penalties,
+    finalPenalties,
+    allReasons
+  );
+
   return {
-    adjustedPenalties,
-    compensatedPenalties
+    adjustedPenalties: finalPenalties,
+    compensatedPenalties,
+    analysis
   };
 };
 
@@ -148,21 +174,42 @@ const applyCompensation = (penalties, compensationPower) => {
  * @param {Object} penalties - Original penalties
  * @param {number} skillMatchPercentage - Overall skill match percentage
  * @param {Array<{ startDate?: string, endDate?: string }>} workExperience - Work experience
+ * @param {SkillMatchQuality} skillMatch - Skill match assessment
+ * @param {boolean} isTechnicalRole - Whether this is a technical role
+ * @param {number} requiredYears - Required years of experience
  * @returns {CompensationResult} Compensation calculation result
  */
-const calculateCompensation = (penalties, skillMatchPercentage, workExperience) => {
+const calculateCompensation = (penalties, skillMatchPercentage, workExperience, skillMatch, isTechnicalRole, requiredYears) => {
   const skillMatchLevel = determineSkillMatchLevel(skillMatchPercentage);
   const yearsExperience = calculateTotalExperience(workExperience);
   const compensationPower = determineCompensationPower(yearsExperience);
   
-  const { adjustedPenalties, compensatedPenalties } = applyCompensation(penalties, compensationPower);
+  const { adjustedPenalties, compensatedPenalties, analysis } = applyCompensation(
+    penalties, 
+    compensationPower,
+    skillMatch,
+    isTechnicalRole,
+    requiredYears,
+    yearsExperience
+  );
+
+  // Calculate reductions
+  /** @type {Object.<string, number>} */
+  const reductions = Object.create(null);
+  for (const key in penalties) {
+    if (Object.prototype.hasOwnProperty.call(penalties, key)) {
+      reductions[key] = penalties[key] - (adjustedPenalties[key] || 0);
+    }
+  }
 
   return {
     skillMatchLevel,
     compensationPower,
     compensatedPenalties,
     originalPenalties: { ...penalties },
-    adjustedPenalties
+    adjustedPenalties,
+    reductions,
+    analysis
   };
 };
 
@@ -172,4 +219,4 @@ module.exports = {
   calculateTotalExperience,
   determineCompensationPower,
   SKILL_MATCH_THRESHOLDS
-}; 
+};

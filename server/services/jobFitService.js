@@ -2,14 +2,16 @@
 const axios = require("axios");
 require("dotenv").config();
 const { calculateEmbeddingSimilarity } = require('./openaiService');
-const { calculateComponentScores } = require('./componentScoring');
+const { calculateComponentScores } = require('./scoring/componentScoring');
 const { 
   calculateTechnicalMismatchPenalty, 
   calculateExperienceMismatchPenalty,
   applyPenalties 
-} = require('./scoringPenalties');
+} = require('./scoring/scoringPenalties');
+const { classifyJob, getRelatedSkills, getCategoryWeight } = require('./scoring/jobCategories');
 
-/** @typedef {import('./technicalKeywordLibrary').Resume} Resume */
+/** @typedef {import('./scoring/technicalKeywordLibrary').Resume} Resume */
+/** @typedef {import('./scoring/jobCategories').ClassificationResult} ClassificationResult */
 
 /** @typedef {Object} WorkExperience
  * @property {string} jobtitle
@@ -35,12 +37,18 @@ const {
  * @property {string} [company]
  */
 
+/** @typedef {Object} JobFitResult
+ * @property {number|null} score
+ * @property {string} explanation
+ * @property {ClassificationResult} [jobClassification]
+ */
+
 /**
  * Prepares resume content for analysis
  * @param {Resume} resume - Resume object
- * @returns {String} Formatted resume content
+ * @returns {string} Formatted resume content
  */
-function prepareResumeContent(resume) {
+const prepareResumeContent = (resume) => {
   const sections = [];
   
   // Add personal title if available
@@ -49,12 +57,12 @@ function prepareResumeContent(resume) {
   }
   
   // Add skills
-  if (resume.skills && resume.skills.skills_) {
+  if (resume.skills?.skills_) {
     sections.push(`SKILLS: ${resume.skills.skills_}`);
   }
   
   // Add work experience
-  if (resume.workExperience && resume.workExperience.length > 0) {
+  if (resume.workExperience?.length > 0) {
     const workExp = resume.workExperience.map(exp => 
       `WORK EXPERIENCE: ${exp.jobtitle} at ${exp.companyName}\n${exp.description}`
     ).join('\n\n');
@@ -62,7 +70,7 @@ function prepareResumeContent(resume) {
   }
   
   // Add projects
-  if (resume.projects && resume.projects.length > 0) {
+  if (resume.projects?.length > 0) {
     const projects = resume.projects.map(proj => 
       `PROJECT: ${proj.title}\n${proj.description}\nTechnologies: ${proj.technologies}`
     ).join('\n\n');
@@ -70,7 +78,7 @@ function prepareResumeContent(resume) {
   }
   
   // Add education
-  if (resume.education && resume.education.length > 0) {
+  if (resume.education?.length > 0) {
     const education = resume.education.map(edu => 
       `EDUCATION: ${edu.degree} in ${edu.fieldOfStudy} from ${edu.institutionName}`
     ).join('\n\n');
@@ -78,13 +86,13 @@ function prepareResumeContent(resume) {
   }
   
   return sections.join('\n\n');
-}
+};
 
 /**
  * Calculates job fit score based on resume content and job description
  * @param {Resume} resume - Resume object
- * @param {Object} coverLetter - Cover letter object containing job description
- * @returns {Promise<{score: number|null, explanation: string}>} Score and explanation
+ * @param {CoverLetter} coverLetter - Cover letter object containing job description
+ * @returns {Promise<JobFitResult>} Score and explanation
  */
 const calculateJobFitScore = async (resume, coverLetter) => {
   try {
@@ -94,31 +102,38 @@ const calculateJobFitScore = async (resume, coverLetter) => {
       throw new Error('Job description is required for scoring');
     }
     
+    // Classify the job
+    const jobClassification = classifyJob(
+      coverLetter.jobtitle ?? '',
+      coverLetter.jobdescription
+    );
+    console.log('Job classified as:', jobClassification);
+    
     // Prepare resume content
     const resumeContent = prepareResumeContent(resume);
     console.log(`Resume content prepared (${resumeContent.length} chars)`);
     
     try {
-      // Calculate component-based score
+      // Calculate component-based score with job category context
       console.log('Calculating component scores...');
       const componentResult = calculateComponentScores(
         resume, 
         coverLetter.jobdescription,
-        coverLetter.jobtitle || ''
+        coverLetter.jobtitle ?? ''
       );
       
-      // Calculate penalties
+      // Calculate penalties with job category context
       console.log('Calculating penalties...');
       const technicalMismatch = calculateTechnicalMismatchPenalty(
         coverLetter.jobdescription,
         resumeContent,
-        coverLetter.jobtitle || ''
+        coverLetter.jobtitle ?? ''
       );
       
       const experienceMismatch = calculateExperienceMismatchPenalty(
-        resume.workExperience,
+        resume.workExperience ?? [],
         coverLetter.jobdescription,
-        coverLetter.jobtitle || ''
+        coverLetter.jobtitle ?? ''
       );
       
       // Use embeddings as a minor adjustment factor
@@ -132,7 +147,7 @@ const calculateJobFitScore = async (resume, coverLetter) => {
       const embeddingAdjustment = (similarity - 0.5) * 2; // Convert 0-1 to -1 to 1
       const adjustedScore = baseScore * (1 + (embeddingAdjustment * 0.2));
       
-      // Apply penalties
+      // Apply penalties with category context
       console.log('Applying penalties...');
       const { finalScore, analysis: penaltyAnalysis } = applyPenalties(
         adjustedScore,
@@ -144,7 +159,7 @@ const calculateJobFitScore = async (resume, coverLetter) => {
       
       console.log(`Final score calculated: ${finalScore}/10`);
       
-      // Generate explanation
+      // Generate explanation with job category context
       console.log('Generating explanation...');
       const explanation = await generateScoreExplanation(
         resume,
@@ -156,13 +171,15 @@ const calculateJobFitScore = async (resume, coverLetter) => {
             technical: technicalMismatch,
             experience: experienceMismatch
           },
-          penaltyAnalysis
+          penaltyAnalysis,
+          jobClassification
         }
       );
       
       return {
         score: parseFloat(finalScore.toFixed(1)),
-        explanation
+        explanation,
+        jobClassification
       };
       
     } catch (calculationError) {
@@ -173,7 +190,8 @@ const calculateJobFitScore = async (resume, coverLetter) => {
     console.error('Error in job fit calculation:', error);
     return {
       score: null,
-      explanation: `Unable to calculate job fit score: ${error.message}`
+      explanation: `Unable to calculate job fit score: ${error.message}`,
+      jobClassification: undefined
     };
   }
 };
@@ -181,12 +199,12 @@ const calculateJobFitScore = async (resume, coverLetter) => {
 /**
  * Generate an explanation for the job fit score using OpenAI
  * @param {Resume} resume - The resume data
- * @param {Object} coverLetter - The cover letter data
+ * @param {CoverLetter} coverLetter - The cover letter data
  * @param {number} score - The calculated score
  * @param {Object} analysis - Detailed score analysis
  * @returns {Promise<string>} An explanation of the score
  */
-async function generateScoreExplanation(resume, coverLetter, score, analysis) {
+const generateScoreExplanation = async (resume, coverLetter, score, analysis) => {
   try {
     console.log('Requesting AI explanation for score:', score);
     
@@ -197,6 +215,8 @@ async function generateScoreExplanation(resume, coverLetter, score, analysis) {
       - Title: ${coverLetter.jobtitle || "Not specified"}
       - Company: ${coverLetter.company || "Not specified"}
       - Description: ${coverLetter.jobdescription || "Not provided"}
+      - Category: ${analysis.jobClassification?.category || "Not specified"} (Confidence: ${analysis.jobClassification?.confidence?.toFixed(2) || "N/A"})
+      - Suggested Skills: ${analysis.jobClassification?.suggestedSkills?.join(', ') || "None"}
 
       Candidate's Resume:
       - Skills: ${resume.skills?.skills_ || "Not provided"}
@@ -222,6 +242,7 @@ async function generateScoreExplanation(resume, coverLetter, score, analysis) {
       2. Specifically highlight details that make the candidate a good match for this role
       3. Provide specific, actionable suggestions for how they could improve their resume to better match this job description
       4. If their background doesn't align with the role, suggest how they could highlight transferable skills or relevant experiences
+      5. Consider the job category and its typical requirements in your suggestions
 
       Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
     `;
