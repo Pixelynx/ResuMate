@@ -1,5 +1,6 @@
 // @ts-check
 const { calculateTechnicalDensity, isTechnicalRole } = require('./technicalKeywordLibrary');
+const { scoreExperience } = require('./experienceScoring');
 
 /** @typedef {import('./technicalKeywordLibrary').Resume} Resume */
 /** @typedef {import('./technicalKeywordLibrary').WorkExperience} WorkExperience */
@@ -79,28 +80,27 @@ function calculateExperienceScore(experience, jobDescription, jobTitle) {
 
   let totalScore = 0;
   const experienceAnalysis = experience.map(exp => {
-    // Calculate role relevance
-    const { isTechnical, confidence } = isTechnicalRole(exp.jobtitle);
-    const roleMatch = isTargetTechnical === isTechnical;
+    const expScore = scoreExperience(exp, {
+      description: jobDescription,
+      title: jobTitle
+    }, (text) => {
+      const techProfile = calculateTechnicalDensity(text);
+      const exactMatches = techProfile.matches.filter(skill => 
+        jobTechProfile.matches.includes(skill)
+      );
+      return {
+        matchScore: exactMatches.length / (jobTechProfile.matches.length || 1),
+        exactMatches,
+        partialMatches: [],
+        missingSkills: jobTechProfile.matches.filter(skill => !exactMatches.includes(skill))
+      };
+    });
 
-    // Calculate experience relevance
-    const expTechProfile = calculateTechnicalDensity(exp.description);
-    const relevanceScore = expTechProfile.matches.filter(skill => 
-      jobTechProfile.matches.includes(skill)
-    ).length / (jobTechProfile.matches.length || 1);
-
-    const entryScore = (roleMatch ? 0.6 : 0.2) + (relevanceScore * 0.4);
-    totalScore += entryScore;
-
-    return {
-      roleMatch,
-      technicalConfidence: confidence,
-      relevanceScore,
-      entryScore
-    };
+    totalScore += expScore.relevanceScore;
+    return expScore;
   });
 
-  // Average score across all experiences, with diminishing returns
+  // Average score with diminishing returns
   const score = Math.sqrt(totalScore / (experience.length || 1));
 
   return {

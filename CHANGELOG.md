@@ -4,6 +4,24 @@
 
 ### [2025-05-31]
 ### Added
+- Enhanced skills scoring system:
+  - Intelligent skill matching with synonyms support
+  - Levenshtein distance for fuzzy matching
+  - Core vs peripheral skill differentiation
+  - Comprehensive skill extraction from job descriptions
+  - Cached skill comparisons for performance
+- Enhanced work experience scoring:
+  - Seniority level detection with confidence scoring
+  - Industry relevance analysis with related industry detection
+  - Recency-based scoring using exponential decay
+  - Detailed strength and gap analysis
+  - Performance optimizations with caching
+- Modern JavaScript features:
+  - Private class fields with # prefix
+  - Nullish coalescing (??) operator
+  - Optional chaining (?.)
+  - Modern array methods
+  - Enhanced type safety with JSDoc
 - Integrated scoring pipeline with comprehensive analytics:
   - Unified scoring flow with proper component ordering
   - Performance monitoring and caching
@@ -87,6 +105,25 @@
   - Improved error handling and logging
 
 ### Changed
+- Consolidated work experience scoring system:
+  - Unified all experience scoring into single module
+  - Converted class-based implementation to functional
+  - Enhanced seniority detection with confidence scoring
+  - Improved industry relevance analysis
+  - Added comprehensive experience gap detection
+  - Optimized date-based calculations
+  - Removed duplicate scoring logic
+  - Files affected:
+    - Removed: workExperienceScoring.js (class-based)
+    - Added: experienceScoring.js (functional)
+- Consolidated skills scoring system:
+  - Merged advanced skills scoring into skillsCompensation.js
+  - Added skill synonyms and fuzzy matching
+  - Improved skill similarity detection
+  - Enhanced skill categorization
+  - Files affected:
+    - Removed: advancedSkillsScoring.js (class-based)
+    - Enhanced: skillsCompensation.js (functional)
 - Enhanced compensation system with multiplicative stacking
 - Improved project relevance detection with technology matching
 - Added synergy detection between skills and projects
