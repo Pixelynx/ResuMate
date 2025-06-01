@@ -1,5 +1,5 @@
 const OpenAI = require('openai');
-const { prioritizeContent } = require('./scoring/contentAnalysis');
+const { prioritizeContent } = require('./scoring/coverLetterAnalysis/contentAnalysis');
 
 /**
  * @typedef {Object} ResumeData
