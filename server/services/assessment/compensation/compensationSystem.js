@@ -8,16 +8,16 @@ const { PenaltyThresholdManager } = require('../scoring/penaltyThresholds');
 
 /**
  * @typedef {Object} SkillMatchThresholds
- * @property {number} MODERATE_MIN - Minimum threshold for moderate match (50%)
- * @property {number} HIGH_MIN - Minimum threshold for high match (80%)
- * @property {number} VERY_HIGH_MIN - Minimum threshold for very high match (90%)
+ * @property {number} MODERATE_MIN - Minimum threshold for moderate match (40%)
+ * @property {number} HIGH_MIN - Minimum threshold for high match (70%)
+ * @property {number} VERY_HIGH_MIN - Minimum threshold for very high match (85%)
  */
 
 /** @type {SkillMatchThresholds} */
 const SKILL_MATCH_THRESHOLDS = {
-  MODERATE_MIN: 0.50,
-  HIGH_MIN: 0.80,
-  VERY_HIGH_MIN: 0.90
+  MODERATE_MIN: 0.4,
+  HIGH_MIN: 0.7,
+  VERY_HIGH_MIN: 0.85
 };
 
 /**

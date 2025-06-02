@@ -14,24 +14,24 @@
 
 /**
  * @typedef {Object} SkillCompensationConfig
- * @property {number} HIGH_MATCH_THRESHOLD - Threshold for high match (0.8)
- * @property {number} VERY_HIGH_MATCH_THRESHOLD - Threshold for very high match (0.9)
- * @property {number} PERFECT_MATCH_THRESHOLD - Threshold for perfect match (0.95)
- * @property {number} HIGH_MATCH_REDUCTION - Penalty reduction for high match (0.3)
- * @property {number} VERY_HIGH_MATCH_REDUCTION - Penalty reduction for very high match (0.5)
- * @property {number} PERFECT_MATCH_REDUCTION - Penalty reduction for perfect match (0.7)
- * @property {number} MINIMUM_PENALTY_THRESHOLD - Minimum penalty after reductions (0.1)
+ * @property {number} HIGH_MATCH_THRESHOLD - Threshold for high match (0.7)
+ * @property {number} VERY_HIGH_MATCH_THRESHOLD - Threshold for very high match (0.8)
+ * @property {number} PERFECT_MATCH_THRESHOLD - Threshold for perfect match (0.9)
+ * @property {number} HIGH_MATCH_REDUCTION - Penalty reduction for high match (0.4)
+ * @property {number} VERY_HIGH_MATCH_REDUCTION - Penalty reduction for very high match (0.6)
+ * @property {number} PERFECT_MATCH_REDUCTION - Penalty reduction for perfect match (0.8)
+ * @property {number} MINIMUM_PENALTY_THRESHOLD - Minimum penalty after reductions (0.05)
  */
 
 /** @type {SkillCompensationConfig} */
 const SKILL_COMPENSATION_CONFIG = {
-  HIGH_MATCH_THRESHOLD: 0.8,
-  VERY_HIGH_MATCH_THRESHOLD: 0.9,
-  PERFECT_MATCH_THRESHOLD: 0.95,
-  HIGH_MATCH_REDUCTION: 0.3,
-  VERY_HIGH_MATCH_REDUCTION: 0.5,
-  PERFECT_MATCH_REDUCTION: 0.7,
-  MINIMUM_PENALTY_THRESHOLD: 0.1
+  HIGH_MATCH_THRESHOLD: 0.7,
+  VERY_HIGH_MATCH_THRESHOLD: 0.8,
+  PERFECT_MATCH_THRESHOLD: 0.9,
+  HIGH_MATCH_REDUCTION: 0.4,
+  VERY_HIGH_MATCH_REDUCTION: 0.6,
+  PERFECT_MATCH_REDUCTION: 0.8,
+  MINIMUM_PENALTY_THRESHOLD: 0.05
 };
 
 /** @type {Map<string, Set<string>>} */
