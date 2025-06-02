@@ -1,14 +1,14 @@
 // @ts-check
 
 const { PenaltyThresholdManager } = require('./penaltyThresholds');
-const { assessSkillMatchQuality, applySkillCompensation } = require('./skillsCompensation');
-const { calculateProjectCompensation, calculateSynergyBonuses, stackCompensation } = require('./projectCompensation');
-const { calculateCompensation } = require('./compensationSystem');
-const { classifyJob } = require('../jobCategories');
+const { assessSkillMatchQuality, applySkillCompensation } = require('../compensation/skillsCompensation');
+const { calculateProjectCompensation, calculateSynergyBonuses, stackCompensation } = require('../compensation/projectCompensation');
+const { calculateCompensation } = require('../compensation/compensationSystem');
+const { classifyJob } = require('../analysis/jobCategories');
 
-/** @typedef {import('./skillsCompensation').SkillMatchQuality} SkillMatchQuality */
-/** @typedef {import('./projectCompensation').ProjectRelevance} ProjectRelevance */
-/** @typedef {import('./compensationSystem').CompensationResult} CompensationResult */
+/** @typedef {import('../compensation/skillsCompensation').SkillMatchQuality} SkillMatchQuality */
+/** @typedef {import('../compensation/projectCompensation').ProjectRelevance} ProjectRelevance */
+/** @typedef {import('../compensation/compensationSystem').CompensationResult} CompensationResult */
 
 /**
  * @typedef {Object} ComponentScore

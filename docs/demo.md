@@ -11,4 +11,4 @@
 ## Cover Letter Print Example
 
 ## Job Score
-![Job Score](../demo/resumate-job-score-cropped.png)
+![Job Score](../demo/jobfitscore-demo.jpg)

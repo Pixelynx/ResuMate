@@ -4,7 +4,7 @@
 /** @typedef {'ENTRY' | 'JUNIOR' | 'MID' | 'SENIOR' | 'EXPERT'} ExperienceLevel */
 
 /** @typedef {import('./skillsCompensation').SkillMatchQuality} SkillMatchQuality */
-const { PenaltyThresholdManager } = require('./penaltyThresholds');
+const { PenaltyThresholdManager } = require('../scoring/penaltyThresholds');
 
 /**
  * @typedef {Object} SkillMatchThresholds

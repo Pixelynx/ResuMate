@@ -1,7 +1,7 @@
 // @ts-check
 
-/** @typedef {import('./skillsCompensation').SkillMatchQuality} SkillMatchQuality */
-/** @typedef {import('./projectCompensation').ProjectRelevance} ProjectRelevance */
+/** @typedef {import('../compensation/skillsCompensation').SkillMatchQuality} SkillMatchQuality */
+/** @typedef {import('../compensation/projectCompensation').ProjectRelevance} ProjectRelevance */
 
 /**
  * @typedef {Object} PenaltyThresholds
