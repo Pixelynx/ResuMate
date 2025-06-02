@@ -23,6 +23,16 @@ module.exports = (sequelize, Sequelize) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
+    jobId: {
+      type: Sequelize.UUID,
+      allowNull: true,
+      references: {
+        model: 'jobs',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    },
     jobtitle: {
       type: Sequelize.STRING,
       allowNull: false
@@ -78,6 +88,10 @@ module.exports = (sequelize, Sequelize) => {
     CoverLetter.belongsTo(models.Resume, {
       foreignKey: 'resumeid',
       as: 'resume'
+    });
+    CoverLetter.belongsTo(models.Job, {
+      foreignKey: 'jobId',
+      as: 'job'
     });
   };
 
