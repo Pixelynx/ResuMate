@@ -26,10 +26,59 @@ The Resumate backend is a Node.js/Express server that provides:
 - Automatic date handling and formatting
 
 ### Cover Letter Generation
-- AI-powered cover letter generation based on resume and job details
-- Customizable tone and content focus
-- Integration with resume data
-- Progress tracking during generation
+The system implements a comprehensive cover letter generation pipeline:
+
+1. Compatibility Assessment:
+   - Pre-generation compatibility checks
+   - Experience level validation
+   - Role category matching
+   - Hard skills verification
+   - Industry compatibility scoring
+   - Detailed feedback for incompatible matches
+
+2. Content Generation:
+   - Strict fact-based content generation
+   - Dynamic prompt building from verified data
+   - Content authenticity validation
+   - Quality metrics assessment
+   - Professional standards enforcement
+
+3. Validation System:
+   - Placeholder detection and elimination
+   - Content completeness verification
+   - Professional tone consistency
+   - Specificity scoring
+   - Personalization measurement
+   - Format verification
+
+4. API Response Format:
+```json
+{
+  "success": true,
+  "message": "Cover letter generated successfully",
+  "data": {
+    "id": "uuid",
+    "content": "generated content",
+    "title": "position at company",
+    "metadata": {
+      "compatibility": {
+        "score": 85,
+        "details": {}
+      },
+      "validation": {
+        "isValid": true,
+        "metrics": {}
+      }
+    }
+  }
+}
+```
+
+5. Error Handling:
+   - Compatibility-based generation control
+   - Structured error responses
+   - Detailed feedback for incompatible matches
+   - Enhancement suggestions when needed
 
 ### Job Fit Analysis
 - Embedding-based similarity calculation between resumes and job descriptions
