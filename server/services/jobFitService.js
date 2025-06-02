@@ -2,16 +2,16 @@
 const axios = require("axios");
 require("dotenv").config();
 const { calculateEmbeddingSimilarity } = require('./openaiService');
-const { calculateComponentScores } = require('./scoring/componentScoring');
+const { calculateComponentScores } = require('./assessment/scoring/componentScoring');
 const { 
   calculateTechnicalMismatchPenalty, 
   calculateExperienceMismatchPenalty,
   applyPenalties 
-} = require('./scoring/scoringPenalties');
-const { classifyJob, getRelatedSkills, getCategoryWeight } = require('./scoring/jobCategories');
+} = require('./assessment/scoring/scoringPenalties');
+const { classifyJob, getRelatedSkills, getCategoryWeight } = require('./assessment/analysis/jobCategories');
 
-/** @typedef {import('./scoring/technicalKeywordLibrary').Resume} Resume */
-/** @typedef {import('./scoring/jobCategories').ClassificationResult} ClassificationResult */
+/** @typedef {import('./assessment/analysis/technicalKeywordLibrary').Resume} Resume */
+/** @typedef {import('./assessment/analysis/jobCategories').ClassificationResult} ClassificationResult */
 
 /** @typedef {Object} WorkExperience
  * @property {string} jobtitle
