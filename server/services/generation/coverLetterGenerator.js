@@ -215,51 +215,71 @@ const buildDynamicPrompt = (resumeData, jobDetails, contentPriority) => {
   const profile = detectCandidateProfile(resumeData);
   const spaceAllocation = allocateContentSpace(contentPriority.sections);
   
-  const profileGuidance = {
-    EXPERIENCED: 'Emphasize career progression and key achievements',
-    TECHNICAL: 'Focus on technical expertise and project implementations',
-    CAREER_CHANGER: 'Highlight transferable skills and relevant projects',
-    NEW_GRADUATE: 'Emphasize academic projects and technical capabilities'
-  }[profile];
+  // Extract actual experience details
+  const workExperience = resumeData.workExperience || [];
+  const latestExperience = workExperience[0] || {};
+  const skills = resumeData.skills?.skills_ || '';
+  const projects = resumeData.projects || [];
+
+  // Calculate total years of experience
+  const totalExperience = workExperience.reduce((total, exp) => {
+    const start = new Date(exp.startDate);
+    const end = exp.endDate ? new Date(exp.endDate) : new Date();
+    return total + (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365);
+  }, 0);
+
+  // Extract actual achievements
+  const achievements = workExperience
+    .map(exp => exp.description || '')
+    .join('\n')
+    .split('\n')
+    .filter(line => line.includes('●'))
+    .map(line => line.replace('●', '').trim());
 
   return `
-    DYNAMIC COVER LETTER GENERATION INSTRUCTIONS:
+    STRICT COVER LETTER GENERATION INSTRUCTIONS:
     
-    Profile Type: ${profile}
-    Primary Strategy: ${profileGuidance}
+    USE ONLY THE FOLLOWING VERIFIED INFORMATION - DO NOT ADD ANY INFORMATION NOT LISTED BELOW:
     
-    Content Priority Structure:
-    ${contentPriority.suggestedOrder.map(section => 
-      `- ${section} (${contentPriority.sections[section].allocationPercentage}% focus, ~${spaceAllocation[section]} chars)`
-    ).join('\n    ')}
-    
-    Section-Specific Guidance:
-    ${Object.entries(contentPriority.sections)
-      .filter(([, priority]) => priority.tier === 'PRIMARY')
-      .map(([section, priority]) => `
-    ${section}:
-    - Focus Points: ${priority.focusPoints.join(', ')}
-    - Key Transitions: "${priority.suggestedTransitions[0]}"
-    - Emphasis Keywords: ${contentPriority.emphasisKeywords[section].join(', ')}
+    Work Experience:
+    ${workExperience.map(exp => `
+    - ${exp.title} at ${exp.company || 'Company'} (${exp.startDate} - ${exp.endDate || 'Present'})
+    ${exp.description || ''}
     `).join('\n')}
     
-    Job Details:
+    Total Years of Experience: ${Math.round(totalExperience * 10) / 10} years
+    
+    Verified Skills: ${skills}
+    
+    Projects:
+    ${projects.map(proj => `
+    - ${proj.title || 'Project'}
+    ${proj.description || ''}
+    `).join('\n')}
+    
+    Verified Achievements:
+    ${achievements.slice(0, 3).join('\n')}
+    
+    Target Job:
     - Company: ${jobDetails.company}
     - Position: ${jobDetails.jobTitle}
     - Key Requirements: ${extractKeyRequirements(jobDetails.jobDescription)}
     
-    Content Quality Requirements:
-    - Only include sections meeting quality thresholds
-    - Maintain natural flow between sections
-    - Use provided transition phrases
-    - Focus on concrete examples and metrics
-    - Adapt tone to match company culture
+    IMPORTANT RULES:
+    1. ONLY use information provided above - DO NOT make up or infer any details
+    2. ONLY mention achievements that are explicitly listed
+    3. DO NOT mention any companies or roles not listed in the work experience
+    4. DO NOT add any skills not listed in the skills section
+    5. DO NOT make up percentages or metrics not provided in the achievements
+    6. If certain information is missing, focus on what IS available rather than making up details
+    7. Maintain a professional tone while being strictly factual
+    8. Format as a proper cover letter with greeting and signature
+    9. Use actual metrics and numbers only when they appear in the achievements section
     
-    DO NOT:
-    - Include placeholder text
-    - Mention missing information
-    - Exceed allocated section lengths
-    - Use generic statements without context
+    Content Structure:
+    ${contentPriority.suggestedOrder.map(section => 
+      `- ${section} (${contentPriority.sections[section].allocationPercentage}% focus, ~${spaceAllocation[section]} chars)`
+    ).join('\n    ')}
   `;
 };
 
