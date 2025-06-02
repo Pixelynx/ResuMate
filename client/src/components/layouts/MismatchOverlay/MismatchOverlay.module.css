@@ -1,0 +1,140 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.overlayVisible {
+  opacity: 1;
+}
+
+.container {
+  width: 85%;
+  max-width: 600px;
+  margin: 20px;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.containerVisible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.paper {
+  background: linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05));
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.title {
+  color: #6a1b9a;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.content {
+  margin: 24px 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.button {
+  background: linear-gradient(to right, #6a1b9a, #8e24aa);
+  color: white;
+  padding: 8px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.button:hover {
+  background: linear-gradient(to right, #4a148c, #6a1b9a);
+}
+
+.buttonSecondary {
+  background: transparent;
+  color: #6a1b9a;
+  border: 1px solid #6a1b9a;
+}
+
+.buttonSecondary:hover {
+  background: rgba(106, 27, 154, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .container {
+    width: 95%;
+    margin: 16px;
+  }
+
+  .paper {
+    padding: 16px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .button {
+    width: 100%;
+    padding: 12px;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .container,
+  .button {
+    transition: none;
+  }
+} 
