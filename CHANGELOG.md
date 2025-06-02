@@ -44,6 +44,21 @@
   - Improved response format with detailed metadata
   - Added compatibility-based generation control
 
+### Added
+- Mismatch Overlay System:
+  - TypeScript interfaces for compatibility assessment
+  - React components for displaying compatibility results:
+    - MismatchOverlay: Main dialog component
+    - MismatchContent: Detailed assessment display
+    - MismatchSuggestion: Individual suggestion component
+  - Comprehensive type safety and validation
+  - Detailed compatibility feedback display:
+    - Overall compatibility score
+    - Key issues and blockers
+    - Matching skills analysis
+    - Missing critical skills
+    - Severity-based suggestions
+
 ### [2025-05-31]
 ### Added
 - Dynamic prompt generation system for cover letters:
