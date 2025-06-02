@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### [2025-06-02]
+### Added
+- Mismatch Overlay System
+  - Added BasicMismatchOverlay component for resume-job compatibility feedback
+  - Integrated mismatch detection in cover letter generation flow
+  - Added Redux state management for mismatch data
+  - Implemented proper handling of 200 status mismatch responses
+  - Added smooth transitions and mobile responsiveness for overlay
+
+### Changed
+- Updated cover letter generation flow to handle compatibility checks
+- Modified Redux store to include mismatch state management
+- Enhanced API response handling to support mismatch detection
+- Improved user feedback during cover letter generation process
+
+### Fixed
+- Proper handling of 200 status mismatch responses in cover letter generation
+- Type safety improvements in Redux actions and state
+
+
 ### [2025-06-01]
 ### Added
 - Comprehensive Cover Letter Generation System:

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch } from '../../redux/store';
 import {
   Box,
   Typography,
@@ -30,6 +32,9 @@ import {
 import { Resume } from '../resume/types/resumeTypes';
 import LoadingOverlay from '../common/LoadingOverlay';
 import CoverLetterFormStepper from './CoverLetterFormStepper';
+import { BasicMismatchOverlay } from '../layouts/MismatchOverlay';
+import { RootState } from '../../redux/types';
+import { generateCoverLetter, clearMismatchData } from '../../redux/slices/coverLetterSlice';
 
 interface ResumeOption {
   id: string;
@@ -41,6 +46,8 @@ const CoverLetterForm: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const dispatch = useDispatch<AppDispatch>();
+  const { showMismatch, mismatchData } = useSelector((state: RootState) => state.coverLetter);
   
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -149,7 +156,7 @@ const CoverLetterForm: React.FC = () => {
     }
   };
 
-  const generateCoverLetter = async () => {
+  const handleGenerateCoverLetter = async () => {
     try {
       setGenerationStatus({
         isGenerating: true,
@@ -182,16 +189,12 @@ const CoverLetterForm: React.FC = () => {
         }));
       }, 1000);
 
-      const response = await coverLetterService.generateCoverLetter(
-        generationRequest,
-        generationoptions
-      );
+      await dispatch(generateCoverLetter({ 
+        request: generationRequest, 
+        options: generationoptions 
+      }));
 
       clearInterval(progressInterval);
-
-      if (!response) {
-        throw new Error('Failed to generate cover letter');
-      }
 
       setGenerationStatus({
         isGenerating: false,
@@ -200,24 +203,13 @@ const CoverLetterForm: React.FC = () => {
         message: 'Cover letter generated successfully!'
       });
 
-      // Navigate to the view page for the new cover letter
-      if ('data' in response && response.data && response.data.id) {
-        // Wrapped response format
-        navigate(`/cover-letter/${response.data.id}`);
-      } else if ('id' in response) {
-        // Direct response format
-        navigate(`/cover-letter/${response.id}`);
-      } else {
-        throw new Error('Failed to retrieve cover letter ID');
-      }
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate cover letter';
+    } catch (error) {
       setGenerationStatus({
         isGenerating: false,
-        error: errorMessage,
-        progress: 0,
-        message: 'Generation failed'
+        error: error instanceof Error ? error.message : 'An error occurred',
+        progress: 0
       });
+      setError('Failed to generate cover letter. Please try again.');
     }
   };
 
@@ -330,7 +322,7 @@ const CoverLetterForm: React.FC = () => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={generateCoverLetter}
+                onClick={handleGenerateCoverLetter}
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : null}
               >
@@ -389,7 +381,7 @@ const CoverLetterForm: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ px: isMobile ? 2 : 3 }}>
+    <Container maxWidth="lg">
       {generationStatus.isGenerating && (
         <LoadingOverlay
           message={generationStatus.message}
@@ -462,6 +454,15 @@ const CoverLetterForm: React.FC = () => {
           </Box>
         </Paper>
       </Box>
+      
+      {/* Mismatch Overlay */}
+      <BasicMismatchOverlay
+        isOpen={showMismatch}
+        onClose={() => dispatch(clearMismatchData())}
+        companyName={formData.company}
+        assessment={mismatchData}
+        onRetry={handleGenerateCoverLetter}
+      />
     </Container>
   );
 };

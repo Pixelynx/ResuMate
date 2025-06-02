@@ -96,5 +96,10 @@ export interface CoverLetterGenerationResponse {
     id: string;
     content: string;
     title: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
   };
 } 

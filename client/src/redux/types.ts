@@ -1,7 +1,8 @@
 import { Resume, ResumeFormData } from '../components/resume/types/resumeTypes';
-import { CoverLetter, CoverLetterGenerationStatus } from '../components/coverLetter/types/coverLetterTypes';
+import { CoverLetter } from '../components/coverLetter/types/coverLetterTypes';
 import { JobFitState } from './slices/jobFitSlice';
 import { PersistPartial } from 'redux-persist/es/persistReducer';
+import { CompatibilityAssessment } from '../types/mismatchTypes';
 
 // Resume State Types
 export interface ResumeState {
@@ -29,7 +30,13 @@ export interface CoverLetterState {
   loading: boolean;
   submitting: boolean;
   error: string | null;
-  generationStatus: CoverLetterGenerationStatus;
+  generationStatus: {
+    isGenerating: boolean;
+    error: string | null;
+    progress: number;
+  };
+  mismatchData: CompatibilityAssessment | null;
+  showMismatch: boolean;
 }
 
 // Print State Types

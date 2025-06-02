@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction, ActionReducerMapBuilder } from '@reduxjs/toolkit';
 import { CoverLetterState } from '../types';
 import { CoverLetter, CoverLetterFormData, CoverLetterGenerationRequest, GenerationOptions } from '../../components/coverLetter/types/coverLetterTypes';
+import { CoverLetterGenerationResponse, CompatibilityAssessment } from '../../types/mismatchTypes';
 import { coverLetterService } from '../../utils/api';
 
 // Async thunks
@@ -68,20 +69,19 @@ export const deleteCoverLetter = createAsyncThunk<string, string>(
 );
 
 export const generateCoverLetter = createAsyncThunk<
-  CoverLetter, 
+  CoverLetterGenerationResponse,
   { request: CoverLetterGenerationRequest; options: GenerationOptions }
 >(
   'coverLetter/generateCoverLetter',
   async ({ request, options }, { rejectWithValue }) => {
     try {
-      // Use provided options or fallback to defaults
-      const generationoptions: GenerationOptions = options || {
+      const generationOptions: GenerationOptions = options || {
         tone: 'professional',
         length: 'medium',
         focusPoints: []
       };
-      const response = await coverLetterService.generateCoverLetter(request, generationoptions);
-      return response as CoverLetter;
+      const response = await coverLetterService.generateCoverLetter(request, generationOptions);
+      return response as CoverLetterGenerationResponse;
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -99,7 +99,9 @@ const initialState: CoverLetterState = {
     isGenerating: false,
     error: null,
     progress: 0
-  }
+  },
+  mismatchData: null,
+  showMismatch: false
 };
 
 // Create the cover letter slice
@@ -132,7 +134,15 @@ const coverLetterSlice = createSlice({
     clearError: (state: CoverLetterState) => {
       state.error = null;
     },
-    resetState: () => initialState
+    resetState: () => initialState,
+    setMismatchData: (state, action: PayloadAction<CompatibilityAssessment>) => {
+      state.mismatchData = action.payload;
+      state.showMismatch = true;
+    },
+    clearMismatchData: (state) => {
+      state.mismatchData = null;
+      state.showMismatch = false;
+    }
   },
   extraReducers: (builder: ActionReducerMapBuilder<CoverLetterState>) => {
     builder
@@ -224,11 +234,27 @@ const coverLetterSlice = createSlice({
         state.generationStatus.error = null;
         state.error = null;
       })
-      .addCase(generateCoverLetter.fulfilled, (state: CoverLetterState, action: PayloadAction<CoverLetter>) => {
+      .addCase(generateCoverLetter.fulfilled, (state: CoverLetterState, action: PayloadAction<CoverLetterGenerationResponse>) => {
         state.generationStatus.isGenerating = false;
         state.generationStatus.progress = 100;
-        state.coverLetters.push(action.payload);
-        state.currentCoverLetter = action.payload;
+        
+        // Handle mismatch response
+        if (!action.payload.isCompatible) {
+          state.showMismatch = true;
+          state.mismatchData = {
+            isCompatible: action.payload.isCompatible,
+            compatibilityScore: action.payload.compatibilityScore,
+            suggestions: action.payload.blockers || [],
+            metadata: action.payload.metadata
+          };
+          return;
+        }
+        
+        // Handle successful generation
+        if (action.payload.data) {
+          state.coverLetters.push(action.payload.data);
+          state.currentCoverLetter = action.payload.data;
+        }
       })
       .addCase(generateCoverLetter.rejected, (state: CoverLetterState, action: any) => {
         state.generationStatus.isGenerating = false;
@@ -246,7 +272,9 @@ export const {
   generationFailed,
   resetGenerationStatus,
   clearError,
-  resetState
+  resetState,
+  setMismatchData,
+  clearMismatchData
 } = coverLetterSlice.actions;
 
 export default coverLetterSlice.reducer; 

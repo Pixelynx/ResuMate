@@ -110,27 +110,42 @@ Resumate is an AI-powered resume and cover letter creation platform designed to 
    - Validates experience level and role category match
    - Verifies required skills and industry alignment
    - Provides detailed feedback for incompatible matches
+   - Displays interactive mismatch overlay for incompatible matches
 
-2. Content Generation Process:
+2. Mismatch Detection System:
+   - Real-time compatibility analysis during generation
+   - Intelligent handling of 200-status mismatch responses
+   - User-friendly overlay with actionable feedback
+   - Clear guidance for improving resume-job alignment
+   - Seamless integration with generation workflow
+
+3. Content Generation Process:
    - Strict fact-based content generation from resume data
    - Dynamic prompt building based on verified information
    - Content authenticity validation
    - Quality metrics assessment
    - Professional standards enforcement
 
-3. Quality Assurance:
+4. Quality Assurance:
    - Placeholder detection and elimination
    - Content completeness verification
    - Professional tone consistency
    - Specificity and personalization scoring
    - Format and structure validation
 
-4. Response Format:
+5. Response Format:
    - Structured API responses with compatibility results
    - Detailed generation metadata
    - Quality metrics and scores
    - Enhancement suggestions when needed
    - Proper error handling and feedback
+
+6. User Interface:
+   - Clean, intuitive form interface
+   - Progress visualization during generation
+   - Interactive mismatch overlay for compatibility issues
+   - Mobile-responsive design
+   - Accessibility-compliant components
 
 ## Technology Stack
 - **Frontend**: React, TypeScript, Material UI, Redux Toolkit

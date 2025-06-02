@@ -1,0 +1,135 @@
+.dialog {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.dialogTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  color: #6a1b9a;
+  font-weight: 600;
+}
+
+.titleContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.errorIcon {
+  font-size: 24px !important;
+}
+
+.closeButton {
+  position: absolute !important;
+  right: 8px;
+  top: 8px;
+  color: rgba(0, 0, 0, 0.54);
+  transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.content {
+  padding: 8px 0;
+}
+
+.scoreSection {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.skillsSection {
+  margin-top: 12px;
+}
+
+.skillsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.skillChip {
+  margin: 4px;
+}
+
+.suggestionList {
+  margin: 16px 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.suggestionItem {
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #f8f8f8;
+  border-radius: 4px;
+}
+
+.suggestionItem:last-child {
+  margin-bottom: 0;
+}
+
+.closeMessage {
+  color: rgba(0, 0, 0, 0.6);
+  font-style: italic;
+  margin-top: 16px;
+}
+
+.actions {
+  padding: 16px 24px;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.button {
+  min-width: 100px;
+  text-transform: none;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .dialogTitle {
+    padding: 12px 16px;
+    font-size: 1.2rem;
+  }
+
+  .content {
+    padding: 4px 0;
+  }
+
+  .scoreSection {
+    padding: 12px;
+    margin: 12px 0;
+  }
+
+  .skillsContainer {
+    gap: 6px;
+  }
+
+  .actions {
+    padding: 12px 16px;
+    flex-direction: column-reverse;
+  }
+
+  .button {
+    width: 100%;
+  }
+} 
