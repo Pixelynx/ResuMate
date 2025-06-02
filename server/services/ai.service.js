@@ -1,7 +1,7 @@
 // @ts-check
 const { OpenAI } = require('openai');
 const { generateEnhancedCoverLetter } = require('./generation/coverLetterGenerator');
-const { prioritizeContent } = require('./generation/content/contentAnalysis');
+const compatibilityAssessment = require('./assessment/CompatibilityAssessment');
 
 /**
  * @typedef {Object} ResumeData
@@ -140,62 +140,122 @@ const generateCoverLetter = async (resumeData, jobDetails, options = {}) => {
     throw new Error('Job details must include company, jobTitle, and jobDescription');
   }
 
-  if (IS_TEST_MODE && !options.mockMode) {
-    return {
-      content: "This is a mock cover letter for testing purposes.",
-      metadata: {
-        processingTime: 0,
-        validation: {
-          isValid: true,
-          errors: [],
-          warnings: [],
-          metrics: {}
-        }
-      }
-    };
-  }
-  
-  const cacheKey = JSON.stringify({
-    resumeId: resumeData.id,
-    jobTitle: jobDetails.jobTitle,
-    company: jobDetails.company,
-    options,
-    timestamp: new Date().toDateString()
-  });
-  
-  if (cache.has(cacheKey)) {
-    console.log('Returning cached cover letter');
-    return {
-      content: cache.get(cacheKey),
-      metadata: {
-        fromCache: true,
-        timestamp: new Date().toDateString()
-      }
-    };
-  }
-
   try {
-    // Create a content generation function that uses OpenAI
-    const generateContent = async (prompt) => {
-      const content = await makeAPIRequestWithRetry(prompt);
-      if (!content) {
-        throw new Error('Failed to generate content');
-      }
-      return content;
-    };
-
-    // Use the enhanced cover letter generation with our content generator
-    const result = await generateEnhancedCoverLetter(resumeData, jobDetails, generateContent, options);
+    console.log('\n=== Starting Compatibility Assessment ===');
+    console.log(`Job Title: ${jobDetails.jobTitle}`);
+    console.log(`Company: ${jobDetails.company}`);
     
-    // Only cache valid content
-    if (result.metadata.validation.isValid) {
-      cache.set(cacheKey, result.content);
+    // Perform compatibility assessment
+    const assessment = await compatibilityAssessment.assessJobCompatibility(resumeData, jobDetails);
+    
+    console.log('\n=== Assessment Results ===');
+    console.log(`Overall Compatibility Score: ${assessment.compatibilityScore}%`);
+    console.log(`Is Compatible: ${assessment.isCompatible}`);
+    
+    if (assessment.metadata.skillsMatch?.length > 0) {
+      console.log('\nMatched Skills:', assessment.metadata.skillsMatch.join(', '));
     }
     
-    return result;
+    if (assessment.metadata.missingCriticalSkills?.length > 0) {
+      console.log('\nMissing Critical Skills:', assessment.metadata.missingCriticalSkills.join(', '));
+    }
+
+    console.log('\nDetailed Assessment:');
+    if (assessment.metadata.assessmentDetails) {
+      Object.entries(assessment.metadata.assessmentDetails).forEach(([criterion, score]) => {
+        console.log(`- ${criterion}: ${score}%`);
+      });
+    }
+
+    // If incompatible, return structured response with compatibility details
+    if (!assessment.isCompatible) {
+      console.log('\n=== Compatibility Blockers ===');
+      assessment.suggestions.forEach(suggestion => {
+        console.log(`[${suggestion.severity.toUpperCase()}] ${suggestion.type}: ${suggestion.message}`);
+      });
+
+      return {
+        success: true,
+        isCompatible: false,
+        blockers: assessment.suggestions.map(suggestion => ({
+          type: suggestion.type,
+          message: suggestion.message,
+          severity: suggestion.severity
+        })),
+        compatibilityScore: assessment.compatibilityScore,
+        metadata: {
+          ...assessment.metadata,
+          timestamp: new Date().toISOString()
+        }
+      };
+    }
+
+    console.log('\n=== Proceeding with Cover Letter Generation ===');
+
+    // Continue with generation only if compatible
+    if (IS_TEST_MODE && !options.mockMode) {
+      return {
+        success: true,
+        isCompatible: true,
+        content: "This is a mock cover letter for testing purposes.",
+        metadata: {
+          processingTime: 0,
+          validation: {
+            isValid: true,
+            errors: [],
+            warnings: [],
+            metrics: {}
+          },
+          compatibility: assessment
+        }
+      };
+    }
+  
+    const cacheKey = JSON.stringify({
+      resumeId: resumeData.id,
+      jobTitle: jobDetails.jobTitle,
+      company: jobDetails.company,
+      options,
+      timestamp: new Date().toDateString()
+    });
+  
+    if (cache.has(cacheKey)) {
+      console.log('Returning cached cover letter');
+      return {
+        success: true,
+        isCompatible: true,
+        content: cache.get(cacheKey),
+        metadata: {
+          fromCache: true,
+          timestamp: new Date().toDateString(),
+          compatibility: assessment
+        }
+      };
+    }
+
+    try {
+      const result = await generateEnhancedCoverLetter(resumeData, jobDetails, makeAPIRequestWithRetry, options);
+      
+      if (result.metadata.validation.isValid) {
+        cache.set(cacheKey, result.content);
+      }
+      
+      return {
+        success: true,
+        isCompatible: true,
+        content: result.content,
+        metadata: {
+          ...result.metadata,
+          compatibility: assessment
+        }
+      };
+    } catch (error) {
+      console.error('Error generating cover letter:', error);
+      throw handleError(error);
+    }
   } catch (error) {
-    console.error('Error generating cover letter:', error);
-    throw handleError(error);
+    console.error('Error in cover letter generation:', error);
+    throw error;
   }
 };
 
