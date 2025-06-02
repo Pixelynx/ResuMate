@@ -9,6 +9,7 @@ interface MismatchContent {
     reason: string;
     matchScore: number;
   }[];
+  generatedAt: number; // Timestamp when content was generated
 }
 
 interface ContentCache {
@@ -18,9 +19,14 @@ interface ContentCache {
 interface UseMismatchContentReturn {
   content: MismatchContent | null;
   isLoading: boolean;
+  isGenerating: boolean; // Separate state for generation vs loading from cache
   error: string | null;
   regenerateContent: () => void;
+  retryGeneration: () => void;
 }
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
 
 /**
  * Hook for managing mismatch content generation with caching
@@ -31,18 +37,23 @@ export const useMismatchContent = (
 ): UseMismatchContentReturn => {
   const [content, setContent] = useState<MismatchContent | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [cache] = useState<ContentCache>({});
 
   // Generate cache key from assessment data
   const cacheKey = useMemo(() => {
     if (!assessment) return '';
-    return JSON.stringify({
+    const keyData = {
       id: assessment.metadata.assessmentTimestamp,
       score: assessment.compatibilityScore,
-      skills: assessment.metadata.skillsMatch,
-      missing: assessment.metadata.missingCriticalSkills,
-    });
+      skills: [...assessment.metadata.skillsMatch].sort(),
+      missing: [...assessment.metadata.missingCriticalSkills].sort(),
+      experience: assessment.metadata.experienceMismatch,
+      role: assessment.metadata.roleTypeMismatch,
+    };
+    return btoa(JSON.stringify(keyData));
   }, [assessment]);
 
   /**
@@ -51,10 +62,30 @@ export const useMismatchContent = (
   const isValidCache = useCallback((key: string): boolean => {
     const cached = cache[key];
     if (!cached) return false;
-
-    const timestamp = parseInt(key.split('-')[0], 10);
-    return Date.now() - timestamp < cacheTimeout;
+    return Date.now() - cached.generatedAt < cacheTimeout;
   }, [cache, cacheTimeout]);
+
+  /**
+   * Generate content with retry logic
+   */
+  const generateContentWithRetry = useCallback(async (retryAttempt = 0): Promise<MismatchContent> => {
+    try {
+      const explanation = ContentGenerator.generateMismatchExplanation(assessment!);
+      const alternativeRoles = ContentGenerator.generateAlternativeRoles(assessment!);
+
+      return {
+        explanation,
+        alternativeRoles,
+        generatedAt: Date.now(),
+      };
+    } catch (err) {
+      if (retryAttempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return generateContentWithRetry(retryAttempt + 1);
+      }
+      throw err;
+    }
+  }, [assessment]);
 
   /**
    * Generate content for the current assessment
@@ -75,16 +106,10 @@ export const useMismatchContent = (
         return;
       }
 
-      // Simulate async operation for natural UX
+      setIsGenerating(true);
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      const explanation = ContentGenerator.generateMismatchExplanation(assessment);
-      const alternativeRoles = ContentGenerator.generateAlternativeRoles(assessment);
-
-      const newContent: MismatchContent = {
-        explanation,
-        alternativeRoles,
-      };
+      const newContent = await generateContentWithRetry();
 
       // Update cache
       if (cacheKey) {
@@ -92,25 +117,41 @@ export const useMismatchContent = (
       }
 
       setContent(newContent);
+      setRetryCount(0);
     } catch (err) {
       console.error('Error generating mismatch content:', err);
       setError('Failed to generate content. Please try again.');
       setContent(null);
+      // Invalidate cache on error
+      if (cacheKey) {
+        delete cache[cacheKey];
+      }
     } finally {
       setIsLoading(false);
+      setIsGenerating(false);
     }
-  }, [assessment, cacheKey, isValidCache, cache]);
+  }, [assessment, cacheKey, isValidCache, cache, generateContentWithRetry]);
 
   /**
    * Force content regeneration
    */
   const regenerateContent = useCallback(() => {
-    // Clear cache for current assessment
     if (cacheKey) {
       delete cache[cacheKey];
     }
+    setRetryCount(0);
     generateContent();
   }, [cacheKey, cache, generateContent]);
+
+  /**
+   * Retry failed generation
+   */
+  const retryGeneration = useCallback(() => {
+    if (retryCount < MAX_RETRIES) {
+      setRetryCount(prev => prev + 1);
+      generateContent();
+    }
+  }, [retryCount, generateContent]);
 
   // Generate content when assessment changes
   useEffect(() => {
@@ -122,8 +163,8 @@ export const useMismatchContent = (
     const cleanup = () => {
       const now = Date.now();
       Object.keys(cache).forEach(key => {
-        const timestamp = parseInt(key.split('-')[0], 10);
-        if (now - timestamp >= cacheTimeout) {
+        const cached = cache[key];
+        if (now - cached.generatedAt >= cacheTimeout) {
           delete cache[key];
         }
       });
@@ -136,7 +177,9 @@ export const useMismatchContent = (
   return {
     content,
     isLoading,
+    isGenerating,
     error,
     regenerateContent,
+    retryGeneration,
   };
 }; 
