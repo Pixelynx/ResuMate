@@ -1,7 +1,7 @@
 # Resumate
 
 ## Project Overview
-Resumate is an AI-powered resume and cover letter creation platform designed to help job seekers create professional documents that improve their chances of landing interviews. The application combines traditional document creation with advanced AI capabilities for job fit scoring, customized cover letter generation, and resume optimization.
+[Resumate](https://resumate-ai.netlify.app) is an AI-powered resume and cover letter creation platform designed to help job seekers create professional documents that improve their chances of landing interviews. The application combines traditional document creation with advanced AI capabilities for job fit scoring, customized cover letter generation, and resume optimization.
 
 ![Job Score](./demo/jobfitscore-demo.jpg)
 
