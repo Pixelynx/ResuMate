@@ -9,6 +9,8 @@ import MismatchSuggestion from './MismatchSuggestion';
  */
 const MismatchContent: React.FC<MismatchContentProps> = ({
   assessment,
+  explanation,
+  alternativeRoles,
   className,
 }) => {
   return (
@@ -18,7 +20,7 @@ const MismatchContent: React.FC<MismatchContentProps> = ({
       </Typography>
       
       <Typography variant="body1" paragraph>
-        We've detected some mismatches between your resume and the job requirements.
+        {explanation || 'We\'ve detected some mismatches between your resume and the job requirements.'}
       </Typography>
 
       <Divider sx={{ my: 2 }} />
@@ -55,6 +57,25 @@ const MismatchContent: React.FC<MismatchContentProps> = ({
           <Typography variant="body1" color="error">
             {assessment.metadata.missingCriticalSkills.join(', ')}
           </Typography>
+        </>
+      )}
+
+      {alternativeRoles && alternativeRoles.length > 0 && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            Alternative Role Suggestions:
+          </Typography>
+          {alternativeRoles.map((role, index) => (
+            <Box key={index} sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                {role.title} (Match Score: {role.matchScore}%)
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {role.reason}
+              </Typography>
+            </Box>
+          ))}
         </>
       )}
     </Box>

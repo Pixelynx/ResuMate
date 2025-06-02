@@ -63,6 +63,12 @@ export interface MismatchOverlayProps {
  */
 export interface MismatchContentProps {
   assessment: CompatibilityAssessment;
+  explanation?: string;
+  alternativeRoles?: Array<{
+    title: string;
+    reason: string;
+    matchScore: number;
+  }>;
   className?: string;
 }
 

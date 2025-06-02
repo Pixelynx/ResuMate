@@ -137,4 +137,46 @@
   .button {
     transition: none;
   }
+}
+
+.dialog {
+  min-height: 400px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  min-height: 300px;
+  padding: 16px 0;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 16px;
+}
+
+.progress {
+  color: primary;
+}
+
+.loadingMessage {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.regenerateContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.actions {
+  padding: 16px 24px;
 } 
