@@ -4,8 +4,8 @@ const { validateContentAuthenticity } = require('./content/contentAuthenticity')
 const { prioritizeContent } = require('./content/contentAnalysis');
 
 /**
- * @typedef {import('../ai.service').ResumeData} ResumeData
- * @typedef {import('../ai.service').JobDetails} JobDetails
+ * @typedef {import('../coverLetterAI.service').ResumeData} ResumeData
+ * @typedef {import('../coverLetterAI.service').JobDetails} JobDetails
  */
 
 /**

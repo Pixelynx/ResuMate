@@ -2,7 +2,7 @@ const db = require('../models');
 const CoverLetter = db.coverletters;
 const Resume = db.resumes;
 const { v4: uuidv4 } = require('uuid');
-const aiService = require('../services/ai.service');
+const aiService = require('../services/coverLetterAI.service');
 
 exports.create = async (req, res) => {
   try {

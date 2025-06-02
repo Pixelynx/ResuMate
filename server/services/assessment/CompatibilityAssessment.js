@@ -75,8 +75,8 @@ class CompatibilityAssessment {
 
   /**
    * Main assessment function
-   * @param {import('../ai.service').ResumeData} resumeData
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {Promise<AssessmentResult>}
    */
   async assessJobCompatibility(resumeData, jobDetails) {
@@ -158,8 +158,8 @@ class CompatibilityAssessment {
 
   /**
    * Assess experience level compatibility
-   * @param {import('../ai.service').ResumeData} resumeData
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {ExperienceAssessmentResult}
    * @private
    */
@@ -202,8 +202,8 @@ class CompatibilityAssessment {
 
   /**
    * Assess role category compatibility
-   * @param {import('../ai.service').ResumeData} resumeData
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {Promise<number>} Score from 0-100
    * @private
    */
@@ -232,8 +232,8 @@ class CompatibilityAssessment {
 
   /**
    * Assess hard skills compatibility
-   * @param {import('../ai.service').ResumeData} resumeData
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {Promise<number>} Score from 0-100
    * @private
    */
@@ -319,7 +319,7 @@ class CompatibilityAssessment {
   /**
    * Check if position is senior level
    * @private
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {boolean}
    */
   isSeniorPosition(jobDetails) {
@@ -329,7 +329,7 @@ class CompatibilityAssessment {
   /**
    * Check if position is executive level
    * @private
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {boolean}
    */
   isExecutivePosition(jobDetails) {
@@ -339,7 +339,7 @@ class CompatibilityAssessment {
   /**
    * Categorize job role
    * @private
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {Object} Role categories
    */
   categorizeRole(jobDetails) {
@@ -353,7 +353,7 @@ class CompatibilityAssessment {
   /**
    * Categorize candidate background
    * @private
-   * @param {import('../ai.service').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
    * @returns {Object} Background categories
    */
   categorizeCandidateBackground(resumeData) {
@@ -407,7 +407,7 @@ class CompatibilityAssessment {
   /**
    * Extract candidate skills
    * @private
-   * @param {import('../ai.service').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
    * @returns {Set<string>}
    */
   extractCandidateSkills(resumeData) {
@@ -442,7 +442,7 @@ class CompatibilityAssessment {
   /**
    * Extract industries from candidate experience
    * @private
-   * @param {import('../ai.service').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
    * @returns {Set<string>}
    */
   extractCandidateIndustries(resumeData) {
@@ -498,8 +498,8 @@ class CompatibilityAssessment {
 
   /**
    * Assess role type match
-   * @param {import('../ai.service').ResumeData} resumeData
-   * @param {import('../ai.service').JobDetails} jobDetails
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').JobDetails} jobDetails
    * @returns {{isMatch: boolean, reason?: string}}
    * @private
    */
@@ -703,7 +703,7 @@ class CompatibilityAssessment {
 
   /**
    * Extract all skills text from resume
-   * @param {import('../ai.service').ResumeData} resumeData
+   * @param {import('../coverLetterAI.service.js').ResumeData} resumeData
    * @returns {string}
    * @private
    */
