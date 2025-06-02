@@ -56,7 +56,7 @@ const BasicMismatchOverlay: React.FC<BasicMismatchOverlayProps> = ({
       <>
         <Box className={styles.scoreSection}>
           <Typography variant="h6" gutterBottom>
-            Compatibility Score: {Math.round(assessment.compatibilityScore * 100)}%
+            Compatibility Score: {Math.round(assessment.compatibilityScore)}%
           </Typography>
           {assessment.metadata.skillsMatch.length > 0 && (
             <Box className={styles.skillsSection}>
