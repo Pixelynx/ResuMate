@@ -123,7 +123,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Typography variant="h6" component="div" noWrap>
-                      {resume.personalDetails.firstname} {resume.personalDetails.lastname}
+                      {resume.personalDetails.title || 'No Title Specified'}
                     </Typography>
                     <IconButton 
                       size="small" 
@@ -134,37 +134,34 @@ const ResumeList: React.FC<ResumeListProps> = ({
                     </IconButton>
                   </Box>
                   
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {resume.personalDetails.title || 'No title specified'}
-                  </Typography>
-                  
                   <Divider sx={{ my: 1 }} />
                   
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
                     {extractSkills(resume).map((skill, index) => (
-                      <Chip 
+                      <Typography 
                         key={index} 
-                        label={skill} 
-                        size="small" 
-                        variant="outlined"
+                        variant='body2'
+                        color="text.secondary"
                         sx={{ fontSize: '0.7rem' }}
-                      />
+                      >
+                        {skill}
+                      </Typography>
                     ))}
                   </Box>
                   
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Experience: {resume.workExperience?.length || 0} entries
+                      XP: {resume.workExperience?.length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Education: {resume.education?.length || 0} entries
+                      EDU: {resume.education?.length || 0}
                     </Typography>
                   </Box>
                 </CardContent>
                 
-                <Box sx={{ mt: 'auto', p: 0.75, backgroundColor: 'rgba(106, 27, 154, 0.05)' }}>
+                <Box sx={{ mt: 'auto', p: 0.75, ml: 1.75 }}>
                   <Typography variant="caption" color="text.secondary">
-                    Last updated: {formatDate(resume.updatedAt)}
+                    Created: {formatDate(resume.updatedAt)}
                   </Typography>
                 </Box>
                 
