@@ -1,12 +1,15 @@
 # Resumate
 
 ## Project Overview
-Resumate is an AI-powered resume and cover letter creation platform designed to help job seekers create professional documents that improve their chances of landing interviews. The application combines traditional document creation with advanced AI capabilities for job fit scoring, customized cover letter generation, and resume optimization.
+[Resumate](https://resumate-ai.netlify.app) is an AI-powered resume and cover letter creation platform designed to help job seekers create professional documents that improve their chances of landing interviews. The application combines traditional document creation with advanced AI capabilities for job fit scoring, customized cover letter generation, and resume optimization.
 
-![Job Score](./demo/resumate-job-score-cropped.png)
+![Job Score](./demo/jobfitscore-demo.jpg)
+
+## Job Fit Score Implementation
+Our job fit scoring system provides intelligent matching between resumes and job descriptions. For detailed technical implementation, see the [Job Fit Score Implementation](./server/README.md#job-fit-score-implementation) section in the server documentation.
 
 ## Contents
-* [Demo](./client/demo.md)
+* [Demo](./client/docs/demo.md)
 * [Key Features](#key-features)
 * [Technical Implementation](#technical-implementation)
 * [Getting Started](#getting-started)
@@ -98,11 +101,13 @@ Resumate is an AI-powered resume and cover letter creation platform designed to 
 5. Redux-based state management for consistent data handling
 
 ### Job Fit Scoring System
-1. Resume content and job descriptions are converted to vector embeddings
-2. Semantic similarity calculated using cosine similarity between vectors
-3. Component-level scoring for different resume sections
-4. AI-generated personalized feedback based on the analysis
-5. Color-coded scoring display with detailed explanations
+1. Component-based evaluation that scores skills, work experience, projects, job title match, and education separately
+2. Technical analysis that identifies skill gaps between the resume and job requirements
+3. Experience level matching that detects mismatches between senior/junior roles and candidate experience
+4. Resume content and job descriptions are converted to OpenAI vector embeddings for semantic analysis
+5. Penalty system that adjusts scores based on severe technical or experience mismatches
+6. Personalized AI-generated feedback with specific improvement suggestions
+7. Color-coded scoring display with detailed explanations
 
 ### Cover Letter Generation
 1. User inputs job details and selects their resume
