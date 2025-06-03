@@ -163,20 +163,6 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
         <Typography variant="h5" component="h2">
           Cover Letters
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleCreateCoverLetter}
-          size="small"
-          sx={{ 
-            py: 0.75,
-            minHeight: '44px',
-            minWidth: '44px'
-          }}
-        >
-          Create Cover Letter
-        </Button>
       </Box>
 
       {coverLetters.length === 0 ? (
@@ -187,19 +173,6 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Generate a cover letter for a specific job using one of your resumes
           </Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            startIcon={<AddIcon />}
-            onClick={handleCreateCoverLetter}
-            sx={{ 
-              mt: 1,
-              minHeight: '44px',
-              minWidth: '44px'
-            }}
-          >
-            Generate Cover Letter
-          </Button>
         </Box>
       ) : (
         <Grid container spacing={2}>
@@ -229,23 +202,6 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                     }
                   }}
                 >
-                  {/* Resume indicator */}
-                  {hasResume && (
-                    <Box 
-                      sx={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        right: 0, 
-                        width: '12px', 
-                        height: '12px',
-                        backgroundColor: 'primary.main',
-                        borderRadius: '0 4px 0 4px',
-                        zIndex: 1
-                      }} 
-                      title="Linked to a resume"
-                    />
-                  )}
-                  
                   <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 2 } }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                       <Typography 
@@ -262,12 +218,10 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                       >
                         {displayTitle}
                       </Typography>
-                      <DescriptionIcon color="primary" fontSize="small" />
                     </Box>
                     
                     {displayJobInfo && (
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <WorkIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
                         <Typography 
                           variant="body2" 
                           color="text.secondary" 
@@ -291,6 +245,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                           <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                             Based on:
                           </Typography>
+                          { /* Link Resume with title*/}
                           <Chip 
                             icon={<LinkIcon sx={{ fontSize: '0.9rem !important' }} />}
                             label="Resume" 
@@ -316,7 +271,7 @@ const CoverLetterList: React.FC<CoverLetterListProps> = ({
                   <CardActions sx={{ p: 1.5, pt: 0 }}>
                     <Button 
                       size="small" 
-                      startIcon={<VisibilityIcon />} 
+                      // startIcon={<VisibilityIcon />} 
                       onClick={() => handleViewCoverLetter(coverLetter.id)}
                       sx={{ 
                         minHeight: '44px',
