@@ -16,6 +16,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import DescriptionIcon from '@mui/icons-material/Description';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
+import styles from '../../styles/Header.module.css';
 
 const Header: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -36,20 +37,13 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AppBar position="static" sx={{ background: 'linear-gradient(to right, #6a1b9a, #8e24aa)' }}>
+    <AppBar position="static" className={styles.header}>
       <Toolbar>
         <Typography 
           variant="h6" 
           component={RouterLink} 
           to="/" 
-          sx={{ 
-            flexGrow: 1, 
-            textDecoration: 'none', 
-            color: 'white',
-            fontWeight: 'bold',
-            display: 'flex',
-            alignItems: 'center'
-          }}
+          className={styles.logo}
         >
           ResuMate
         </Typography>
@@ -57,10 +51,10 @@ const Header: React.FC = () => {
         {isMobile ? (
           <>
             <IconButton
-              color="inherit"
               aria-label="menu"
               onClick={handleMenuOpen}
               edge="end"
+              className={styles.menuIcon}
             >
               <MenuIcon />
             </IconButton>
@@ -82,8 +76,9 @@ const Header: React.FC = () => {
                 to="/dashboard" 
                 onClick={handleMenuClose}
                 selected={isActive('/dashboard')}
+                className={styles.menuItem}
               >
-                <DashboardIcon sx={{ mr: 1 }} fontSize="small" />
+                <DashboardIcon className={styles.menuItemIcon} fontSize="small" />
                 Dashboard
               </MenuItem>
               <MenuItem 
@@ -91,8 +86,9 @@ const Header: React.FC = () => {
                 to="/resume/builder" 
                 onClick={handleMenuClose}
                 selected={isActive('/resume')}
+                className={styles.menuItem}
               >
-                <DescriptionIcon sx={{ mr: 1 }} fontSize="small" />
+                <DescriptionIcon className={styles.menuItemIcon} fontSize="small" />
                 Resume Builder
               </MenuItem>
               <MenuItem 
@@ -100,47 +96,36 @@ const Header: React.FC = () => {
                 to="/cover-letter/new" 
                 onClick={handleMenuClose}
                 selected={isActive('/cover-letter')}
+                className={styles.menuItem}
               >
-                <NoteAddIcon sx={{ mr: 1 }} fontSize="small" />
+                <NoteAddIcon className={styles.menuItemIcon} fontSize="small" />
                 Cover Letter
               </MenuItem>
             </Menu>
           </>
         ) : (
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box className={styles.navContainer}>
             <Button 
-              color="inherit" 
               component={RouterLink} 
               to="/dashboard"
               startIcon={<DashboardIcon />}
-              sx={{ 
-                fontWeight: isActive('/dashboard') ? 'bold' : 'normal',
-                borderBottom: isActive('/dashboard') ? '2px solid white' : 'none',
-              }}
+              className={isActive('/dashboard') ? styles.navButtonActive : styles.navButton}
             >
               Dashboard
             </Button>
             <Button 
-              color="inherit" 
               component={RouterLink} 
               to="/resume/builder"
               startIcon={<DescriptionIcon />}
-              sx={{ 
-                fontWeight: isActive('/resume') ? 'bold' : 'normal',
-                borderBottom: isActive('/resume') ? '2px solid white' : 'none',
-              }}
+              className={isActive('/resume') ? styles.navButtonActive : styles.navButton}
             >
               Resume Builder
             </Button>
             <Button 
-              color="inherit" 
               component={RouterLink} 
               to="/cover-letter/new"
               startIcon={<NoteAddIcon />}
-              sx={{ 
-                fontWeight: isActive('/cover-letter') ? 'bold' : 'normal',
-                borderBottom: isActive('/cover-letter') ? '2px solid white' : 'none',
-              }}
+              className={isActive('/cover-letter') ? styles.navButtonActive : styles.navButton}
             >
               Cover Letter
             </Button>

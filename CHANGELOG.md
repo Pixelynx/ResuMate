@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### [2025-06-05]
+### Changed
+- Refactored styling architecture with CSS Modules implementation
+  - Extracted inline styles from Header and Footer components
+  - Added TypeScript declarations for CSS Modules
+  - Improved style maintainability and type safety
+  - Preserved all existing styling behavior and responsiveness
+
 ### [2025-06-01]
 ### Added
 - Complete dynamic cover letter generation system:

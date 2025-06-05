@@ -1,0 +1,40 @@
+.header {
+  background: linear-gradient(to right, #6a1b9a, #8e24aa);
+}
+
+.logo {
+  flex-grow: 1;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.navButton {
+  color: inherit;
+}
+
+.navButtonActive {
+  color: inherit;
+  font-weight: bold;
+  border-bottom: 2px solid white;
+}
+
+.menuIcon {
+  color: inherit;
+}
+
+.navContainer {
+  display: flex;
+  gap: 16px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+}
+
+.menuItemIcon {
+  margin-right: 8px;
+} 
