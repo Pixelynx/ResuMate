@@ -9,7 +9,7 @@
 Our job fit scoring system provides intelligent matching between resumes and job descriptions. For detailed technical implementation, see the [Job Fit Score Implementation](./server/README.md#job-fit-score-implementation) section in the server documentation.
 
 ## Contents
-* [Demo](./client/docs/demo.md)
+* [Demo](./docs/demo.md)
 * [Key Features](#key-features)
 * [Technical Implementation](#technical-implementation)
 * [Getting Started](#getting-started)
