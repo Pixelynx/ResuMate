@@ -1,7 +1,6 @@
 import React, { forwardRef, useEffect } from 'react';
 import { 
   Typography, 
-  Box, 
   Paper
 } from '@mui/material';
 import { styled } from '@mui/material/styles';

@@ -12,17 +12,13 @@
 }
 
 .navButton {
-  color: inherit;
+  color: white;
 }
 
 .navButtonActive {
-  color: inherit;
+  color: white;
   font-weight: bold;
   border-bottom: 2px solid white;
-}
-
-.menuIcon {
-  color: inherit;
 }
 
 .navContainer {
@@ -30,9 +26,14 @@
   gap: 16px;
 }
 
+.menuIcon {
+  color: white;
+}
+
 .menuItem {
   display: flex;
   align-items: center;
+  color: rgba(106, 27, 154, 0.8) !important;
 }
 
 .menuItemIcon {
