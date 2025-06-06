@@ -3,6 +3,7 @@ export interface CoverLetter {
   title: string;
   content: string;
   resumeid?: string;
+  resumeTitle?: string;
   jobtitle?: string;
   company?: string;
   firstname: string;
@@ -11,7 +12,7 @@ export interface CoverLetter {
   phoneNumber?: string;
   prevEmployed?: string[];
   jobdescription?: string;
-  createdAt?: string;
+  createdAt: string;
   updatedAt?: string;
   generationoptions?: GenerationOptions;
 }

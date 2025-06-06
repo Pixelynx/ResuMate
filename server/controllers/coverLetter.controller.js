@@ -85,9 +85,21 @@ exports.create = async (req, res) => {
 exports.findAll = async (req, res) => {
   try {
     const data = await CoverLetter.findAll({
+      include: [{
+        model: Resume,
+        as: 'resume',
+        attributes: ['title']
+      }],
       order: [['updatedAt', 'DESC']]
     });
-    res.send(data);
+
+    // Transform the data to include resumeTitle
+    const transformedData = data.map(coverLetter => ({
+      ...coverLetter.get({ plain: true }),
+      resumeTitle: coverLetter.resume?.title || null
+    }));
+
+    res.send(transformedData);
   } catch (err) {
     res.status(500).send({
       message: err.message || "Some error occurred while retrieving cover letters."

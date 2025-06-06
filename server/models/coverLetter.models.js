@@ -74,12 +74,5 @@ module.exports = (sequelize, Sequelize) => {
     timestamps: true
   });
 
-  CoverLetter.associate = (models) => {
-    CoverLetter.belongsTo(models.Resume, {
-      foreignKey: 'resumeid',
-      as: 'resume'
-    });
-  };
-
   return CoverLetter;
 }; 
