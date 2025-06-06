@@ -137,7 +137,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
               <div className={styles.content}>
                 <div className={styles.sections}>
                   <div className={styles.section}>
-                    <div className={styles.qualifiersGrid}>
+                    <div className={styles.qualifiersContainer}>
                       {qualifiers.map(({ label, value }, index) => (
                         <div key={index} className={styles.qualifier}>
                           <Typography variant="body2">{label}</Typography>
