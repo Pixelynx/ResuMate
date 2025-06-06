@@ -12,13 +12,13 @@
 }
 
 .navButton {
-  color: white;
+  color: white !important;
 }
 
 .navButtonActive {
-  color: white;
+  color: white !important;
   font-weight: bold;
-  border-bottom: 2px solid white;
+  border-bottom: 2px solid white !important;
 }
 
 .navContainer {
@@ -27,7 +27,7 @@
 }
 
 .menuIcon {
-  color: white;
+  color: white !important;
 }
 
 .menuItem {
