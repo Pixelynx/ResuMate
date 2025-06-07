@@ -3,18 +3,14 @@ import {
   Box,
   Typography,
   Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
   IconButton,
-  Tooltip,
-  Chip,
-  Divider,
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Divider,
+  Button,
+  Tooltip
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
@@ -24,8 +20,11 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Resume } from '../resume/types/resumeTypes';
+import styles from '../../styles/ResumeList.module.css';
 
 dayjs.extend(relativeTime);
+
+const MAX_VISIBLE_SKILLS = 4;
 
 interface ResumeListProps {
   resumes: Resume[];
@@ -76,10 +75,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
     }
   };
 
-  // Extract skills from resume data
   const extractSkills = (resume: Resume) => {
     if (resume.skills && resume.skills.skills_) {
-      return resume.skills.skills_.split(',').slice(0, 3).map((skill: string) => skill.trim());
+      return resume.skills.skills_.split(',').map((skill: string) => skill.trim());
     }
     return [];
   };
@@ -88,133 +86,126 @@ const ResumeList: React.FC<ResumeListProps> = ({
     return date ? dayjs(date).fromNow() : 'Never';
   };
 
+  if (resumes.length === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 3 }}>
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          You don't have any resumes yet
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => onEdit('')}
+          sx={{ mt: 1 }}
+        >
+          Create Your First Resume
+        </Button>
+      </Box>
+    );
+  }
+
   return (
-    <Box>
-      {resumes.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 3 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            You don't have any resumes yet
-          </Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={() => onEdit('')}
-            sx={{ mt: 1 }}
-          >
-            Create Your First Resume
-          </Button>
-        </Box>
-      ) : (
-        <Grid container spacing={2}>
-          {resumes.map((resume) => (
-            <Grid item xs={12} sm={6} md={4} key={resume.id}>
-              <Card 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 6,
-                  }
-                }}
-              >
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Typography variant="h6" component="div" noWrap>
-                      {resume.personalDetails.firstname} {resume.personalDetails.lastname}
-                    </Typography>
-                    <IconButton 
-                      size="small" 
-                      onClick={(e) => handleMenuOpen(e, resume.id)}
-                      aria-label="resume options"
-                    >
-                      <MoreVertIcon />
-                    </IconButton>
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {resume.personalDetails.title || 'No title specified'}
-                  </Typography>
-                  
-                  <Divider sx={{ my: 1 }} />
-                  
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                    {extractSkills(resume).map((skill, index) => (
-                      <Chip 
-                        key={index} 
-                        label={skill} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ fontSize: '0.7rem' }}
-                      />
-                    ))}
-                  </Box>
-                  
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Experience: {resume.workExperience?.length || 0} entries
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Education: {resume.education?.length || 0} entries
-                    </Typography>
-                  </Box>
-                </CardContent>
-                
-                <Box sx={{ mt: 'auto', p: 0.75, backgroundColor: 'rgba(106, 27, 154, 0.05)' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    Last updated: {formatDate(resume.updatedAt)}
-                  </Typography>
-                </Box>
-                
-                <CardActions sx={{ p: 1 }}>
+    <Grid container spacing={2}>
+      {resumes.map((resume) => {
+        const skills = extractSkills(resume);
+        const visibleSkills = skills.slice(0, MAX_VISIBLE_SKILLS);
+        const remainingSkills = skills.length - MAX_VISIBLE_SKILLS;
+
+        const qualifiers = [
+          { label: 'XP', value: resume.workExperience?.length || 0 },
+          { label: 'EDU', value: resume.education?.length || 0 },
+          { label: 'PROJ', value: resume.projects?.length || 0 },
+          { label: 'CERT', value: resume.certifications?.length || 0 }
+        ];
+
+        return (
+          <Grid item xs={12} sm={6} md={4} key={resume.id}>
+            <div className={styles.card}>
+              <div className={styles.header}>
+                <Typography className={styles.title}>
+                  {resume.personalDetails.title || 'No Title Specified'}
+                </Typography>
+                <IconButton 
+                  size="small"
+                  onClick={(e) => handleMenuOpen(e, resume.id)}
+                  className={styles.menuButton}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              </div>
+
+              <div className={styles.content}>
+                <div className={styles.sections}>
+                  <div className={styles.section}>
+                    <div className={styles.qualifiersContainer}>
+                      {qualifiers.map(({ label, value }, index) => (
+                        <div key={index} className={styles.qualifier}>
+                          <Typography variant="body2">{label}</Typography>
+                          <Typography variant="body1">{value}</Typography>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.section}>
+                    <div className={styles.skillsContainer}>
+                      {visibleSkills.map((skill, index) => (
+                        <span key={index} className={styles.skill}>{skill}</span>
+                      ))}
+                      {remainingSkills > 0 && (
+                        <span className={styles.skill}>+{remainingSkills}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.footer}>
+                <Typography className={styles.date}>
+                  Created {formatDate(resume.updatedAt)}
+                </Typography>
+                <div className={styles.actions}>
                   <Tooltip title="View Resume">
                     <Button 
-                      size="small" 
-                      // startIcon={<VisibilityIcon sx={{ fontSize: '0.9rem' }} />}
+                      size="small"
                       onClick={() => onView(resume.id)}
-                      sx={{ py: 0.5 }}
+                      className={styles.button}
+                      startIcon={<VisibilityIcon />}
                     >
-                      View
+                      <span className={styles.buttonText}>View</span>
                     </Button>
                   </Tooltip>
+
                   <Tooltip title="Edit functionality is temporarily disabled">
                     <span>
                       <Button 
-                        size="small" 
-                        startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
+                        size="small"
                         disabled={true}
-                        sx={{ 
-                          py: 0.5,
-                          '&.Mui-disabled': {
-                            color: (theme) => theme.palette.grey[500]
-                          }
-                        }}
+                        className={styles.button}
+                        startIcon={<EditIcon />}
                       >
-                        Edit
+                        <span className={styles.buttonText}>Edit</span>
                       </Button>
                     </span>
                   </Tooltip>
-                  <Box sx={{ flexGrow: 1 }} />
+
                   <Tooltip title="Generate Cover Letter">
                     <Button 
-                      size="small" 
-                      color="secondary"
-                      startIcon={<NoteAddIcon sx={{ fontSize: '0.9rem' }} />}
+                      size="small"
                       onClick={() => onCreateCoverLetter(resume.id)}
-                      sx={{ py: 0.5 }}
+                      className={styles.button}
+                      startIcon={<NoteAddIcon />}
                     >
-                      Cover Letter
+                      <span className={styles.buttonText}>Cover Letter</span>
                     </Button>
                   </Tooltip>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
-      
+                </div>
+              </div>
+            </div>
+          </Grid>
+        );
+      })}
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -228,11 +219,9 @@ const ResumeList: React.FC<ResumeListProps> = ({
         </MenuItem>
         <MenuItem disabled>
           <ListItemIcon>
-            <EditIcon fontSize="small" sx={{ color: (theme) => theme.palette.grey[500] }} />
+            <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText sx={{ color: (theme) => theme.palette.grey[500] }}>
-            Edit Resume (Temporarily Disabled)
-          </ListItemText>
+          <ListItemText>Edit Resume (Temporarily Disabled)</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleCreateCoverLetter}>
           <ListItemIcon>
@@ -248,7 +237,7 @@ const ResumeList: React.FC<ResumeListProps> = ({
           <ListItemText>Delete Resume</ListItemText>
         </MenuItem>
       </Menu>
-    </Box>
+    </Grid>
   );
 };
 

@@ -209,7 +209,7 @@ const generateScoreExplanation = async (resume, coverLetter, score, analysis) =>
     console.log('Requesting AI explanation for score:', score);
     
     const prompt = `
-      You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score}/10.0.
+      You are an AI career advisor analyzing a job application. Based on the following information, provide personalized feedback on why the candidate received a job fit score of ${score.toFixed(2)}/10.00.
 
       Job Details:
       - Title: ${coverLetter.jobtitle || "Not specified"}

@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### [2025-06-05]
+### Changed
+- Refactored styling architecture with CSS Modules implementation
+  - Extracted inline styles from Header and Footer components
+  - Added TypeScript declarations for CSS Modules
+  - Improved style maintainability and type safety
+  - Preserved all existing styling behavior and responsiveness
+- Redesigned resume card layout with purple theme and mobile responsiveness
+  - Implemented side-by-side skills and other qualifiers sections
+  - Added hover states with gradient effects
+  - Enhanced mobile view with icon-only buttons
+  - Improved accessibility and visual hierarchy
+  - Added responsive design patterns for better mobile experience
+- Updated CoverLetter type definitions to include resumeTitle
+  - Improved error handling in CoverLetterList component
+  - Simplified component structure using CSS Modules
+
+  ### Added
+- Redesigned CoverLetterList component with matching purple theme and CSS Modules
+  - Implemented consistent styling with ResumeList component
+  - Added hover states and transitions
+  - Improved mobile responsiveness
+  - Reorganized content layout for better readability
+  - Replaced MUI Card components with custom styled elements
+  - Added proper TypeScript support with CSS Module declarations
+
 ### [2025-06-01]
 ### Added
 - Complete dynamic cover letter generation system:

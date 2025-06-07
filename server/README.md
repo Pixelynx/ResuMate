@@ -37,6 +37,128 @@ The Resumate backend is a Node.js/Express server that provides:
 - Personalized feedback generation using OpenAI
 - Error handling with graceful fallbacks
 
+### Job Fit Score Implementation
+Our job fit scoring system uses a sophisticated multi-component approach to evaluate how well a candidate's resume matches a job description:
+
+1. **Job Classification**: First, we classify the job to understand its category and requirements.
+2. **Resume Content Preparation**: We extract and format resume content for analysis.
+3. **Component-Based Scoring**: We evaluate different resume components separately:
+   - Skills match (30% weight)
+   - Work experience relevance (25% weight)
+   - Projects alignment (20% weight)
+   - Education relevance (15% weight)
+   - Job title match (10% weight)
+4. **Technical Mismatch Detection**: We identify gaps between job requirements and candidate skills.
+5. **Experience Level Matching**: We detect mismatches between senior/junior roles and candidate experience.
+6. **Embedding-Based Adjustments**: We use OpenAI embeddings for semantic similarity analysis.
+7. **Penalty Application**: We adjust scores based on severe technical or experience mismatches.
+8. **AI-Powered Explanation**: We generate personalized feedback with improvement suggestions.
+
+Here's the core implementation from `jobFitService.js`:
+
+```javascript
+const calculateJobFitScore = async (resume, coverLetter) => {
+  try {
+    // 1. Job classification
+    const jobClassification = classifyJob(
+      coverLetter.jobtitle ?? '',
+      coverLetter.jobdescription
+    );
+    
+    // 2. Resume content preparation
+    const resumeContent = prepareResumeContent(resume);
+    
+    // 3. Component-based scoring
+    const componentResult = calculateComponentScores(
+      resume, 
+      coverLetter.jobdescription,
+      coverLetter.jobtitle ?? ''
+    );
+    
+    // 4. Calculate penalties
+    const technicalMismatch = calculateTechnicalMismatchPenalty(
+      coverLetter.jobdescription,
+      resumeContent,
+      coverLetter.jobtitle ?? ''
+    );
+    
+    const experienceMismatch = calculateExperienceMismatchPenalty(
+      resume.workExperience ?? [],
+      coverLetter.jobdescription,
+      coverLetter.jobtitle ?? ''
+    );
+    
+    // 5. Apply embedding-based adjustment
+    const similarity = await calculateEmbeddingSimilarity(resumeContent, coverLetter.jobdescription);
+    const baseScore = componentResult.score * 10;
+    const embeddingAdjustment = (similarity - 0.5) * 2; // Convert 0-1 to -1 to 1
+    const adjustedScore = baseScore * (1 + (embeddingAdjustment * 0.2));
+    
+    // 6. Apply penalties
+    const { finalScore, analysis: penaltyAnalysis } = applyPenalties(
+      adjustedScore,
+      {
+        technicalMismatch,
+        experienceMismatch
+      }
+    );
+    
+    // 7. Generate explanation with AI
+    const explanation = await generateScoreExplanation(
+      resume,
+      coverLetter,
+      finalScore,
+      {
+        ...componentResult,
+        penalties: {
+          technical: technicalMismatch,
+          experience: experienceMismatch
+        },
+        penaltyAnalysis,
+        jobClassification
+      }
+    );
+    
+    return {
+      score: parseFloat(finalScore.toFixed(1)),
+      explanation,
+      jobClassification
+    };
+  } catch (error) {
+    console.error('Error in job fit calculation:', error);
+    return {
+      score: null,
+      explanation: `Unable to calculate job fit score: ${error.message}`
+    };
+  }
+};
+```
+
+The embedding similarity calculation is a key part of our approach:
+
+```javascript
+async function calculateEmbeddingSimilarity(text1, text2) {
+  try {
+    // Get embeddings for both texts
+    const [embedding1, embedding2] = await Promise.all([
+      getEmbedding(text1),
+      getEmbedding(text2)
+    ]);
+    
+    // Calculate cosine similarity
+    const similarity = cosineSimilarity(embedding1, embedding2);
+    
+    // Convert similarity (-1 to 1) to a 0 to 1 score
+    return (similarity + 1) / 2;
+  } catch (error) {
+    console.error('Error calculating embedding similarity:', error);
+    return 0.5; // Return middle value on error
+  }
+}
+```
+
+This implementation provides a balance between keyword matching and semantic understanding, with penalties that help adjust scores based on real-world job matching concerns.
+
 ## Project Structure
 ```
 server/
@@ -320,6 +442,6 @@ The Cover Letter model includes:
 ## Development Roadmap
 - [X] Add more AI-powered features for resume enhancement
 - [ ] Implement backend persistence for resume data
-- [ ] Enhance cover letter generation by implementing cosine similarity between resume and job description
-- [ ] Adjust cosine similarity logic for job scoring to ensure more balanced results
+- [X] Enhance cover letter generation by implementing cosine similarity between resume and job description
+- [X] Adjust cosine similarity logic for job scoring to ensure more balanced results
 - [ ] Implement ATS optimization suggestions

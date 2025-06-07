@@ -6,7 +6,6 @@ import {
   Container,
   Paper,
   Button,
-  Divider,
   Grid,
   CircularProgress,
   Dialog,
@@ -387,16 +386,6 @@ const ViewCoverLetter: React.FC = () => {
         
         <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, mt: 4, mb: 4 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h4" gutterBottom>
-                {coverLetter.title}
-              </Typography>
-              <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-                For: {coverLetter.jobtitle} at {coverLetter.company}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-            </Grid>
-            
             <Grid item xs={12}>
               <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
                 {coverLetter.content}

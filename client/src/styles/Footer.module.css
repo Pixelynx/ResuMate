@@ -1,0 +1,39 @@
+.footer {
+  position: fixed;
+  bottom: 4px;
+  left: 50%;
+  width: calc(100% - 32px);
+  max-width: 1200px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  background-color: rgba(106, 27, 154, 0.95);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  z-index: 10;
+}
+
+.copyright {
+  opacity: 0.9;
+}
+
+.linkContainer {
+  display: flex;
+  gap: 24px;
+}
+
+.link {
+  opacity: 0.9;
+  transition: opacity 0.2s;
+  color: inherit;
+  text-decoration: none;
+}
+
+.link:hover {
+  opacity: 1;
+  text-decoration: underline;
+} 
