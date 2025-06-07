@@ -21,8 +21,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
-// import { ValidationState } from './types/validationTypes';
-import { WorkExperienceValidation, EducationValidation, FieldValidation } from './types/validationTypes';
+import { ValidationState, WorkExperienceValidation, EducationValidation, FieldValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -109,6 +108,7 @@ const ResumeForm: React.FC = () => {
 
     const {
       validationState,
+      setValidationState,
       fieldRefs,
       handleBlur,
       validateWorkExperienceDates,
@@ -150,40 +150,51 @@ const ResumeForm: React.FC = () => {
       if (!formData) return false;
 
       switch (step) {
-        case 0:
+        case 0: // Personal Details
           return Object.values(validationState.personalDetails)
             .every((field) => {
               const validationField = field as FieldValidation;
               return !validationField.error || !validationField.touched;
             });
         
-        case 1:
-          return workExperienceManager.isEmpty() || 
-            validationState.workExperience?.every((exp: WorkExperienceValidation) => 
-              Object.entries(exp).every(([key, value]) => 
-                key.endsWith('Valid') ? value as boolean : (!(value as FieldValidation).error || !(value as FieldValidation).touched)
-              )
-            );
+        case 1: // Work Experience
+          if (workExperienceManager.isEmpty()) return true;
+          
+          return validationState.workExperience?.every((exp: WorkExperienceValidation) => {
+            // Check all fields except dates first
+            const fieldsValid = Object.entries(exp)
+              .filter(([key]) => !key.includes('Date') && !key.includes('Valid'))
+              .every(([_, value]) => {
+                const field = value as FieldValidation;
+                return !field.error || !field.touched;
+              });
+
+            // Check date validation separately
+            const datesValid = exp.startDateValid && exp.endDateValid;
+            
+            return fieldsValid && datesValid;
+          }) ?? true;
         
-        case 2:
-          return educationManager.isEmpty() ||
-            validationState.education?.every((edu: EducationValidation) => 
-              Object.values(edu).every((field) => {
-                const validationField = field as FieldValidation;
-                return !validationField.error || !validationField.touched;
-              })
-            );
+        case 2: // Education
+          if (educationManager.isEmpty()) return true;
+          
+          return validationState.education?.every((edu: EducationValidation) => 
+            Object.values(edu).every((field) => {
+              const validationField = field as FieldValidation;
+              return !validationField.error || !validationField.touched;
+            })
+          ) ?? true;
         
-        case 3:
+        case 3: // Skills - Optional
           return true;
         
-        case 4:
+        case 4: // Certifications - Optional
           return true;
         
-        case 5:
+        case 5: // Projects - Optional
           return true;
         
-        case 6:
+        case 6: // Preview
           return true;
         
         default:
@@ -249,14 +260,52 @@ const ResumeForm: React.FC = () => {
       }
     };
   
-    const handleNext = () => {
-      if (isStepValid(activeStep)) {
-        dispatch(nextStep());
-      }
+    const handleBack = () => {
+      // Clear any validation errors for the current step before going back
+      setValidationState((prev: ValidationState) => ({
+        ...prev,
+        ...(activeStep === 1 ? { 
+          workExperience: prev.workExperience.map((exp: WorkExperienceValidation) => ({
+            ...exp,
+            startDateValid: true,
+            endDateValid: true,
+            dateErrorMessage: ''
+          }))
+        } : {}),
+        ...(activeStep === 2 ? {
+          education: prev.education.map((edu: EducationValidation) => ({
+            ...edu,
+            graduationDate: { error: false, message: '', touched: false }
+          }))
+        } : {})
+      }));
+
+      dispatch(prevStep());
     };
 
-    const handleBack = () => {
-      dispatch(prevStep());
+    const handleNext = () => {
+      if (isStepValid(activeStep)) {
+        // Clear any validation errors for the current step before moving forward
+        setValidationState((prev: ValidationState) => ({
+          ...prev,
+          ...(activeStep === 1 ? { 
+            workExperience: prev.workExperience.map((exp: WorkExperienceValidation) => ({
+              ...exp,
+              startDateValid: true,
+              endDateValid: true,
+              dateErrorMessage: ''
+            }))
+          } : {}),
+          ...(activeStep === 2 ? {
+            education: prev.education.map((edu: EducationValidation) => ({
+              ...edu,
+              graduationDate: { error: false, message: '', touched: false }
+            }))
+          } : {})
+        }));
+
+        dispatch(nextStep());
+      }
     };
 
     const handleFinish = () => submitResume();
