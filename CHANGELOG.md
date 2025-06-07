@@ -3,6 +3,22 @@
 ## [Unreleased]
 
 ### [2025-06-05]
+### Added
+- Backend utility functions for filtering empty resume sections
+  - Added `resumeDataFilters.js` with section validation logic
+  - Implemented empty section detection and removal
+  - Added type definitions and JSDoc documentation
+  - Supports all resume section types (work, education, skills, etc.)
+
+### Changed
+- Improved resume data handling to exclude empty sections
+- Enhanced data validation for resume sections
+
+### Fixed
+- Issue with empty sections being saved in resumes
+- Improved data consistency in resume storage 
+
+### [2025-06-05]
 ### Changed
 - Refactored styling architecture with CSS Modules implementation
   - Extracted inline styles from Header and Footer components
