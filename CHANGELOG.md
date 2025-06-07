@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-### [2025-06-05]
+### [2025-06-07]
 ### Added
 - Backend utility functions for filtering empty resume sections
   - Added `resumeDataFilters.js` with section validation logic
@@ -11,7 +11,15 @@
   - Supports all resume section types (work, education, skills, etc.)
   - Refactored resume controller for better code organization
   - Added comprehensive error handling for data filtering
-  - Improved type safety with JSDoc documentation 
+- Custom section management hook for dynamic form sections
+  - Added `useSectionManager` hook for handling section data
+  - Implemented section-specific add/remove/update operations
+  - Added section emptiness detection
+  - Improved type safety with TypeScript
+  - Refactored form state management for better maintainability
+- Enhanced type definitions for form sections
+- Improved form validation architecture
+- Added comprehensive error handling for section operations
 
 ### Changed
 - Improved resume data handling to exclude empty sections
@@ -21,6 +29,11 @@
   - Improved response formatting to exclude null sections
   - Enhanced error handling for data filtering operations
 - Optimized database operations to handle null sections properly
+- Enhanced ResumeForm component with dynamic section handling
+  - Updated form validation to handle optional sections
+  - Improved step validation with section-aware logic
+  - Enhanced form navigation with proper validation checks
+  - Added graceful handling of null/empty sections
 
 ### Fixed
 - Issue with empty sections being saved in resumes

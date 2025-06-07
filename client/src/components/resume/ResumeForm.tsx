@@ -21,7 +21,8 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
-import { WorkExperienceValidation } from './types/validationTypes';
+// import { ValidationState } from './types/validationTypes';
+import { WorkExperienceValidation, EducationValidation, FieldValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -33,18 +34,10 @@ import {
   prevStep,
   updatePersonalDetails,
   updateWorkExperience,
-  addWorkExperience,
-  removeWorkExperience,
   updateEducation,
-  addEducation,
-  removeEducation,
   updateSkills,
   updateCertification,
-  addCertification,
-  removeCertification,
   updateProject,
-  addProject,
-  removeProject,
   initNewDraftResume,
   clearError
 } from '../../redux/slices/resumeSlice';
@@ -60,6 +53,7 @@ import { ResumeFormData } from './types/resumeTypes';
 import ResumeParser from './ResumeParser';
 import ResumeFormStepper from './ResumeFormStepper';
 import dayjs from 'dayjs';
+import { useSectionManager } from '../../hooks/useSectionManager';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
@@ -114,7 +108,6 @@ const ResumeForm: React.FC = () => {
     };
 
     const {
-      setValidationState,
       validationState,
       fieldRefs,
       handleBlur,
@@ -145,6 +138,58 @@ const ResumeForm: React.FC = () => {
         dispatch(fetchResumeById(resumeid));
       }
     }, [dispatch, resumeid]);
+
+    const workExperienceManager = useSectionManager('workExperience');
+    const educationManager = useSectionManager('education');
+    const skillsManager = useSectionManager('skills');
+    const certificationsManager = useSectionManager('certifications');
+    const projectsManager = useSectionManager('projects');
+
+    // Update step validation to handle dynamic sections
+    const isStepValid = (step: number): boolean => {
+      if (!formData) return false;
+
+      switch (step) {
+        case 0:
+          return Object.values(validationState.personalDetails)
+            .every((field) => {
+              const validationField = field as FieldValidation;
+              return !validationField.error || !validationField.touched;
+            });
+        
+        case 1:
+          return workExperienceManager.isEmpty() || 
+            validationState.workExperience?.every((exp: WorkExperienceValidation) => 
+              Object.entries(exp).every(([key, value]) => 
+                key.endsWith('Valid') ? value as boolean : (!(value as FieldValidation).error || !(value as FieldValidation).touched)
+              )
+            );
+        
+        case 2:
+          return educationManager.isEmpty() ||
+            validationState.education?.every((edu: EducationValidation) => 
+              Object.values(edu).every((field) => {
+                const validationField = field as FieldValidation;
+                return !validationField.error || !validationField.touched;
+              })
+            );
+        
+        case 3:
+          return true;
+        
+        case 4:
+          return true;
+        
+        case 5:
+          return true;
+        
+        case 6:
+          return true;
+        
+        default:
+          return false;
+      }
+    };
 
     const submitResume = async () => {
       if (!formData) return;
@@ -204,8 +249,16 @@ const ResumeForm: React.FC = () => {
       }
     };
   
-    const handleNext = () => dispatch(nextStep());
-    const handleBack = () => dispatch(prevStep());
+    const handleNext = () => {
+      if (isStepValid(activeStep)) {
+        dispatch(nextStep());
+      }
+    };
+
+    const handleBack = () => {
+      dispatch(prevStep());
+    };
+
     const handleFinish = () => submitResume();
 
     const handleChange = (section: keyof ResumeFormData, index: number, field: string, value: any) => {
@@ -254,46 +307,6 @@ const ResumeForm: React.FC = () => {
         dispatch(updateCertification({ index, field, value: processedValue }));
       } else if (section === 'projects') {
         dispatch(updateProject({ index, field, value: processedValue }));
-      }
-    };
-  
-    const addEntry = (section: keyof ResumeFormData) => {
-      if (section === 'workExperience') {
-        setValidationState(prev => {
-          const updatedWorkExperience = [...(prev.workExperience as WorkExperienceValidation[] || [])];
-          updatedWorkExperience.push({
-            companyName: { error: false, message: '', touched: false },
-            jobtitle: { error: false, message: '', touched: false },
-            location: { error: false, message: '', touched: false },
-            description: { error: false, message: '', touched: false },
-            startDateValid: true,
-            endDateValid: true,
-            dateErrorMessage: '',
-          });
-          return {
-            ...prev,
-            workExperience: updatedWorkExperience
-          };
-        });
-        dispatch(addWorkExperience());
-      } else if (section === 'education') {
-        dispatch(addEducation());
-      } else if (section === 'certifications') {
-        dispatch(addCertification());
-      } else if (section === 'projects') {
-        dispatch(addProject());
-      }
-    };
-  
-    const removeEntry = (section: keyof ResumeFormData, index: number) => {
-      if (section === 'workExperience') {
-        dispatch(removeWorkExperience(index));
-      } else if (section === 'education') {
-        dispatch(removeEducation(index));
-      } else if (section === 'certifications') {
-        dispatch(removeCertification(index));
-      } else if (section === 'projects') {
-        dispatch(removeProject(index));
       }
     };
   
@@ -493,7 +506,7 @@ const ResumeForm: React.FC = () => {
         case 1:
           return (
             <Box>
-              {formData.workExperience.map((entry, index) => (
+              {workExperienceManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
@@ -617,8 +630,8 @@ const ResumeForm: React.FC = () => {
                   </Grid>
                   <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                     <IconButton 
-                      onClick={() => removeEntry('workExperience', index)}
-                      disabled={formData.workExperience.length === 1}
+                      onClick={() => workExperienceManager.removeItem(index)}
+                      disabled={workExperienceManager.data?.length === 1}
                       aria-label={`Remove work experience entry ${index + 1}`}
                     >
                       <RemoveCircleOutlineIcon />
@@ -627,7 +640,7 @@ const ResumeForm: React.FC = () => {
                 </Box>
               ))}
               <Button 
-                onClick={() => addEntry('workExperience')} 
+                onClick={workExperienceManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
                 Add Another Work Experience
@@ -637,7 +650,7 @@ const ResumeForm: React.FC = () => {
         case 2:
           return (
             <Box>
-              {formData.education.map((entry, index) => (
+              {educationManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -687,10 +700,20 @@ const ResumeForm: React.FC = () => {
                       </LocalizationProvider>
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('education', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => educationManager.removeItem(index)}
+                    disabled={educationManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('education')} startIcon={<AddCircleOutlineIcon />}>Add Another Education</Button>
+              <Button 
+                onClick={educationManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Education
+              </Button>
             </Box>
           );
         case 3:
@@ -705,8 +728,8 @@ const ResumeForm: React.FC = () => {
                     multiline
                     rows={4}
                     placeholder="Enter your skills (e.g., Programming Languages, Frameworks, Tools)"
-                    value={formData.skills.skills_}
-                    onChange={(e) => handleChange('skills', 0, 'skills_', e.target.value)}
+                    value={skillsManager.data?.skills_ || ''}
+                    onChange={(e) => skillsManager.updateItem(0, 'skills_', e.target.value)}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -717,8 +740,8 @@ const ResumeForm: React.FC = () => {
                     multiline
                     rows={2}
                     placeholder="Enter languages you speak"
-                    value={formData.skills.languages}
-                    onChange={(e) => handleChange('skills', 0, 'languages', e.target.value)}
+                    value={skillsManager.data?.languages || ''}
+                    onChange={(e) => skillsManager.updateItem(0, 'languages', e.target.value)}
                   />
                 </Grid>
               </Grid>
@@ -727,7 +750,7 @@ const ResumeForm: React.FC = () => {
         case 4:
           return (
             <Box>
-              {formData.certifications.map((entry, index) => (
+              {certificationsManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -779,16 +802,26 @@ const ResumeForm: React.FC = () => {
                       />
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('certifications', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => certificationsManager.removeItem(index)}
+                    disabled={certificationsManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('certifications')} startIcon={<AddCircleOutlineIcon />}>Add Another Certification</Button>
+              <Button 
+                onClick={certificationsManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Certification
+              </Button>
             </Box>
           );
         case 5:
           return (
             <Box>
-              {formData.projects.map((entry, index) => (
+              {projectsManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -849,10 +882,20 @@ const ResumeForm: React.FC = () => {
                       />
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('projects', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => projectsManager.removeItem(index)}
+                    disabled={projectsManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('projects')} startIcon={<AddCircleOutlineIcon />}>Add Another Project</Button>
+              <Button 
+                onClick={projectsManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Project
+              </Button>
             </Box>
           );
           case steps.length - 1:
