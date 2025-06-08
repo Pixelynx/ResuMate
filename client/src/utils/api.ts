@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { ResumeFormData } from '../components/resume/types/resumeTypes';
-import { Resume } from '../components/resume/types/resumeTypes';
+import { ResumeFormData, Resume, ResumeResponse, ResumeListResponse, APIResponse } from '../components/resume/types/resumeTypes';
 import {
   CoverLetterFormData,
   CoverLetterGenerationRequest,
@@ -17,100 +16,132 @@ const API = axios.create({
   },
 });
 
-export type ResumeResponse = Resume;
-export type ResumeListResponse = Resume[];
+const handleError = (error: any): never => {
+  console.error('API Error:', error);
+  
+  if (error.response) {
+    console.error('Server response data:', error.response.data);
+    console.error('Server response status:', error.response.status);
+    throw error.response.data;
+  }
+  
+  throw new Error(error.message || 'An unexpected error occurred');
+};
+
+// Data transformation utilities
+const transformFormDataForAPI = (formData: ResumeFormData): ResumeFormData => {
+  // Clean empty arrays before sending to API
+  return {
+    ...formData,
+    workExperience: formData.workExperience.length > 0 ? formData.workExperience : [],
+    education: formData.education.length > 0 ? formData.education : [],
+    certifications: formData.certifications.length > 0 ? formData.certifications : [],
+    projects: formData.projects.length > 0 ? formData.projects : []
+  };
+};
+
+const transformAPIResponse = (response: any): Resume => {
+  // Ensure null sections are properly handled
+  return {
+    ...response,
+    workExperience: response.workExperience || null,
+    education: response.education || null,
+    skills: response.skills || null,
+    certifications: response.certifications || null,
+    projects: response.projects || null
+  };
+};
 
 export const resumeService = {
-  createResume: async (resumeData: ResumeFormData): Promise<ResumeResponse> => {
+  createResume: async (formData: ResumeFormData): Promise<Resume> => {
     try {
-      console.log('Creating resume with data:', JSON.stringify(resumeData, null, 2));
-      // Log specifically the format of phone and any dates
-      console.log('Phone format:', resumeData.personalDetails.phone);
+      console.log('Creating resume with data:', JSON.stringify(formData, null, 2));
       
-      // Log work experience dates for debugging
-      if (resumeData.workExperience && resumeData.workExperience.length > 0) {
-        resumeData.workExperience.forEach((exp, index) => {
-          console.log(`Work exp #${index + 1} - startDate:`, exp.startDate);
-          console.log(`Work exp #${index + 1} - endDate:`, exp.endDate);
-        });
+      const transformedData = transformFormDataForAPI(formData);
+      const response = await API.post<ResumeResponse>('/resumes', transformedData);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to create resume');
       }
       
-      const response = await API.post('/resumes', resumeData);
-      console.log('Resume created successfully:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('Error creating resume:', error);
-      if (error.response) {
-        console.error('Server response data:', error.response.data);
-        console.error('Server response status:', error.response.status);
-      }
-      throw error;
+      return transformAPIResponse(response.data.data);
+    } catch (error) {
+      return handleError(error);
     }
   },
 
-  getAllResumes: async (): Promise<ResumeListResponse> => {
+  getAllResumes: async (): Promise<Resume[]> => {
     try {
       console.log('Fetching all resumes...');
-      const response = await API.get('/resumes');
-      console.log('Fetched resumes count:', response.data.length);
-      return response.data;
+      const response = await API.get<ResumeListResponse>('/resumes');
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to fetch resumes');
+      }
+      
+      return response.data.data.map(transformAPIResponse);
     } catch (error) {
-      console.error('Error fetching resumes:', error);
-      throw error;
+      return handleError(error);
     }
   },
 
-  getResumeById: async (id: string): Promise<ResumeResponse> => {
+  getResumeById: async (id: string): Promise<Resume> => {
     try {
       console.log(`Fetching resume with ID ${id}...`);
-      const response = await API.get(`/resumes/${id}`);
-      console.log('Resume fetched successfully:', response.data.id);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching resume with ID ${id}:`, error);
-      throw error;
+      const response = await API.get<ResumeResponse>(`/resumes/${id}`);
+      
+      console.log('Resume response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to fetch resume');
+      }
+      
+      if (!response.data.data) {
+        throw new Error('Resume data is missing from response');
+      }
+      
+      return transformAPIResponse(response.data.data);
+    } catch (error: any) {
+      console.error('Error in getResumeById:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      return handleError(error);
     }
   },
 
-  updateResume: async (id: string, resumeData: ResumeFormData): Promise<ResumeResponse> => {
+  updateResume: async (id: string, formData: ResumeFormData): Promise<Resume> => {
     try {
-      console.log(`Updating resume with ID ${id}:`, JSON.stringify(resumeData, null, 2));
+      console.log(`Updating resume with ID ${id}:`, JSON.stringify(formData, null, 2));
       
-      // Log phone format
-      console.log('Phone format:', resumeData.personalDetails.phone);
+      const transformedData = transformFormDataForAPI(formData);
+      const response = await API.put<ResumeResponse>(`/resumes/${id}`, transformedData);
       
-      // Log work experience dates for debugging
-      if (resumeData.workExperience && resumeData.workExperience.length > 0) {
-        resumeData.workExperience.forEach((exp, index) => {
-          console.log(`Work exp #${index + 1} - startDate:`, exp.startDate);
-          console.log(`Work exp #${index + 1} - endDate:`, exp.endDate);
-        });
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to update resume');
       }
       
-      const response = await API.put(`/resumes/${id}`, resumeData);
-      console.log('Resume updated successfully:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error updating resume with ID ${id}:`, error);
-      if (error.response) {
-        console.error('Server response data:', error.response.data);
-        console.error('Server response status:', error.response.status);
-      }
-      throw error;
+      return transformAPIResponse(response.data.data);
+    } catch (error) {
+      return handleError(error);
     }
   },
 
   deleteResume: async (id: string): Promise<boolean> => {
     try {
       console.log(`Deleting resume with ID ${id}...`);
-      await API.delete(`/resumes/${id}`);
-      console.log('Resume deleted successfully');
+      const response = await API.delete<APIResponse<boolean>>(`/resumes/${id}`);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to delete resume');
+      }
+      
       return true;
     } catch (error) {
-      console.error(`Error deleting resume with ID ${id}:`, error);
-      throw error;
+      return handleError(error);
     }
-  },
+  }
 };
 
 export const coverLetterService = {

@@ -202,63 +202,61 @@ const ResumeForm: React.FC = () => {
       }
     };
 
-    const submitResume = async () => {
-      if (!formData) return;
-      console.log("Starting resume submission");
-      
+  const submitResume = async () => {
+    if (!formData) return;
+    console.log("Starting resume submission");
+
+    try {
+      // Ensure all required fields are present
+      if (!formData.personalDetails.firstname || !formData.personalDetails.lastname ||
+        !formData.personalDetails.email || !formData.personalDetails.phone ||
+        !formData.personalDetails.location) {
+        throw new Error('Please fill in all required personal details');
+      }
+
       // Create a serialized copy of form data to ensure all dates are in ISO format
       const serializedFormData = {
         ...formData,
         workExperience: formData.workExperience.map(exp => ({
           ...exp,
-          startDate: exp.startDate ? 
+          startDate: exp.startDate ?
             (typeof exp.startDate === 'string' ? exp.startDate : dayjs(exp.startDate).toISOString()) : null,
-          endDate: exp.endDate ? 
+          endDate: exp.endDate ?
             (typeof exp.endDate === 'string' ? exp.endDate : dayjs(exp.endDate).toISOString()) : null
         })),
         education: formData.education.map(edu => ({
           ...edu,
-          graduationDate: edu.graduationDate ? 
+          graduationDate: edu.graduationDate ?
             (typeof edu.graduationDate === 'string' ? edu.graduationDate : dayjs(edu.graduationDate).toISOString()) : null
         })),
         certifications: formData.certifications.map(cert => ({
           ...cert,
-          dateObtained: cert.dateObtained ? 
+          dateObtained: cert.dateObtained ?
             (typeof cert.dateObtained === 'string' ? cert.dateObtained : dayjs(cert.dateObtained).toISOString()) : null,
-          expirationDate: cert.expirationDate ? 
+          expirationDate: cert.expirationDate ?
             (typeof cert.expirationDate === 'string' ? cert.expirationDate : dayjs(cert.expirationDate).toISOString()) : null
         }))
       };
-      
-      if (serializedFormData.workExperience && serializedFormData.workExperience.length > 0) {
-        console.log("Serialized work experience date formats:");
-        serializedFormData.workExperience.forEach((exp, i) => {
-          const startDate = exp.startDate;
-          const endDate = exp.endDate;
-          
-          console.log(`Entry ${i+1}:`);
-          console.log(` - startDate:`, startDate, typeof startDate);
-          console.log(` - endDate:`, endDate, typeof endDate);
-        });
-      }
-      
-      try {
-        if (savedResumeId) {
-          console.log("Updating existing resume with ID:", savedResumeId);
-          await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
-          console.log("Resume updated successfully");
-        } else {
-          console.log("Creating new resume");
-          const result = await dispatch(createResume(serializedFormData)).unwrap();
-          if (result) {
-            console.log("Resume created successfully with ID:", result.id);
-            setSubmitSuccess(true);
-          }
+
+      console.log("Submitting resume data:", JSON.stringify(serializedFormData, null, 2));
+
+      if (savedResumeId) {
+        console.log("Updating existing resume with ID:", savedResumeId);
+        await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
+        console.log("Resume updated successfully");
+      } else {
+        console.log("Creating new resume");
+        const result = await dispatch(createResume(serializedFormData)).unwrap();
+        if (result) {
+          console.log("Resume created successfully with ID:", result.id);
+          setSubmitSuccess(true);
         }
-      } catch (error) {
-        console.error('Error submitting resume:', error);
       }
-    };
+    } catch (error) {
+      console.error('Error submitting resume:', error);
+      throw error;
+    }
+  };
   
     const handleBack = () => {
       // Clear any validation errors for the current step before going back

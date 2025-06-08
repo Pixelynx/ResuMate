@@ -20,6 +20,7 @@ import {
 } from '../../redux/selectors/resumeSelectors';
 import PrintableResume from '../print/PrintableResume';
 import PrintController from '../print/PrintController';
+import { Resume, ResumeFormData } from './types/resumeTypes';
 
 const ViewResume: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,16 @@ const ViewResume: React.FC = () => {
   const resume = useAppSelector(selectCurrentResume);
   const loading = useAppSelector(selectResumeLoading);
   const error = useAppSelector(selectResumeError);
+
+  // Transform Resume to ResumeFormData
+  const transformToFormData = (resume: Resume): ResumeFormData => ({
+    ...resume,
+    workExperience: resume.workExperience || [],
+    education: resume.education || [],
+    skills: resume.skills || { skills_: '', languages: '' },
+    certifications: resume.certifications || [],
+    projects: resume.projects || []
+  });
 
   useEffect(() => {
     if (id) {
@@ -85,6 +96,8 @@ const ViewResume: React.FC = () => {
     );
   }
 
+  const formData = transformToFormData(resume);
+
   return (
     <Container maxWidth="md" sx={{ paddingBottom: '80px' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, mb: 2 }}>
@@ -125,7 +138,7 @@ const ViewResume: React.FC = () => {
       
       {/* Regular view */}
       <Box sx={{ display: 'block' }}>
-        <ResumePreview formData={resume} />
+        <ResumePreview formData={formData} />
       </Box>
 
       {/* Hidden printable view - only shown during printing */}

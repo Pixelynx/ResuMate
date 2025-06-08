@@ -53,11 +53,11 @@ export interface PersonalDetails {
   export interface Resume {
     id: string;
     personalDetails: PersonalDetails;
-    workExperience: WorkExperience[];
-    education: Education[];
-    skills: Skills;
-    certifications: Certification[];
-    projects: Project[];
+    workExperience: WorkExperience[] | null;
+    education: Education[] | null;
+    skills: Skills | null;
+    certifications: Certification[] | null;
+    projects: Project[] | null;
     createdAt?: string;
     updatedAt?: string;
   }
@@ -71,14 +71,13 @@ export interface PersonalDetails {
     projects: Project[];
   }
 
-  export interface ResumeResponse {
+  export interface APIResponse<T> {
     success: boolean;
-    data: Resume;
+    data: T;
     message?: string;
+    error?: string;
   }
 
-  export interface ResumeListResponse {
-    success: boolean;
-    data: Resume[];
-    message?: string;
-  }
+  export interface ResumeResponse extends APIResponse<Resume> {}
+
+  export interface ResumeListResponse extends APIResponse<Resume[]> {}
