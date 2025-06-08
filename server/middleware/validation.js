@@ -187,22 +187,6 @@ const validateGenerationOptionsMiddleware = (req, res, next) => {
       });
     }
 
-    // Validate length if provided
-    if (options.length && !['short', 'standard', 'detailed'].includes(options.length)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid length specified',
-        code: 'INVALID_LENGTH',
-        details: {
-          allowedLengths: ['short', 'standard', 'detailed'],
-          suggestions: [
-            'Please choose from the allowed length options',
-            'If unsure, omit the length option to use the default standard length'
-          ]
-        }
-      });
-    }
-
     next();
   } catch (error) {
     next(error);

@@ -216,6 +216,55 @@ exports.delete = async (req, res) => {
 exports.generate = async (req, res) => {
   try {
     const resumeid = req.body.resumeid;
+    
+    // Fetch the resume data first
+    const resume = await Resume.findByPk(resumeid);
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        message: `Resume with id=${resumeid} was not found.`
+      });
+    }
+    console.log('=== RESUME DEBUG ===');
+    console.log('Resume found:', !!resume);
+    console.log('Resume data:', {
+      id: resume?.id,
+      firstname: resume?.firstname,
+      lastname: resume?.lastname,
+      email: resume?.email,
+      phone: resume?.phone
+    });
+
+    console.log('=== REQUEST BODY BEFORE ===');
+    console.log({
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber
+    });
+
+    // Populate request body with resume data if not provided
+    // Handle empty strings properly
+    req.body.firstname = (req.body.firstname && req.body.firstname.trim()) || resume.firstname || '';
+    req.body.lastname = (req.body.lastname && req.body.lastname.trim()) || resume.lastname || '';
+    req.body.email = (req.body.email && req.body.email.trim()) || resume.email || '';
+    req.body.phoneNumber = (req.body.phoneNumber && req.body.phoneNumber.trim()) || resume.phone || '';
+
+    const updatedPersonalDetails = {
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email,
+      phone: req.body.phoneNumber
+    };
+
+    console.log('=== REQUEST BODY AFTER FALLBACK ===');
+    console.log({
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber
+    });
+
     const jobDetails = {
       jobTitle: req.body.jobtitle,
       company: req.body.company,
@@ -224,7 +273,6 @@ exports.generate = async (req, res) => {
 
     const options = {
       tone: req.body.options?.tone || 'professional',
-      length: req.body.options?.length || 'standard',
       emphasis: req.body.options?.emphasis || [],
       customInstructions: req.body.options?.customInstructions,
       model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
@@ -232,25 +280,25 @@ exports.generate = async (req, res) => {
       maxTokens: req.body.options?.maxTokens || 1000,
       topP: req.body.options?.topP || 1
     };
-    
-    // Fetch the resume data
-    const resume = await Resume.findByPk(resumeid);
-    if (!resume) {
-      return res.status(404).json({
-        success: false,
-        message: `Resume with id=${resumeid} was not found.`
-      });
-    }
 
     // Process and validate resume data
-    const processedResumeData = await extractCompleteResumeData(resume);
-    
+    const processedResumeData = await extractCompleteResumeData(resume, updatedPersonalDetails);
+
+    console.log('=== PROCESSED RESUME DATA ===');
+    console.log('Personal Details:', processedResumeData.personalDetails);
+    console.log('Full processed data keys:', Object.keys(processedResumeData));
+
     // Log data quality metrics
     console.log('Resume data quality metrics:', processedResumeData.metadata.dataQuality);
-    
+
     if (processedResumeData.metadata.completenessScore < 50) {
       console.warn(`Low resume completeness score: ${processedResumeData.metadata.completenessScore}`);
     }
+
+    console.log('=== FINAL DATA BEING PASSED TO AI SERVICE ===');
+    console.log('processedResumeData.personalDetails:', processedResumeData.personalDetails);
+    console.log('jobDetails:', jobDetails);
+    console.log('options:', options);
 
     // Generate cover letter using AI service
     const aiResponse = await aiService.generateCoverLetter(processedResumeData, jobDetails, options);
@@ -265,10 +313,10 @@ exports.generate = async (req, res) => {
       jobtitle: jobDetails.jobTitle,
       company: jobDetails.company,
       jobdescription: jobDetails.jobDescription,
-      firstname: processedResumeData.personalDetails.fullName.split(' ')[0],
-      lastname: processedResumeData.personalDetails.fullName.split(' ').slice(1).join(' '),
-      email: processedResumeData.personalDetails.email,
-      phoneNumber: processedResumeData.personalDetails.phone,
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      email: req.body.email,
+      phoneNumber: req.body.phoneNumber,
       prevEmployed: processedResumeData.workExperience.map(exp => exp.company),
       createdAt: new Date(),
       generationOptions: {
@@ -279,7 +327,15 @@ exports.generate = async (req, res) => {
     };
 
     const savedCoverLetter = await CoverLetter.create(coverLetter);
-    
+
+    console.log('=== COVER LETTER OBJECT ===');
+    console.log({
+      firstname: coverLetter.firstname,
+      lastname: coverLetter.lastname,
+      email: coverLetter.email,
+      phoneNumber: coverLetter.phoneNumber
+    });
+
     // Send response with success flag and data
     res.status(201).json({
       success: true,

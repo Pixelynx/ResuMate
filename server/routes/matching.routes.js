@@ -1,134 +1,156 @@
-const { Router } = require('express');
-const { SkillMatcher } = require('../services/matching/core/SkillMatcher');
-const { TechnologyMapper } = require('../services/matching/core/TechnologyMapper');
-const { validateSkillMatchRequest, validateJobAnalysisRequest, validateRecommendationsRequest } = require('../middleware/validation');
-const { requestLogger } = require('../middleware/logging');
+const express = require('express');
+const router = express.Router();
+const MatchingIntegrationService = require('../services/matching/integration/MatchingIntegrationService');
+const { extractCompleteResumeData } = require('../services/generation/resumeDataProcessor');
+const { validateResumeDataMiddleware, validateJobDetailsMiddleware } = require('../middleware/validation');
 
-const router = Router();
-const skillMatcher = new SkillMatcher();
-
-// Apply middleware
-router.use(requestLogger);
-
-/**
- * @route POST /api/matching/score
- * @desc Calculate job match score based on skills
- */
-router.post('/score', validateSkillMatchRequest, async (req, res) => {
-  try {
-    const { jobSkills, candidateSkills, config } = req.body;
-    const result = await skillMatcher.matchSkills(jobSkills, candidateSkills, config);
-
-    res.json({
-      status: 'success',
-      data: result
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to calculate match score',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
+const matchingService = new MatchingIntegrationService({
+  cacheEnabled: process.env.MATCHING_CACHE_ENABLED !== 'false',
+  cacheTTL: parseInt(process.env.MATCHING_CACHE_TTL) || 3600000,
+  maxConcurrentRequests: parseInt(process.env.MAX_CONCURRENT_MATCHING) || 10
 });
 
 /**
- * @route POST /api/matching/analyze
- * @desc Analyze job description and resume for compatibility
+ * Get relevant content for cover letter generation
+ * @route GET /api/matching/relevance/:resumeId/:jobId
  */
-router.post('/analyze', validateJobAnalysisRequest, async (req, res) => {
+router.get('/relevance/:resumeId/:jobId', [
+  validateResumeDataMiddleware,
+  validateJobDetailsMiddleware
+], async (req, res) => {
+  const startTime = performance.now();
+  
   try {
-    const { jobDescription, resume, includeContext = false } = req.body;
-    
-    // Extract skills from job description and resume
-    const jobSkills = await extractSkills(jobDescription);
-    const candidateSkills = await extractSkills(resume);
-    
-    // Get match results
-    const matchResult = await skillMatcher.matchSkills(jobSkills, candidateSkills);
-    
-    // Add context if requested
-    const response = {
-      status: 'success',
-      data: {
-        matchResult,
-        jobSkills,
-        candidateSkills
-      }
+    const resumeData = await extractCompleteResumeData(req.resume);
+    const jobDetails = {
+      jobTitle: req.job.jobTitle,
+      company: req.job.company,
+      jobDescription: req.job.jobDescription
     };
 
-    if (includeContext) {
-      response.data.context = {
-        skillContexts: jobSkills.map(skill => ({
-          skill,
-          context: TechnologyMapper.getSkillContext(skill)
-        }))
-      };
-    }
-
-    res.json(response);
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to analyze job compatibility',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
-
-/**
- * @route POST /api/matching/recommendations
- * @desc Get skill recommendations based on current skills and target role
- */
-router.post('/recommendations', validateRecommendationsRequest, async (req, res) => {
-  try {
-    const { currentSkills, targetRole, experienceLevel } = req.body;
+    const relevanceData = await matchingService.getRelevantContent(resumeData, jobDetails);
     
-    // Get related skills for the target role
-    const relatedSkills = currentSkills.flatMap(skill => 
-      TechnologyMapper.getRelatedSkills(skill)
-    );
-    
-    // Filter out skills the candidate already has
-    const recommendations = relatedSkills.filter(skill => 
-      !currentSkills.includes(skill)
-    );
-    
-    // Get context and compensation factors for recommendations
-    const enhancedRecommendations = recommendations.map(skill => ({
-      skill,
-      context: TechnologyMapper.getSkillContext(skill),
-      compensationFactor: TechnologyMapper.getCompensationFactor(skill)
-    }));
-
     res.json({
-      status: 'success',
-      data: {
-        recommendations: enhancedRecommendations,
-        currentSkillCount: currentSkills.length,
-        recommendationCount: recommendations.length
+      success: true,
+      data: relevanceData,
+      metadata: {
+        processingTime: performance.now() - startTime,
+        cacheHit: relevanceData.fromCache || false
       }
     });
   } catch (error) {
+    console.error('Error in matching relevance:', error);
     res.status(500).json({
-      status: 'error',
-      message: 'Failed to generate recommendations',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Unknown error in matching service',
+        code: error instanceof Error ? error.code : 'UNKNOWN_ERROR',
+        details: error instanceof Error ? error.details : undefined
+      }
     });
   }
 });
 
 /**
- * Helper function to extract skills from text
- * @param {string} text - Text to extract skills from
- * @returns {Promise<string[]>} Array of extracted skills
+ * Get experience relevance scores
+ * @route GET /api/matching/experiences/:resumeId/:jobId
  */
-async function extractSkills(text) {
-  // This is a placeholder - implement actual skill extraction logic
-  // Could use NLP, keyword matching, or integration with a skills API
-  return text.toLowerCase()
-    .split(/[,.\s]+/)
-    .filter(word => TechnologyMapper.findGroupForSkill(word) !== null);
-}
+router.get('/experiences/:resumeId/:jobId', [
+  validateResumeDataMiddleware,
+  validateJobDetailsMiddleware
+], async (req, res) => {
+  try {
+    const resumeData = await extractCompleteResumeData(req.resume);
+    const jobDetails = {
+      jobTitle: req.job.jobTitle,
+      company: req.job.company,
+      jobDescription: req.job.jobDescription
+    };
+
+    const experiences = await matchingService.getRelevantExperiences(resumeData, jobDetails);
+    
+    res.json({
+      success: true,
+      data: experiences
+    });
+  } catch (error) {
+    console.error('Error getting relevant experiences:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Unknown error getting experiences',
+        code: error instanceof Error ? error.code : 'UNKNOWN_ERROR'
+      }
+    });
+  }
+});
+
+/**
+ * Get skill prioritization
+ * @route GET /api/matching/skills/:resumeId/:jobId
+ */
+router.get('/skills/:resumeId/:jobId', [
+  validateResumeDataMiddleware,
+  validateJobDetailsMiddleware
+], async (req, res) => {
+  try {
+    const resumeData = await extractCompleteResumeData(req.resume);
+    const jobDetails = {
+      jobTitle: req.job.jobTitle,
+      company: req.job.company,
+      jobDescription: req.job.jobDescription
+    };
+
+    const relevanceData = await matchingService.getRelevantContent(resumeData, jobDetails);
+    
+    res.json({
+      success: true,
+      data: relevanceData.skills
+    });
+  } catch (error) {
+    console.error('Error in skill prioritization:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Unknown error in skill analysis',
+        code: error instanceof Error ? error.code : 'UNKNOWN_ERROR'
+      }
+    });
+  }
+});
+
+/**
+ * Get keyword optimization suggestions
+ * @route GET /api/matching/keywords/:resumeId/:jobId
+ */
+router.get('/keywords/:resumeId/:jobId', [
+  validateResumeDataMiddleware,
+  validateJobDetailsMiddleware
+], async (req, res) => {
+  try {
+    const resumeData = await extractCompleteResumeData(req.resume);
+    const jobDetails = {
+      jobTitle: req.job.jobTitle,
+      company: req.job.company,
+      jobDescription: req.job.jobDescription
+    };
+
+    const relevanceData = await matchingService.getRelevantContent(resumeData, jobDetails);
+    
+    res.json({
+      success: true,
+      data: relevanceData.keywords
+    });
+  } catch (error) {
+    console.error('Error in keyword optimization:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : 'Unknown error in keyword analysis',
+        code: error instanceof Error ? error.code : 'UNKNOWN_ERROR'
+      }
+    });
+  }
+});
 
 module.exports = router; 

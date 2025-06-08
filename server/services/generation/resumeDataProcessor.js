@@ -1,6 +1,3 @@
-// @ts-check
-const { calculateComponentScores } = require('../assessment/scoring/componentScoring');
-
 /**
  * Custom error class for resume data processing
  * @extends Error
@@ -91,22 +88,16 @@ class ValidationError extends ResumeDataError {
  * @returns {Promise<StandardizedResumeData>} Standardized resume data
  * @throws {ResumeDataError} If data extraction fails
  */
-const extractCompleteResumeData = async (resume) => {
+const extractCompleteResumeData = async (resume, updatedPersonalDetails = null) => {
   try {
     // Extract and normalize personal details
-    const personalDetails = extractPersonalDetails(resume);
+    const personalDetails = updatedPersonalDetails || extractPersonalDetails(resume);
     
-    // Process work experience
-    const workExperience = processWorkExperience(resume.workExperience);
-    
-    // Process skills
-    const skills = processSkills(resume.skills);
-    
-    // Process education
-    const education = processEducation(resume.education);
-    
-    // Process projects
-    const projects = processProjects(resume.projects);
+    // Add null checks for arrays before processing
+    const workExperience = processWorkExperience(resume.workExperience || []);
+    const skills = processSkills(resume.skills || []);
+    const education = processEducation(resume.education || []);
+    const projects = processProjects(resume.projects || []);
     
     // Calculate completeness score and metadata
     const metadata = await calculateMetadata({
@@ -143,8 +134,8 @@ const extractCompleteResumeData = async (resume) => {
 const extractPersonalDetails = (resume) => {
   const missingFields = [];
   
-  if (!resume.firstName) missingFields.push('firstName');
-  if (!resume.lastName) missingFields.push('lastName');
+  if (!resume.firstname) missingFields.push('firstname');
+  if (!resume.lastname) missingFields.push('lastname');
   
   if (missingFields.length > 0) {
     throw new ValidationError('personalDetails', 'Missing required fields', [
@@ -154,12 +145,12 @@ const extractPersonalDetails = (resume) => {
   }
 
   return {
-    fullName: `${resume.firstName} ${resume.lastName}`,
+    fullName: `${resume.firstname} ${resume.lastname}`,
     email: resume.email || '',
     phone: resume.phone || '',
     location: resume.location || {},
-    linkedIn: resume.linkedIn || '',
-    portfolio: resume.portfolio || ''
+    linkedIn: resume.linkedin || '',
+    portfolio: resume.website || ''
   };
 };
 

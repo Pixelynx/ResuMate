@@ -1,4 +1,5 @@
 // @ts-check
+const DataSanitizationPipeline = require('./sanitization/DataSanitizationPipeline');
 
 /**
  * @typedef {import('../../ai.service').ResumeData} ResumeData
@@ -167,76 +168,78 @@ const calculateFreshnessScore = (content) => {
 };
 
 /**
- * Selects optimal content based on quality and relevance
+ * Selects optimal content from resume data
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @returns {SelectedContent} Selected content with quality scores
+ * @returns {Promise<SelectedContent>} Selected content with quality metrics
  */
-const selectOptimalContent = (resumeData, jobDetails) => {
-  const cacheKey = JSON.stringify({ resumeId: resumeData.id, jobId: jobDetails.jobTitle });
-  
-  if (contentAnalysisCache.has(cacheKey)) {
-    return contentAnalysisCache.get(cacheKey) || createEmptyContent();
+const selectOptimalContent = async (resumeData, jobDetails) => {
+  try {
+    // Sanitize and validate data
+    const sanitizationResult = await DataSanitizationPipeline.process(resumeData);
+    
+    if (sanitizationResult.errors.length > 0) {
+      console.warn('Data sanitization warnings:', sanitizationResult.warnings);
+      console.error('Data sanitization errors:', sanitizationResult.errors);
+    }
+
+    const sanitizedData = sanitizationResult.data;
+    
+    // Select content using sanitized data
+    const experience = await selectExperienceContent(sanitizedData.workExperience, jobDetails);
+    const skills = await selectSkillsContent(sanitizedData.skills, jobDetails);
+    const projects = await selectProjectContent(sanitizedData.projects, jobDetails);
+    const education = await selectEducationContent(sanitizedData.education, jobDetails);
+
+    // Calculate overall metrics
+    const metrics = {
+      specificity: calculateOverallMetric([experience, skills, projects, education], 'specificity'),
+      relevance: calculateOverallMetric([experience, skills, projects, education], 'relevance'),
+      impact: calculateOverallMetric([experience, skills, projects, education], 'impact'),
+      freshness: calculateOverallMetric([experience, skills, projects, education], 'freshness')
+    };
+
+    // Identify strengths and weaknesses
+    const strengths = [];
+    const weaknesses = [];
+
+    if (metrics.specificity > 0.7) strengths.push('High level of specific, quantifiable details');
+    if (metrics.relevance > 0.7) strengths.push('Strong alignment with job requirements');
+    if (metrics.impact > 0.7) strengths.push('Clear demonstration of achievements');
+    if (metrics.freshness > 0.7) strengths.push('Recent, up-to-date experience');
+
+    if (metrics.specificity < 0.5) weaknesses.push('Could include more specific details and metrics');
+    if (metrics.relevance < 0.5) weaknesses.push('Could better align with job requirements');
+    if (metrics.impact < 0.5) weaknesses.push('Could highlight more concrete achievements');
+    if (metrics.freshness < 0.5) weaknesses.push('Consider updating with more recent experience');
+
+    // Calculate overall score
+    const overallScore = (
+      metrics.specificity * 0.3 +
+      metrics.relevance * 0.3 +
+      metrics.impact * 0.25 +
+      metrics.freshness * 0.15
+    );
+
+    // Add sanitization metrics to the result
+    metrics.completeness = sanitizationResult.metrics.completeness;
+    metrics.consistency = sanitizationResult.metrics.consistency;
+    metrics.quality = sanitizationResult.metrics.quality;
+
+    return {
+      experience,
+      skills,
+      projects,
+      education,
+      metrics,
+      overallScore,
+      strengths,
+      weaknesses
+    };
+  } catch (error) {
+    console.error('Error in content selection:', error);
+    return createEmptyContent();
   }
-
-  const experienceContent = selectExperienceContent(
-    /** @type {WorkExperience[]} */ (resumeData.workExperience || []), 
-    jobDetails
-  );
-  const skillsContent = selectSkillsContent(
-    /** @type {Skills} */ (resumeData.skills || { skills_: '' }), 
-    jobDetails
-  );
-  const projectContent = selectProjectContent(
-    /** @type {Project[]} */ (resumeData.projects || []), 
-    jobDetails
-  );
-  const educationContent = selectEducationContent(
-    /** @type {Education[]} */ (resumeData.education || []), 
-    jobDetails
-  );
-
-  // Calculate overall metrics
-  const metrics = {
-    specificity: calculateOverallMetric([experienceContent, projectContent], 'specificity'),
-    relevance: calculateOverallMetric([experienceContent, skillsContent, projectContent], 'relevance'),
-    impact: calculateOverallMetric([experienceContent, projectContent], 'impact'),
-    freshness: calculateOverallMetric([experienceContent, educationContent], 'freshness')
-  };
-
-  // Calculate overall score
-  const overallScore = (
-    metrics.specificity * 0.3 +
-    metrics.relevance * 0.3 +
-    metrics.impact * 0.2 +
-    metrics.freshness * 0.2
-  );
-
-  // Identify strengths and weaknesses
-  const strengths = [];
-  const weaknesses = [];
-
-  if (metrics.relevance > 0.7) strengths.push('High job relevance');
-  if (metrics.impact > 0.7) strengths.push('Strong achievements');
-  if (metrics.specificity > 0.7) strengths.push('Detailed experience');
-  
-  if (metrics.relevance < 0.3) weaknesses.push('Low job relevance');
-  if (metrics.impact < 0.3) weaknesses.push('Limited achievements');
-  if (metrics.specificity < 0.3) weaknesses.push('Lacks specific details');
-
-  const result = {
-    experience: experienceContent,
-    skills: skillsContent,
-    projects: projectContent,
-    education: educationContent,
-    metrics,
-    overallScore,
-    strengths,
-    weaknesses
-  };
-
-  contentAnalysisCache.set(cacheKey, result);
-  return result;
 };
 
 /**

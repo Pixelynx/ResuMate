@@ -1,7 +1,6 @@
 // @ts-check
 const { selectOptimalContent } = require('./content/contentSelection');
 const { validateContentAuthenticity } = require('./content/contentAuthenticity');
-const { prioritizeContent } = require('./content/contentAnalysis');
 
 /**
  * @typedef {import('../ai.service').ResumeData} ResumeData
@@ -262,17 +261,19 @@ class PromptGenerationError extends Error {
  */
 const buildPersonalDetailsSection = (resumeData) => {
   const {
-    firstName,
-    lastName,
     personalDetails,
     title: resumeTitle
   } = resumeData;
+
+  // Get firstName and lastName from personalDetails
+  const firstName = personalDetails?.firstname;
+  const lastName = personalDetails?.lastname;
 
   // Validate required fields
   const missingFields = [];
   if (!firstName) missingFields.push('firstName');
   if (!lastName) missingFields.push('lastName');
-  
+
   if (missingFields.length > 0) {
     throw new PromptGenerationError('Missing required personal details', {
       missingFields,
@@ -281,16 +282,16 @@ const buildPersonalDetailsSection = (resumeData) => {
   }
 
   const professionalTitle = personalDetails?.title || resumeTitle || `${firstName} ${lastName}`;
-  
-  return `
-CANDIDATE DETAILS:
-Full Name: ${firstName} ${lastName}
-Professional Title: ${professionalTitle}
-${resumeData.email ? `Email: ${resumeData.email}` : ''}
-${resumeData.phoneNumber ? `Phone: ${resumeData.phoneNumber}` : ''}
 
-USE THESE EXACT DETAILS - DO NOT MODIFY OR USE PLACEHOLDERS
-`;
+  return `
+    CANDIDATE DETAILS:
+    Full Name: ${firstName} ${lastName}
+    Professional Title: ${professionalTitle}
+    ${personalDetails?.email ? `Email: ${personalDetails.email}` : ''}
+    ${personalDetails?.phone ? `Phone: ${personalDetails.phone}` : ''}
+
+    USE THESE EXACT DETAILS - DO NOT MODIFY OR USE PLACEHOLDERS
+  `;
 };
 
 /**

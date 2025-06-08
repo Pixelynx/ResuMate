@@ -39,3 +39,6 @@ coverage/
 # Misc files
 \example-job-comparison.js
 \queryCoverLetterWithResume.js
+
+# Testing
+*.test.js
