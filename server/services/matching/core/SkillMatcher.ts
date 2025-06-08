@@ -91,12 +91,12 @@ export class SkillMatcher implements SkillMatcherType {
       const normalizedContext = context.toLowerCase();
 
       // Find the technology group for the skill
-      const group = TechnologyMapper.findGroupForSkill(normalizedSkill);
-      if (!group) return 0.5; // Default relevance for unknown skills
+      const groupInfo = TechnologyMapper.findGroupForSkill(normalizedSkill);
+      if (!groupInfo) return 0.5; // Default relevance for unknown skills
 
       // Check if the context mentions the technology group or related terms
-      const groupSkills = TechnologyMapper.getGroupSkills(group);
-      const contextRelevance = groupSkills.some(s => normalizedContext.includes(s)) ? 1.0 : 0.7;
+      const groupSkills = TechnologyMapper.getSkills(groupInfo.category, groupInfo.subcategory);
+      const contextRelevance = groupSkills.some((s: string) => normalizedContext.includes(s)) ? 1.0 : 0.7;
 
       return contextRelevance;
     } catch (error) {
@@ -141,9 +141,9 @@ export class SkillMatcher implements SkillMatcherType {
       if (relatedSkills.some(related => 
         SkillNormalizer.areSimilarSkills(related, candidateSkill)
       )) {
-        const group = TechnologyMapper.findGroupForSkill(jobSkill);
-        const compensationFactor = group 
-          ? TechnologyMapper.getCompensationFactor(group) 
+        const groupInfo = TechnologyMapper.findGroupForSkill(jobSkill);
+        const compensationFactor = groupInfo 
+          ? groupInfo.group.compensation
           : config.compensationFactor;
 
         return {
@@ -157,7 +157,7 @@ export class SkillMatcher implements SkillMatcherType {
             requiredSkill: jobSkill,
             relatedSkill: candidateSkill,
             factor: compensationFactor,
-            reason: `${candidateSkill} is related to ${jobSkill} in the ${group || 'technology'} category`
+            reason: `${candidateSkill} is related to ${jobSkill} in the ${groupInfo?.category || 'technology'} category`
           }
         };
       }
@@ -201,5 +201,49 @@ export class SkillMatcher implements SkillMatcherType {
 
       return suggestion;
     });
+  }
+
+  /**
+   * Check if a skill is valid/known
+   */
+  public isValidSkill(skill: string): boolean {
+    const normalizedSkill = SkillNormalizer.normalizeSkill(skill);
+    return TechnologyMapper.findGroupForSkill(normalizedSkill) !== null;
+  }
+
+  /**
+   * Find direct and related matches
+   */
+  private findMatches(
+    required: string[],
+    candidate: string[]
+  ): { skill: string; matchType: 'direct' | 'related' | 'potential' }[] {
+    const matches: { skill: string; matchType: 'direct' | 'related' | 'potential' }[] = [];
+
+    required.forEach(skill => {
+      // Check for direct match
+      if (candidate.some(s => SkillNormalizer.areSimilarSkills(s, skill))) {
+        matches.push({ skill, matchType: 'direct' });
+        return;
+      }
+
+      // Check for related match
+      const relatedSkills = TechnologyMapper.getRelatedSkills(skill);
+      if (candidate.some(s => relatedSkills.includes(s))) {
+        matches.push({ skill, matchType: 'related' });
+        return;
+      }
+
+      // Check for potential match (same technology group)
+      const skillGroup = TechnologyMapper.findGroupForSkill(skill);
+      if (skillGroup && candidate.some(s => {
+        const candidateGroup = TechnologyMapper.findGroupForSkill(s);
+        return candidateGroup && candidateGroup.category === skillGroup.category;
+      })) {
+        matches.push({ skill, matchType: 'potential' });
+      }
+    });
+
+    return matches;
   }
 } 
