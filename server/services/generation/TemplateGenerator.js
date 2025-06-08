@@ -1,5 +1,5 @@
 // @ts-check
-const { SkillHighlighter } = require('./SkillHighlighter');
+const { SkillHighlighter } = require('../matching/integration/SkillHighlighter');
 
 /**
  * @typedef {import('../matching/core/interfaces/SkillMatcherType').SkillMatchResult} SkillMatchResult

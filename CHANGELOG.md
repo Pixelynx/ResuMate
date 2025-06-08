@@ -59,6 +59,17 @@
   - Improved error responses
   - Added data quality metrics to response
   - Enhanced options validation
+- New personal details validation system in `contentAuthenticity.js`:
+  - `validatePersonalDetails()`: Comprehensive validation of personal information usage
+  - `detectPlaceholders()`: Advanced placeholder detection with severity scoring
+  - `validateContactInformation()`: Contact details validation and formatting
+  - `replaceDetectedPlaceholders()`: Intelligent placeholder replacement system
+  - `calculateContentQualityScore()`: Content quality metrics and scoring
+  - Comprehensive validation reporting with actionable feedback
+  - Strict placeholder detection patterns for brackets, generic terms, etc.
+  - Intelligent content replacement with fallback strategies
+  - Quality scoring based on personalization, specificity, and coherence
+  - Performance optimizations with caching and efficient regex patterns
 
 ### Changed
 - Replaced old `buildDynamicPrompt()` with new modular system
@@ -70,6 +81,12 @@
 - Improved error handling with specific error types
 - Enhanced data validation pipeline
 - Standardized response formats to use JSON consistently
+- Enhanced personal details handling in cover letter generation:
+  - Improved validation of contact information usage
+  - Added strict placeholder prevention measures
+  - Enhanced quality scoring with personalization metrics
+  - Updated type definitions for better type safety
+  - Improved error handling for missing personal details
 
 ### [2025-06-07]
 ### Added

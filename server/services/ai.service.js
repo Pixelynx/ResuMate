@@ -6,6 +6,9 @@ const { prioritizeContent } = require('./generation/content/contentAnalysis');
 /**
  * @typedef {Object} PersonalDetails
  * @property {string} [title] - Professional title
+ * @property {string} [linkedIn] - LinkedIn profile URL
+ * @property {string} [portfolio] - Portfolio URL
+ * @property {string} [location] - Location information
  */
 
 /**
