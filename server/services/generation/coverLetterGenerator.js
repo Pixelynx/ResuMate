@@ -9,11 +9,29 @@ const { prioritizeContent } = require('./content/contentAnalysis');
  */
 
 /**
+ * @typedef {Object} Education
+ * @property {string} endDate - End date of education
+ */
+
+/**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
  * @typedef {Object} ValidationResult
  * @property {boolean} isValid - Whether content is valid
  * @property {string[]} errors - List of validation errors
  * @property {string[]} warnings - List of validation warnings
- * @property {Object} metrics - Validation metrics
+ * @property {ValidationMetrics} metrics - Validation metrics
+ */
+
+/**
+ * @typedef {Object} ValidationMetrics
+ * @property {number} specificity - Specificity score
+ * @property {number} personalization - Personalization score
+ * @property {number} completeness - Completeness score
+ * @property {number} professionalism - Professionalism score
  */
 
 /**
@@ -53,6 +71,26 @@ const REQUIRED_ELEMENTS = new Set([
   'greeting',
   'closing'
 ]);
+
+/**
+ * Type guard for education array
+ * @param {unknown} value - Value to check
+ * @returns {boolean} Whether the value is an education array
+ */
+const isEducationArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null && 'endDate' in item
+  );
+};
+
+/**
+ * Type guard for skills object
+ * @param {unknown} value - Value to check
+ * @returns {boolean} Whether the value is a skills object
+ */
+const isSkills = (value) => {
+  return typeof value === 'object' && value !== null && 'skills_' in value;
+};
 
 /**
  * Validates generated content for quality and completeness
@@ -290,11 +328,19 @@ const extractKeyRequirements = (description) => {
  */
 const detectCandidateProfile = (resumeData) => {
   const hasStrongExperience = (resumeData.workExperience?.length ?? 0) >= 3;
-  const hasTechnicalSkills = resumeData.skills?.skills_?.toLowerCase().includes('programming') ||
-    resumeData.skills?.skills_?.toLowerCase().includes('software');
-  const isRecentGraduate = resumeData.education?.some(edu => 
-    edu.endDate && new Date(edu.endDate).getFullYear() >= new Date().getFullYear() - 1
+  
+  const skills = resumeData.skills || {};
+  const hasTechnicalSkills = isSkills(skills) && (
+    /** @type {Skills} */ (skills).skills_.toLowerCase().includes('programming') ||
+    /** @type {Skills} */ (skills).skills_.toLowerCase().includes('software')
   );
+  
+  const education = resumeData.education || [];
+  const isRecentGraduate = isEducationArray(education) && education.some(edu => {
+    const typedEdu = /** @type {Education} */ (edu);
+    if (!typedEdu.endDate) return false;
+    return new Date(typedEdu.endDate).getFullYear() >= new Date().getFullYear() - 1;
+  });
 
   if (hasStrongExperience) return 'EXPERIENCED';
   if (hasTechnicalSkills) return 'TECHNICAL';
@@ -328,7 +374,7 @@ const allocateContentSpace = (sections) => {
  * Generates enhanced cover letter with validation
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @param {Function} generateContent - Function to generate content using AI
+ * @param {(prompt: string) => Promise<string>} generateContent - Function to generate content using AI
  * @param {Object} [options] - Generation options
  * @returns {Promise<GenerationResult>} Generated cover letter with metadata
  */
@@ -340,13 +386,10 @@ const generateEnhancedCoverLetter = async (resumeData, jobDetails, generateConte
     if (!resumeData) {
       throw new Error('Resume data is required');
     }
-    if (!jobDetails) {
-      throw new Error('Job details are required');
-    }
-    if (!jobDetails.company || !jobDetails.jobTitle || !jobDetails.jobDescription) {
+    if (!jobDetails?.company || !jobDetails?.jobTitle || !jobDetails?.jobDescription) {
       throw new Error('Job details must include company, jobTitle, and jobDescription');
     }
-    if (!generateContent || typeof generateContent !== 'function') {
+    if (typeof generateContent !== 'function') {
       throw new Error('Content generation function is required');
     }
 
@@ -370,7 +413,6 @@ const generateEnhancedCoverLetter = async (resumeData, jobDetails, generateConte
     // Step 5: Enhancement if needed
     let finalContent = initialContent;
     if (!validation.isValid) {
-      // Build enhancement prompt based on validation results
       const enhancementPrompt = buildEnhancementPrompt(initialContent, validation, jobDetails);
       finalContent = await generateContent(enhancementPrompt);
     }
@@ -388,8 +430,8 @@ const generateEnhancedCoverLetter = async (resumeData, jobDetails, generateConte
       }
     };
   } catch (error) {
-    console.error('Error generating enhanced cover letter:', error);
-    throw new Error('Failed to generate enhanced cover letter: ' + error.message);
+    console.error('Error generating enhanced cover letter:', error instanceof Error ? error.message : 'Unknown error');
+    throw new Error(`Failed to generate enhanced cover letter: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 

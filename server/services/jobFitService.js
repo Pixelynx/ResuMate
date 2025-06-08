@@ -12,35 +12,98 @@ const { classifyJob, getRelatedSkills, getCategoryWeight } = require('./assessme
 
 /** @typedef {import('./assessment/analysis/technicalKeywordLibrary').Resume} Resume */
 /** @typedef {import('./assessment/analysis/jobCategories').ClassificationResult} ClassificationResult */
+/** @typedef {import('./assessment/scoring/scoringPenalties').WorkExperience} ScoringWorkExperience */
 
-/** @typedef {Object} WorkExperience
- * @property {string} jobtitle
- * @property {string} companyName
- * @property {string} description
+/**
+ * @typedef {Object} WorkExperience
+ * @property {string} jobtitle - Job title
+ * @property {string} companyName - Company name
+ * @property {string} description - Job description
+ * @property {string} [startDate] - Start date
+ * @property {string} [endDate] - End date
  */
 
-/** @typedef {Object} Project
- * @property {string} title
- * @property {string} description
- * @property {string} technologies
+/**
+ * @typedef {Object} Project
+ * @property {string} title - Project title
+ * @property {string} description - Project description
+ * @property {string} [technologies] - Technologies used
  */
 
-/** @typedef {Object} Education
- * @property {string} degree
- * @property {string} fieldOfStudy
- * @property {string} institutionName
+/**
+ * @typedef {Object} Education
+ * @property {string} degree - Degree name
+ * @property {string} fieldOfStudy - Field of study
+ * @property {string} institutionName - Institution name
  */
 
-/** @typedef {Object} CoverLetter
- * @property {string} jobdescription
- * @property {string} [jobtitle]
- * @property {string} [company]
+/**
+ * @typedef {Object} CoverLetter
+ * @property {string} jobdescription - Job description
+ * @property {string} [jobtitle] - Job title
+ * @property {string} [company] - Company name
  */
 
-/** @typedef {Object} JobFitResult
- * @property {number|null} score
- * @property {string} explanation
- * @property {ClassificationResult} [jobClassification]
+/**
+ * @typedef {Object} JobFitResult
+ * @property {number|null} score - Job fit score
+ * @property {string} explanation - Score explanation
+ * @property {ClassificationResult} [jobClassification] - Job classification details
+ */
+
+/**
+ * @typedef {Object} ComponentScores
+ * @property {number} skills - Skills match score
+ * @property {number} experience - Experience match score
+ * @property {number} projects - Projects match score
+ * @property {number} jobTitle - Job title match score
+ * @property {number} education - Education match score
+ */
+
+/**
+ * @typedef {Object} PenaltyAnalysis
+ * @property {Object} technical - Technical mismatch analysis
+ * @property {boolean} technical.hasSevereMismatch - Whether there's a severe technical mismatch
+ * @property {Object} experience - Experience mismatch analysis
+ * @property {Object} experience.analysis - Experience analysis details
+ * @property {string} experience.analysis.reason - Reason for experience mismatch
+ */
+
+/**
+ * @typedef {Object} AnalysisResult
+ * @property {ComponentScores} componentScores - Component-wise scores
+ * @property {PenaltyAnalysis} penalties - Penalty analysis
+ * @property {ClassificationResult} [jobClassification] - Job classification
+ */
+
+/**
+ * @typedef {Object} ExperienceMismatchResult
+ * @property {number} penalty - Penalty score
+ * @property {Object} analysis - Analysis details
+ * @property {string} analysis.reason - Reason for mismatch
+ */
+
+/**
+ * @typedef {Object} RawComponentScores
+ * @property {number} [skills] - Skills match score
+ * @property {number} [experience] - Experience match score
+ * @property {number} [projects] - Projects match score
+ * @property {number} [jobTitle] - Job title match score
+ * @property {number} [education] - Education match score
+ */
+
+/**
+ * @typedef {Object} RawComponentResult
+ * @property {RawComponentScores} componentScores - Component-wise scores
+ * @property {number} score - Overall score
+ * @property {Object} analysis - Analysis details
+ */
+
+/**
+ * @typedef {Object} ComponentResult
+ * @property {ComponentScores} componentScores - Component-wise scores
+ * @property {number} score - Overall score
+ * @property {Object} analysis - Analysis details
  */
 
 /**
@@ -116,11 +179,24 @@ const calculateJobFitScore = async (resume, coverLetter) => {
     try {
       // Calculate component-based score with job category context
       console.log('Calculating component scores...');
-      const componentResult = calculateComponentScores(
+      const rawComponentResult = /** @type {RawComponentResult} */ (calculateComponentScores(
         resume, 
         coverLetter.jobdescription,
         coverLetter.jobtitle ?? ''
-      );
+      ));
+
+      // Ensure proper typing of component scores
+      const componentResult = {
+        score: rawComponentResult.score,
+        componentScores: {
+          skills: rawComponentResult.componentScores.skills || 0,
+          experience: rawComponentResult.componentScores.experience || 0,
+          projects: rawComponentResult.componentScores.projects || 0,
+          jobTitle: rawComponentResult.componentScores.jobTitle || 0,
+          education: rawComponentResult.componentScores.education || 0
+        },
+        analysis: rawComponentResult.analysis
+      };
       
       // Calculate penalties with job category context
       console.log('Calculating penalties...');
@@ -130,10 +206,21 @@ const calculateJobFitScore = async (resume, coverLetter) => {
         coverLetter.jobtitle ?? ''
       );
       
-      const experienceMismatch = calculateExperienceMismatchPenalty(
-        resume.workExperience ?? [],
-        coverLetter.jobdescription,
-        coverLetter.jobtitle ?? ''
+      // Convert work experience to the expected format
+      const workExperience = /** @type {ScoringWorkExperience[]} */ (
+        resume.workExperience?.map(exp => ({
+          ...exp,
+          startDate: exp.startDate || new Date().toISOString(), // Default to current date if missing
+          endDate: exp.endDate || new Date().toISOString() // Default to current date if missing
+        })) || []
+      );
+      
+      const experienceMismatch = /** @type {ExperienceMismatchResult} */ (
+        calculateExperienceMismatchPenalty(
+          workExperience,
+          coverLetter.jobdescription,
+          coverLetter.jobtitle ?? ''
+        )
       );
       
       // Use embeddings as a minor adjustment factor
@@ -166,12 +253,11 @@ const calculateJobFitScore = async (resume, coverLetter) => {
         coverLetter,
         finalScore,
         {
-          ...componentResult,
+          componentScores: componentResult.componentScores,
           penalties: {
             technical: technicalMismatch,
             experience: experienceMismatch
           },
-          penaltyAnalysis,
           jobClassification
         }
       );
@@ -183,14 +269,16 @@ const calculateJobFitScore = async (resume, coverLetter) => {
       };
       
     } catch (calculationError) {
-      console.error('Error in score calculation:', calculationError);
-      throw new Error(`Unable to calculate job fit score: ${calculationError.message}`);
+      const err = /** @type {Error} */ (calculationError);
+      console.error('Error in score calculation:', err);
+      throw new Error(`Unable to calculate job fit score: ${err.message}`);
     }
   } catch (error) {
-    console.error('Error in job fit calculation:', error);
+    const err = /** @type {Error} */ (error);
+    console.error('Error in job fit calculation:', err);
     return {
       score: null,
-      explanation: `Unable to calculate job fit score: ${error.message}`,
+      explanation: `Unable to calculate job fit score: ${err.message}`,
       jobClassification: undefined
     };
   }
@@ -201,7 +289,7 @@ const calculateJobFitScore = async (resume, coverLetter) => {
  * @param {Resume} resume - The resume data
  * @param {CoverLetter} coverLetter - The cover letter data
  * @param {number} score - The calculated score
- * @param {Object} analysis - Detailed score analysis
+ * @param {AnalysisResult} analysis - Detailed score analysis
  * @returns {Promise<string>} An explanation of the score
  */
 const generateScoreExplanation = async (resume, coverLetter, score, analysis) => {
@@ -247,8 +335,8 @@ const generateScoreExplanation = async (resume, coverLetter, score, analysis) =>
       Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
     `;
 
-    console.log('Sending request to OpenAI...');
-    const response = await axios.post(
+    const { default: axiosInstance } = await import('axios');
+    const response = await axiosInstance.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: "gpt-3.5-turbo",
@@ -271,12 +359,13 @@ const generateScoreExplanation = async (resume, coverLetter, score, analysis) =>
     console.log('Successfully generated personalized explanation');
     return explanation;
   } catch (error) {
-    console.error("Error generating explanation:", error.response?.data || error.message);
-    console.error("Stack trace:", error.stack);
+    const err = /** @type {Error & { response?: { data?: any } }} */ (error);
+    console.error("Error generating explanation:", err.response?.data || err.message);
+    console.error("Stack trace:", err.stack);
     
     return "We're unable to provide a detailed analysis of your job fit at this time. Our systems are experiencing some technical difficulties. Please try again later or contact support if the issue persists.";
   }
-}
+};
 
 module.exports = {
   calculateJobFitScore

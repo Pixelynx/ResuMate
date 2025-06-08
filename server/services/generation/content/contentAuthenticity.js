@@ -14,6 +14,26 @@
  */
 
 /**
+ * @typedef {Object} Education
+ * @property {string} degree - Degree name
+ * @property {string} fieldOfStudy - Field of study
+ * @property {string} [startDate] - Start date
+ * @property {string} [endDate] - End date
+ */
+
+/**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
+ * @typedef {Object} Project
+ * @property {string} title - Project title
+ * @property {string} description - Project description
+ * @property {string} [technologies] - Technologies used
+ */
+
+/**
  * @typedef {Object} ContentAvailability
  * @property {boolean} hasWorkExperience
  * @property {boolean} hasProjects
@@ -38,22 +58,72 @@
  */
 
 /**
+ * Type guard for work experience array
+ * @param {unknown} value - Value to check
+ * @returns {value is WorkExperience[]} Whether the value is a work experience array
+ */
+const isWorkExperienceArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null &&
+    'jobTitle' in item && 'description' in item
+  );
+};
+
+/**
+ * Type guard for education array
+ * @param {unknown} value - Value to check
+ * @returns {value is Education[]} Whether the value is an education array
+ */
+const isEducationArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null &&
+    'degree' in item && 'fieldOfStudy' in item
+  );
+};
+
+/**
+ * Type guard for skills object
+ * @param {unknown} value - Value to check
+ * @returns {value is Skills} Whether the value is a skills object
+ */
+const isSkills = (value) => {
+  return typeof value === 'object' && value !== null && 'skills_' in value;
+};
+
+/**
+ * Type guard for project array
+ * @param {unknown} value - Value to check
+ * @returns {value is Project[]} Whether the value is a project array
+ */
+const isProjectArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null &&
+    'title' in item && 'description' in item
+  );
+};
+
+/**
  * Analyzes content availability and authenticity
  * @param {ResumeData} resumeData - Resume data
  * @returns {ContentAvailability}
  */
 const analyzeContentAvailability = (resumeData) => {
-  const hasWorkExperience = (resumeData.workExperience?.length ?? 0) > 0;
-  const hasProjects = (resumeData.projects?.length ?? 0) > 0;
-  const hasSkills = Boolean(resumeData.skills?.skills_);
-  const hasEducation = (resumeData.education?.length ?? 0) > 0;
+  const workExperience = resumeData.workExperience || [];
+  const projects = resumeData.projects || [];
+  const skills = resumeData.skills || {};
+  const education = resumeData.education || [];
+
+  const hasWorkExperience = isWorkExperienceArray(workExperience) && workExperience.length > 0;
+  const hasProjects = isProjectArray(projects) && projects.length > 0;
+  const hasSkills = isSkills(skills) && Boolean(skills.skills_);
+  const hasEducation = isEducationArray(education) && education.length > 0;
 
   // Calculate content strength scores (0-1)
   const contentStrengths = {
-    workExperience: hasWorkExperience ? calculateSectionStrength(resumeData.workExperience || []) : 0,
-    projects: hasProjects ? calculateSectionStrength(resumeData.projects || []) : 0,
-    skills: hasSkills ? calculateSkillsStrength(resumeData.skills?.skills_ || '') : 0,
-    education: hasEducation ? calculateSectionStrength(resumeData.education || []) : 0
+    workExperience: hasWorkExperience ? calculateSectionStrength(workExperience) : 0,
+    projects: hasProjects ? calculateSectionStrength(projects) : 0,
+    skills: hasSkills ? calculateSkillsStrength(skills.skills_) : 0,
+    education: hasEducation ? calculateSectionStrength(education) : 0
   };
 
   return {
@@ -67,16 +137,16 @@ const analyzeContentAvailability = (resumeData) => {
 
 /**
  * Calculates strength of a resume section
- * @param {Array<Object>} sectionData - Section data array
+ * @param {Array<WorkExperience | Project | Education>} sectionData - Section data array
  * @returns {number} Section strength score (0-1)
  */
 const calculateSectionStrength = (sectionData) => {
   if (!sectionData?.length) return 0;
 
   const metrics = sectionData.map(item => ({
-    length: String(item.description || '').length,
-    details: (String(item.description || '').match(/\b\d+%|\d+ years|\$\d+|\d+ projects/g) || []).length,
-    keywords: (String(item.description || '').match(/\b(developed|managed|created|improved|led)\b/gi) || []).length
+    length: String('description' in item ? item.description : '').length,
+    details: (String('description' in item ? item.description : '').match(/\b\d+%|\d+ years|\$\d+|\d+ projects/g) || []).length,
+    keywords: (String('description' in item ? item.description : '').match(/\b(developed|managed|created|improved|led)\b/gi) || []).length
   }));
 
   const avgScore = metrics.reduce((sum, m) => 
@@ -118,7 +188,9 @@ const calculateSkillsStrength = (skills) => {
  * @returns {GapCompensation}
  */
 const compensateForGaps = (availability, jobDetails) => {
+  /** @type {string[]} */
   const emphasizedAreas = [];
+  /** @type {string[]} */
   const transitionStrategies = [];
   /** @type {Record<string, string>} */
   const alternativeHighlights = {};
@@ -212,9 +284,9 @@ const validateTimelineConsistency = (resumeData) => {
   
   // Check work experience timeline
   const workExperience = resumeData.workExperience || [];
-  if (workExperience.length > 1) {
+  if (isWorkExperienceArray(workExperience) && workExperience.length > 1) {
     for (let i = 1; i < workExperience.length; i++) {
-      const current = new Date(workExperience[i].startDate);
+      const current = new Date(workExperience[i].startDate || '');
       const previous = new Date(workExperience[i-1].endDate || Date.now());
       
       if (current > previous) {
@@ -225,9 +297,9 @@ const validateTimelineConsistency = (resumeData) => {
   
   // Check education timeline
   const education = resumeData.education || [];
-  if (education.length > 1) {
+  if (isEducationArray(education) && education.length > 1) {
     for (let i = 1; i < education.length; i++) {
-      const current = new Date(education[i].startDate);
+      const current = new Date(education[i].startDate || '');
       const previous = new Date(education[i-1].endDate || Date.now());
       
       if (current > previous) {
@@ -239,8 +311,10 @@ const validateTimelineConsistency = (resumeData) => {
   // Check for future dates
   const now = new Date();
   const futureIssues = [
-    ...workExperience.filter(exp => new Date(exp.startDate) > now),
-    ...education.filter(edu => new Date(edu.startDate) > now)
+    ...(isWorkExperienceArray(workExperience) ? 
+      workExperience.filter(exp => new Date(exp.startDate || '') > now) : []),
+    ...(isEducationArray(education) ? 
+      education.filter(edu => new Date(edu.startDate || '') > now) : [])
   ];
   
   if (futureIssues.length > 0) {
@@ -256,25 +330,32 @@ const validateTimelineConsistency = (resumeData) => {
  * @returns {number} Skill consistency score (0-1)
  */
 const validateSkillConsistency = (resumeData) => {
-  if (!resumeData.skills?.skills_) return 0.5; // Default if no skills
+  const skills = resumeData.skills || {};
+  if (!isSkills(skills)) return 0.5; // Default if no skills
   
   const declaredSkills = new Set(
-    resumeData.skills.skills_.toLowerCase().split(',').map(s => s.trim())
+    skills.skills_.toLowerCase().split(',').map(s => s.trim())
   );
   
   // Extract skills mentioned in experience
   const experienceSkills = new Set();
-  resumeData.workExperience?.forEach(exp => {
-    const skills = extractSkillsFromText(exp.description);
-    skills.forEach(skill => experienceSkills.add(skill));
-  });
+  const workExperience = resumeData.workExperience || [];
+  if (isWorkExperienceArray(workExperience)) {
+    workExperience.forEach(exp => {
+      const skills = extractSkillsFromText(exp.description);
+      skills.forEach(skill => experienceSkills.add(skill));
+    });
+  }
   
   // Extract skills mentioned in projects
   const projectSkills = new Set();
-  resumeData.projects?.forEach(proj => {
-    const skills = extractSkillsFromText(proj.description);
-    skills.forEach(skill => projectSkills.add(skill));
-  });
+  const projects = resumeData.projects || [];
+  if (isProjectArray(projects)) {
+    projects.forEach(proj => {
+      const skills = extractSkillsFromText(proj.description);
+      skills.forEach(skill => projectSkills.add(skill));
+    });
+  }
   
   // Calculate consistency scores
   const experienceConsistency = calculateSetOverlap(declaredSkills, experienceSkills);
@@ -292,26 +373,32 @@ const validateAchievementRealism = (resumeData) => {
   const achievementIssues = [];
   
   // Check work experience achievements
-  resumeData.workExperience?.forEach(exp => {
-    const metrics = extractMetricsFromText(exp.description);
-    
-    metrics.forEach(metric => {
-      if (!isMetricRealistic(metric)) {
-        achievementIssues.push(`Unrealistic metric: ${metric}`);
-      }
+  const workExperience = resumeData.workExperience || [];
+  if (isWorkExperienceArray(workExperience)) {
+    workExperience.forEach(exp => {
+      const metrics = extractMetricsFromText(exp.description);
+      
+      metrics.forEach(metric => {
+        if (!isMetricRealistic(metric)) {
+          achievementIssues.push(`Unrealistic metric: ${metric}`);
+        }
+      });
     });
-  });
+  }
   
   // Check project achievements
-  resumeData.projects?.forEach(proj => {
-    const metrics = extractMetricsFromText(proj.description);
-    
-    metrics.forEach(metric => {
-      if (!isMetricRealistic(metric)) {
-        achievementIssues.push(`Unrealistic metric: ${metric}`);
-      }
+  const projects = resumeData.projects || [];
+  if (isProjectArray(projects)) {
+    projects.forEach(proj => {
+      const metrics = extractMetricsFromText(proj.description);
+      
+      metrics.forEach(metric => {
+        if (!isMetricRealistic(metric)) {
+          achievementIssues.push(`Unrealistic metric: ${metric}`);
+        }
+      });
     });
-  });
+  }
   
   return Math.max(0, 1 - (achievementIssues.length * 0.15));
 };
