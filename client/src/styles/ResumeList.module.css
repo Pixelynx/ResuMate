@@ -62,7 +62,7 @@
 }
 
 .card:hover .section {
-  border: 2px solid rgba(106, 27, 154, 0.8);
+  border: 1.75px solid rgba(106, 27, 154, 0.8);
 }
 
 .sectionTitle {

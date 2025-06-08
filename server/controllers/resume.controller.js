@@ -1,5 +1,6 @@
 const db = require('../models');
 const Resume = db.resumes;
+const { cleanResumeData } = require('../utils/resumeDataFilters');
 
 // Validation helper functions
 /* 
@@ -71,22 +72,47 @@ const validateRequiredFields = (data) => {
   return errors;
 };
 
+/**
+ * Formats a resume object from database format to API response format
+ * @param {Object} resume - The resume object from database
+ * @returns {Object} Formatted resume object
+ */
+const formatResumeResponse = (resume) => {
+  if (!resume) return null;
+
+  const formattedResume = {
+    id: resume.id,
+    personalDetails: {
+      firstname: resume.firstname,
+      lastname: resume.lastname,
+      title: resume.title,
+      email: resume.email,
+      phone: resume.phone,
+      location: resume.location,
+      linkedin: resume.linkedin,
+      website: resume.website,
+      github: resume.github,
+      instagram: resume.instagram,
+    },
+    createdAt: resume.createdAt,
+    updatedAt: resume.updatedAt
+  };
+
+  // Only include non-null sections
+  if (resume.workExperience) formattedResume.workExperience = resume.workExperience;
+  if (resume.education) formattedResume.education = resume.education;
+  if (resume.skills) formattedResume.skills = resume.skills;
+  if (resume.certifications) formattedResume.certifications = resume.certifications;
+  if (resume.projects) formattedResume.projects = resume.projects;
+
+  return formattedResume;
+};
+
 exports.createResume = async (req, res) => {
   try {
     console.log('Creating resume with data:', JSON.stringify(req.body, null, 2));
     
-    // Log dates for debugging
-    if (req.body.workExperience && req.body.workExperience.length > 0) {
-      console.log('Work Experience dates:');
-      req.body.workExperience.forEach((exp, i) => {
-        console.log(`- Entry ${i+1}:`);
-        console.log(`  startDate: ${exp.startDate}`);
-        console.log(`  endDate: ${exp.endDate}`);
-        console.log(`  Types: startDate (${typeof exp.startDate}), endDate (${typeof exp.endDate})`);
-      });
-    }
-    
-    // Validate request body - only basic existence checks
+    // Validate required fields first
     const validationErrors = validateRequiredFields(req.body);
     if (validationErrors.length > 0) {
       console.log('Resume creation failed due to validation errors');
@@ -96,16 +122,18 @@ exports.createResume = async (req, res) => {
       });
     }
 
-    const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
-    
-    /* 
-    // Clean date fields to ensure proper format before saving
-    const cleanWorkExperience = workExperience && workExperience.map(exp => ({
-      ...exp,
-      startDate: exp.startDate, // Keep as is, PostgreSQL/Sequelize will handle the conversion
-      endDate: exp.endDate  // Keep as is, PostgreSQL/Sequelize will handle the conversion
-    }));
-    */
+    // Clean and filter the resume data
+    let cleanedData;
+    try {
+      cleanedData = cleanResumeData(req.body);
+      console.log('Cleaned resume data:', JSON.stringify(cleanedData, null, 2));
+    } catch (filterError) {
+      console.error('Error cleaning resume data:', filterError);
+      // Continue with original data if cleaning fails
+      cleanedData = req.body;
+    }
+
+    const { personalDetails, workExperience, education, skills, certifications, projects } = cleanedData;
     
     console.log('Creating resume in database...');
     const resume = await Resume.create({
@@ -121,74 +149,45 @@ exports.createResume = async (req, res) => {
       github: personalDetails.github,
       instagram: personalDetails.instagram,
       
-      workExperience: workExperience,
-      education,
-      skills,
-      certifications,
-      projects
+      // Optional sections - only include if not null
+      ...(workExperience && { workExperience }),
+      ...(education && { education }),
+      ...(skills && { skills }),
+      ...(certifications && { certifications }),
+      ...(projects && { projects })
     });
+
     console.log('Resume created successfully with ID:', resume.id);
     
-    const formattedResume = {
-      id: resume.id,
-      personalDetails: {
-        firstname: resume.firstname,
-        lastname: resume.lastname,
-        title: resume.title,
-        email: resume.email,
-        phone: resume.phone,
-        location: resume.location,
-        linkedin: resume.linkedin,
-        website: resume.website,
-        github: resume.github,
-        instagram: resume.instagram,
-      },
-      workExperience: resume.workExperience,
-      education: resume.education,
-      skills: resume.skills,
-      certifications: resume.certifications,
-      projects: resume.projects,
-      createdAt: resume.createdAt,
-      updatedAt: resume.updatedAt
-    };
-    
+    const formattedResume = formatResumeResponse(resume);
     console.log('Sending formatted resume response');
-    res.status(201).json(formattedResume);
+    res.status(201).json({
+      success: true,
+      data: formattedResume
+    });
   } catch (error) {
     console.error('Error creating resume:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
 exports.getAllResumes = async (req, res) => {
   try {
     const resumes = await Resume.findAll();
-    const formattedResumes = resumes.map(resume => ({
-      id: resume.id,
-      personalDetails: {
-        firstname: resume.firstname,
-        lastname: resume.lastname,
-        title: resume.title,
-        email: resume.email,
-        phone: resume.phone,
-        location: resume.location,
-        linkedin: resume.linkedin,
-        website: resume.website,
-        github: resume.github,
-        instagram: resume.instagram,
-      },
-      workExperience: resume.workExperience,
-      education: resume.education,
-      skills: resume.skills,
-      certifications: resume.certifications,
-      projects: resume.projects,
-      createdAt: resume.createdAt,
-      updatedAt: resume.updatedAt
-    }));
-    res.json(formattedResumes);
+    const formattedResumes = resumes.map(resume => formatResumeResponse(resume));
+    res.json({
+      success: true,
+      data: formattedResumes
+    });
   } catch (error) {
     console.error('Error fetching resumes:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
@@ -196,36 +195,23 @@ exports.getResumeById = async (req, res) => {
   try {
     const resume = await Resume.findByPk(req.params.id);
     if (resume) {
-      const formattedResume = {
-        id: resume.id,
-        personalDetails: {
-          firstname: resume.firstname,
-          lastname: resume.lastname,
-          title: resume.title,
-          email: resume.email,
-          phone: resume.phone,
-          location: resume.location,
-          linkedin: resume.linkedin,
-          website: resume.website,
-          github: resume.github,
-          instagram: resume.instagram,
-        },
-        workExperience: resume.workExperience,
-        education: resume.education,
-        skills: resume.skills,
-        certifications: resume.certifications,
-        projects: resume.projects,
-        createdAt: resume.createdAt,
-        updatedAt: resume.updatedAt
-      };
-      
-      res.json(formattedResume);
+      const formattedResume = formatResumeResponse(resume);
+      res.json({
+        success: true,
+        data: formattedResume
+      });
     } else {
-      res.status(404).json({ error: 'Resume not found' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Resume not found' 
+      });
     }
   } catch (error) {
     console.error('Error fetching resume:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
@@ -234,18 +220,7 @@ exports.updateResume = async (req, res) => {
     console.log(`Updating resume with ID ${req.params.id}`);
     console.log('Update data:', JSON.stringify(req.body, null, 2));
     
-    // Log dates for debugging
-    if (req.body.workExperience && req.body.workExperience.length > 0) {
-      console.log('Work Experience dates:');
-      req.body.workExperience.forEach((exp, i) => {
-        console.log(`- Entry ${i+1}:`);
-        console.log(`  startDate: ${exp.startDate}`);
-        console.log(`  endDate: ${exp.endDate}`);
-        console.log(`  Types: startDate (${typeof exp.startDate}), endDate (${typeof exp.endDate})`);
-      });
-    }
-    
-    // Basic validation - only check required fields
+    // Validate required fields
     const validationErrors = validateRequiredFields(req.body);
     if (validationErrors.length > 0) {
       console.log('Resume update failed due to validation errors');
@@ -254,8 +229,19 @@ exports.updateResume = async (req, res) => {
         errors: validationErrors
       });
     }
+
+    // Clean and filter the resume data
+    let cleanedData;
+    try {
+      cleanedData = cleanResumeData(req.body);
+      console.log('Cleaned resume data:', JSON.stringify(cleanedData, null, 2));
+    } catch (filterError) {
+      console.error('Error cleaning resume data:', filterError);
+      // Continue with original data if cleaning fails
+      cleanedData = req.body;
+    }
     
-    const { personalDetails, workExperience, education, skills, certifications, projects } = req.body;
+    const { personalDetails, workExperience, education, skills, certifications, projects } = cleanedData;
     
     console.log('Updating resume in database...');
     const [updated] = await Resume.update({
@@ -271,11 +257,12 @@ exports.updateResume = async (req, res) => {
       github: personalDetails.github,
       instagram: personalDetails.instagram,
       
-      workExperience: workExperience,
-      education,
-      skills,
-      certifications,
-      projects
+      // Optional sections - only include if not null
+      ...(workExperience && { workExperience }),
+      ...(education && { education }),
+      ...(skills && { skills }),
+      ...(certifications && { certifications }),
+      ...(projects && { projects })
     }, {
       where: { id: req.params.id }
     });
@@ -283,30 +270,7 @@ exports.updateResume = async (req, res) => {
     if (updated) {
       console.log('Resume updated successfully');
       const updatedResume = await Resume.findByPk(req.params.id);
-      
-      const formattedResume = {
-        id: updatedResume.id,
-        personalDetails: {
-          firstname: updatedResume.firstname,
-          lastname: updatedResume.lastname,
-          title: updatedResume.title,
-          email: updatedResume.email,
-          phone: updatedResume.phone,
-          location: updatedResume.location,
-          linkedin: updatedResume.linkedin,
-          website: updatedResume.website,
-          github: updatedResume.github,
-          instagram: updatedResume.instagram,
-        },
-        workExperience: updatedResume.workExperience,
-        education: updatedResume.education,
-        skills: updatedResume.skills,
-        certifications: updatedResume.certifications,
-        projects: updatedResume.projects,
-        createdAt: updatedResume.createdAt,
-        updatedAt: updatedResume.updatedAt
-      };
-      
+      const formattedResume = formatResumeResponse(updatedResume);
       console.log('Sending formatted resume response');
       res.json(formattedResume);
     } else {
