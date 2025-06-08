@@ -1,37 +1,31 @@
 /**
- * Technology group with related skills and compensation
+ * @typedef {Object} TechGroup
+ * @property {string} primary - Primary technology
+ * @property {string[]} related - Related technologies
+ * @property {number} compensation - Compensation factor
+ * @property {string[]} context - Context keywords
  */
-export interface TechGroup {
-  primary: string;
-  related: string[];
-  compensation: number;
-  context: string[];
-}
 
 /**
- * Detailed technology category mapping
+ * @typedef {Object} TechnologyCategory
+ * @property {TechGroup[]} [frameworks] - Framework groups
+ * @property {TechGroup[]} [libraries] - Library groups
+ * @property {TechGroup[]} [tools] - Tool groups
+ * @property {TechGroup[]} [languages] - Language groups
+ * @property {TechGroup[]} [databases] - Database groups
+ * @property {TechGroup[]} [core] - Core technology groups
  */
-export interface TechnologyCategory {
-  frameworks?: TechGroup[];
-  libraries?: TechGroup[];
-  tools?: TechGroup[];
-  languages?: TechGroup[];
-  databases?: TechGroup[];
-  core?: TechGroup[];
-}
 
 /**
- * Complete technology mapping structure
+ * @typedef {Object.<string, TechnologyCategory>} TechnologyMap
  */
-export interface TechnologyMap {
-  [key: string]: TechnologyCategory;
-}
 
-/**
- * Comprehensive technology mapping system
- */
-export class TechnologyMapper {
-  private static readonly technologyMap: TechnologyMap = {
+class TechnologyMapper {
+  /**
+   * @type {TechnologyMap}
+   * @private
+   */
+  static technologyMap = {
     frontend: {
       frameworks: [
         {
@@ -168,34 +162,35 @@ export class TechnologyMapper {
 
   /**
    * Get all skills in a specific technology category and subcategory
+   * @param {string} category - Technology category
+   * @param {string} [subcategory] - Technology subcategory
+   * @returns {string[]} List of skills
    */
-  public static getSkills(category: string, subcategory?: string): string[] {
+  static getSkills(category, subcategory) {
     const categoryData = this.technologyMap[category];
     if (!categoryData) return [];
 
     if (subcategory) {
-      const subcategoryData = categoryData[subcategory as keyof TechnologyCategory] || [];
-      return subcategoryData.flatMap((group: TechGroup) => [group.primary, ...group.related]);
+      const subcategoryData = categoryData[subcategory] || [];
+      return subcategoryData.flatMap(group => [group.primary, ...group.related]);
     }
 
     return Object.values(categoryData).flatMap(groups => 
-      (groups || []).flatMap((group: TechGroup) => [group.primary, ...group.related])
+      (groups || []).flatMap(group => [group.primary, ...group.related])
     );
   }
 
   /**
    * Find technology group for a given skill
+   * @param {string} skill - Skill to find
+   * @returns {{ category: string, subcategory: string, group: TechGroup } | null} Group info
    */
-  public static findGroupForSkill(skill: string): { 
-    category: string; 
-    subcategory: string; 
-    group: TechGroup 
-  } | null {
+  static findGroupForSkill(skill) {
     const normalizedSkill = skill.toLowerCase().trim();
 
     for (const [category, categoryData] of Object.entries(this.technologyMap)) {
       for (const [subcategory, groups] of Object.entries(categoryData)) {
-        const group = groups?.find((g: TechGroup) => 
+        const group = groups?.find(g => 
           g.primary === normalizedSkill || 
           g.related.includes(normalizedSkill)
         );
@@ -211,30 +206,36 @@ export class TechnologyMapper {
 
   /**
    * Get compensation factor for a skill
+   * @param {string} skill - Skill to evaluate
+   * @returns {number} Compensation factor
    */
-  public static getCompensationFactor(skill: string): number {
+  static getCompensationFactor(skill) {
     const groupInfo = this.findGroupForSkill(skill);
     return groupInfo?.group.compensation || 0.5;
   }
 
   /**
    * Get context keywords for a skill
+   * @param {string} skill - Skill to get context for
+   * @returns {string[]} Context keywords
    */
-  public static getSkillContext(skill: string): string[] {
+  static getSkillContext(skill) {
     const groupInfo = this.findGroupForSkill(skill);
     return groupInfo?.group.context || [];
   }
 
   /**
    * Get related skills for a given skill
+   * @param {string} skill - Skill to find related skills for
+   * @returns {string[]} Related skills
    */
-  public static getRelatedSkills(skill: string): string[] {
+  static getRelatedSkills(skill) {
     const groupInfo = this.findGroupForSkill(skill);
     if (!groupInfo) return [];
 
     const { category, subcategory } = groupInfo;
     const categoryData = this.technologyMap[category];
-    const relatedGroups = categoryData[subcategory as keyof TechnologyCategory] || [];
+    const relatedGroups = categoryData[subcategory] || [];
 
     return Array.from(new Set(
       relatedGroups.flatMap(group => [group.primary, ...group.related])
@@ -244,21 +245,21 @@ export class TechnologyMapper {
 
   /**
    * Check if two skills are related
+   * @param {string} skill1 - First skill
+   * @param {string} skill2 - Second skill
+   * @returns {boolean} Whether the skills are related
    */
-  public static areSkillsRelated(skill1: string, skill2: string): boolean {
+  static areSkillsRelated(skill1, skill2) {
     const group1 = this.findGroupForSkill(skill1);
     const group2 = this.findGroupForSkill(skill2);
 
     if (!group1 || !group2) return false;
 
-    // Same category and subcategory
-    if (group1.category === group2.category && 
-        group1.subcategory === group2.subcategory) {
-      return true;
-    }
-
-    // Check if one skill is in the related array of the other
-    return group1.group.related.includes(skill2.toLowerCase()) ||
-           group2.group.related.includes(skill1.toLowerCase());
+    return group1.category === group2.category &&
+           group1.subcategory === group2.subcategory;
   }
-} 
+}
+
+module.exports = {
+  TechnologyMapper
+}; 

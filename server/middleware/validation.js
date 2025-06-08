@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
+// @ts-check
+const { z } = require('zod');
 
 // Validation schemas
 const skillMatchRequestSchema = z.object({
@@ -25,8 +25,13 @@ const recommendationsRequestSchema = z.object({
   experienceLevel: z.string().optional()
 });
 
-// Validation middleware functions
-export const validateSkillMatchRequest = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Validate skill match request middleware
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next function
+ */
+const validateSkillMatchRequest = (req, res, next) => {
   try {
     skillMatchRequestSchema.parse(req.body);
     next();
@@ -39,7 +44,13 @@ export const validateSkillMatchRequest = (req: Request, res: Response, next: Nex
   }
 };
 
-export const validateJobAnalysisRequest = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Validate job analysis request middleware
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next function
+ */
+const validateJobAnalysisRequest = (req, res, next) => {
   try {
     jobAnalysisRequestSchema.parse(req.body);
     next();
@@ -52,7 +63,13 @@ export const validateJobAnalysisRequest = (req: Request, res: Response, next: Ne
   }
 };
 
-export const validateRecommendationsRequest = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Validate recommendations request middleware
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next function
+ */
+const validateRecommendationsRequest = (req, res, next) => {
   try {
     recommendationsRequestSchema.parse(req.body);
     next();
@@ -63,4 +80,10 @@ export const validateRecommendationsRequest = (req: Request, res: Response, next
       details: error
     });
   }
+};
+
+module.exports = {
+  validateSkillMatchRequest,
+  validateJobAnalysisRequest,
+  validateRecommendationsRequest
 }; 

@@ -1,11 +1,16 @@
-import { SkillMatcherType, SkillMatch, SkillMatchResult, SkillMatchConfig, SkillCompensation } from './interfaces/SkillMatcherType';
-import { TechnologyMapper } from './TechnologyMapper';
-import { SkillNormalizer } from './SkillNormalizer';
+const { TechnologyMapper } = require('./TechnologyMapper');
+const { SkillNormalizer } = require('./SkillNormalizer');
 
 /**
  * Default configuration for skill matching
+ * @type {{
+ *   baseWeight: number,
+ *   contextMultiplier: number,
+ *   compensationFactor: number,
+ *   minThreshold: number
+ * }}
  */
-const DEFAULT_CONFIG: SkillMatchConfig = {
+const DEFAULT_CONFIG = {
   baseWeight: 1.0,
   contextMultiplier: 1.2,
   compensationFactor: 0.8,
@@ -15,21 +20,21 @@ const DEFAULT_CONFIG: SkillMatchConfig = {
 /**
  * Implementation of the skill matching system
  */
-export class SkillMatcher implements SkillMatcherType {
+class SkillMatcher {
   /**
    * Match candidate skills against job requirements
+   * @param {string[]} jobSkills - Required job skills
+   * @param {string[]} candidateSkills - Candidate's skills
+   * @param {Object} [config] - Optional configuration
+   * @returns {Promise<Object>} Match result
    */
-  public async matchSkills(
-    jobSkills: string[],
-    candidateSkills: string[],
-    config: Partial<SkillMatchConfig> = {}
-  ): Promise<SkillMatchResult> {
+  async matchSkills(jobSkills, candidateSkills, config = {}) {
     try {
       const finalConfig = { ...DEFAULT_CONFIG, ...config };
-      const matches: SkillMatch[] = [];
-      const compensations: SkillCompensation[] = [];
-      const missingCritical: string[] = [];
-      const processedSkills = new Set<string>();
+      const matches = [];
+      const compensations = [];
+      const missingCritical = [];
+      const processedSkills = new Set();
 
       // Normalize all skills
       const normalizedJobSkills = jobSkills.map(skill => SkillNormalizer.normalizeSkill(skill));
@@ -84,8 +89,11 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Calculate relevance of a skill in a given context
+   * @param {string} skill - Skill to evaluate
+   * @param {string} context - Context to evaluate against
+   * @returns {Promise<number>} Relevance score
    */
-  public async calculateSkillRelevance(skill: string, context: string): Promise<number> {
+  async calculateSkillRelevance(skill, context) {
     try {
       const normalizedSkill = SkillNormalizer.normalizeSkill(skill);
       const normalizedContext = context.toLowerCase();
@@ -96,7 +104,7 @@ export class SkillMatcher implements SkillMatcherType {
 
       // Check if the context mentions the technology group or related terms
       const groupSkills = TechnologyMapper.getSkills(groupInfo.category, groupInfo.subcategory);
-      const contextRelevance = groupSkills.some((s: string) => normalizedContext.includes(s)) ? 1.0 : 0.7;
+      const contextRelevance = groupSkills.some(s => normalizedContext.includes(s)) ? 1.0 : 0.7;
 
       return contextRelevance;
     } catch (error) {
@@ -107,8 +115,10 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Find related skills for a given skill
+   * @param {string} skill - Skill to find related skills for
+   * @returns {Promise<string[]>} Related skills
    */
-  public async findRelatedSkills(skill: string): Promise<string[]> {
+  async findRelatedSkills(skill) {
     try {
       const normalizedSkill = SkillNormalizer.normalizeSkill(skill);
       return TechnologyMapper.getRelatedSkills(normalizedSkill);
@@ -120,8 +130,11 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Find a direct match for a job skill in candidate skills
+   * @param {string} jobSkill - Job skill to match
+   * @param {string[]} candidateSkills - Candidate skills to match against
+   * @returns {boolean} Whether a direct match was found
    */
-  private findDirectMatch(jobSkill: string, candidateSkills: string[]): boolean {
+  findDirectMatch(jobSkill, candidateSkills) {
     return candidateSkills.some(skill => 
       SkillNormalizer.areSimilarSkills(jobSkill, skill)
     );
@@ -129,12 +142,12 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Find a related match for a job skill
+   * @param {string} jobSkill - Job skill to match
+   * @param {string[]} candidateSkills - Candidate skills to match against
+   * @param {Object} config - Match configuration
+   * @returns {Promise<Object|null>} Match and compensation info
    */
-  private async findRelatedMatch(
-    jobSkill: string,
-    candidateSkills: string[],
-    config: SkillMatchConfig
-  ): Promise<{ match: SkillMatch; compensation: SkillCompensation } | null> {
+  async findRelatedMatch(jobSkill, candidateSkills, config) {
     const relatedSkills = await this.findRelatedSkills(jobSkill);
     
     for (const candidateSkill of candidateSkills) {
@@ -168,12 +181,12 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Calculate the overall score based on matches and compensations
+   * @param {Array} matches - Skill matches
+   * @param {Array} compensations - Skill compensations
+   * @param {Object} config - Score configuration
+   * @returns {number} Overall score
    */
-  private calculateOverallScore(
-    matches: SkillMatch[],
-    compensations: SkillCompensation[],
-    config: SkillMatchConfig
-  ): number {
+  calculateOverallScore(matches, compensations, config) {
     const directMatches = matches.filter(m => m.matchType === 'direct').length;
     const relatedMatches = matches.filter(m => m.matchType === 'related').length;
     
@@ -188,8 +201,10 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Generate suggestions for missing skills
+   * @param {string[]} missingSkills - Missing skills to generate suggestions for
+   * @returns {string[]} Skill suggestions
    */
-  private generateSuggestions(missingSkills: string[]): string[] {
+  generateSuggestions(missingSkills) {
     return missingSkills.map(skill => {
       const group = TechnologyMapper.findGroupForSkill(skill);
       if (!group) return `Consider learning ${skill}`;
@@ -205,20 +220,22 @@ export class SkillMatcher implements SkillMatcherType {
 
   /**
    * Check if a skill is valid/known
+   * @param {string} skill - Skill to validate
+   * @returns {boolean} Whether the skill is valid
    */
-  public isValidSkill(skill: string): boolean {
+  isValidSkill(skill) {
     const normalizedSkill = SkillNormalizer.normalizeSkill(skill);
     return TechnologyMapper.findGroupForSkill(normalizedSkill) !== null;
   }
 
   /**
    * Find direct and related matches
+   * @param {string[]} required - Required skills
+   * @param {string[]} candidate - Candidate skills
+   * @returns {Array<Object>} Matches
    */
-  private findMatches(
-    required: string[],
-    candidate: string[]
-  ): { skill: string; matchType: 'direct' | 'related' | 'potential' }[] {
-    const matches: { skill: string; matchType: 'direct' | 'related' | 'potential' }[] = [];
+  findMatches(required, candidate) {
+    const matches = [];
 
     required.forEach(skill => {
       // Check for direct match
@@ -246,4 +263,8 @@ export class SkillMatcher implements SkillMatcherType {
 
     return matches;
   }
-} 
+}
+
+module.exports = {
+  SkillMatcher
+}; 

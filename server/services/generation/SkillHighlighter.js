@@ -1,51 +1,55 @@
-import { SkillMatchResult, SkillMatch } from '../matching/core/interfaces/SkillMatcherType';
+// @ts-check
 
 /**
- * Configuration for skill highlighting
+ * @typedef {import('../matching/core/interfaces/SkillMatcherType').SkillMatchResult} SkillMatchResult
+ * @typedef {import('../matching/core/interfaces/SkillMatcherType').SkillMatch} SkillMatch
  */
-interface HighlightConfig {
-  maxSkillsPerSection: number;
-  minConfidenceScore: number;
-  prioritizeCore: boolean;
-  groupByCategory: boolean;
-}
 
 /**
- * Result of skill highlighting process
+ * @typedef {Object} HighlightConfig
+ * @property {number} maxSkillsPerSection - Maximum skills per section
+ * @property {number} minConfidenceScore - Minimum confidence score
+ * @property {boolean} prioritizeCore - Whether to prioritize core skills
+ * @property {boolean} groupByCategory - Whether to group by category
  */
-interface HighlightResult {
-  highlightedSkills: {
-    skill: string;
-    confidence: number;
-    category?: string;
-    context?: string;
-  }[];
-  suggestedPhrases: string[];
-  statistics: {
-    totalHighlighted: number;
-    averageConfidence: number;
-    categoryCoverage: Record<string, number>;
-  };
-}
+
+/**
+ * @typedef {Object} HighlightResult
+ * @property {Array<{
+ *   skill: string,
+ *   confidence: number,
+ *   category?: string,
+ *   context?: string
+ * }>} highlightedSkills - Highlighted skills
+ * @property {string[]} suggestedPhrases - Suggested phrases
+ * @property {{
+ *   totalHighlighted: number,
+ *   averageConfidence: number,
+ *   categoryCoverage: Record<string, number>
+ * }} statistics - Statistics
+ */
 
 /**
  * Handles skill highlighting and context generation for cover letters
  */
-export class SkillHighlighter {
-  private readonly defaultConfig: HighlightConfig = {
-    maxSkillsPerSection: 5,
-    minConfidenceScore: 0.7,
-    prioritizeCore: true,
-    groupByCategory: true
-  };
+class SkillHighlighter {
+  constructor() {
+    /** @type {HighlightConfig} */
+    this.defaultConfig = {
+      maxSkillsPerSection: 5,
+      minConfidenceScore: 0.7,
+      prioritizeCore: true,
+      groupByCategory: true
+    };
+  }
 
   /**
    * Highlight relevant skills based on job matching results
+   * @param {SkillMatchResult} matchResult - Match results
+   * @param {Partial<HighlightConfig>} [customConfig] - Custom configuration
+   * @returns {Promise<HighlightResult>} Highlight result
    */
-  public async highlightSkills(
-    matchResult: SkillMatchResult,
-    customConfig?: Partial<HighlightConfig>
-  ): Promise<HighlightResult> {
+  async highlightSkills(matchResult, customConfig = {}) {
     const config = { ...this.defaultConfig, ...customConfig };
     
     try {
@@ -68,11 +72,12 @@ export class SkillHighlighter {
 
   /**
    * Process and filter skills based on configuration
+   * @param {SkillMatchResult} matchResult - Match results
+   * @param {HighlightConfig} config - Configuration
+   * @returns {Promise<HighlightResult['highlightedSkills']>} Processed skills
+   * @private
    */
-  private async processSkills(
-    matchResult: SkillMatchResult,
-    config: HighlightConfig
-  ): Promise<HighlightResult['highlightedSkills']> {
+  async processSkills(matchResult, config) {
     const { matches } = matchResult;
 
     // Filter and sort skills by confidence
@@ -102,9 +107,11 @@ export class SkillHighlighter {
 
   /**
    * Infer skill category based on match information
+   * @param {SkillMatch} match - Skill match
+   * @returns {string} Inferred category
+   * @private
    */
-  private inferSkillCategory(match: SkillMatch): string {
-    // This could be enhanced with actual technology mapping logic
+  inferSkillCategory(match) {
     if (match.context) {
       if (match.context.toLowerCase().includes('programming')) return 'programming';
       if (match.context.toLowerCase().includes('framework')) return 'framework';
@@ -115,15 +122,19 @@ export class SkillHighlighter {
 
   /**
    * Generate context for a skill
+   * @param {SkillMatch} skill - Skill match
+   * @returns {string} Generated context
+   * @private
    */
-  private generateSkillContext(skill: SkillMatch): string {
+  generateSkillContext(skill) {
     if (skill.context) {
       return skill.context;
     }
 
     // Generate generic context based on match type and inferred category
     const category = this.inferSkillCategory(skill);
-    const contextTemplates: Record<string, string> = {
+    /** @type {Record<string, string>} */
+    const contextTemplates = {
       'programming': 'proficient in developing with',
       'framework': 'experienced in building applications using',
       'tool': 'skilled in utilizing',
@@ -138,24 +149,27 @@ export class SkillHighlighter {
 
   /**
    * Generate suggested phrases for highlighting skills
+   * @param {HighlightResult['highlightedSkills']} highlightedSkills - Highlighted skills
+   * @returns {string[]} Generated phrases
+   * @private
    */
-  private generateSuggestedPhrases(
-    highlightedSkills: HighlightResult['highlightedSkills']
-  ): string[] {
-    const phrases: string[] = [];
+  generateSuggestedPhrases(highlightedSkills) {
+    const phrases = [];
 
     // Group skills by category if available
-    const skillsByCategory = highlightedSkills.reduce((acc, skill) => {
+    /** @type {Record<string, HighlightResult['highlightedSkills']>} */
+    const skillsByCategory = {};
+    
+    highlightedSkills.forEach(skill => {
       const category = skill.category || 'general';
-      if (!acc[category]) {
-        acc[category] = [];
+      if (!skillsByCategory[category]) {
+        skillsByCategory[category] = [];
       }
-      acc[category].push(skill);
-      return acc;
-    }, {} as Record<string, typeof highlightedSkills>);
+      skillsByCategory[category].push(skill);
+    });
 
     // Generate phrases for each category
-    for (const [category, skills] of Object.entries(skillsByCategory)) {
+    for (const [, skills] of Object.entries(skillsByCategory)) {
       if (skills.length === 1) {
         phrases.push(this.generateSkillContext({
           skill: skills[0].skill,
@@ -180,22 +194,25 @@ export class SkillHighlighter {
 
   /**
    * Calculate statistics for highlighted skills
+   * @param {HighlightResult['highlightedSkills']} highlightedSkills - Highlighted skills
+   * @returns {HighlightResult['statistics']} Calculated statistics
+   * @private
    */
-  private calculateStatistics(
-    highlightedSkills: HighlightResult['highlightedSkills']
-  ): HighlightResult['statistics'] {
+  calculateStatistics(highlightedSkills) {
     const totalHighlighted = highlightedSkills.length;
     const averageConfidence = highlightedSkills.reduce(
       (sum, skill) => sum + skill.confidence,
       0
     ) / totalHighlighted;
 
-    const categoryCoverage = highlightedSkills.reduce((acc, skill) => {
+    /** @type {Record<string, number>} */
+    const categoryCoverage = {};
+    
+    highlightedSkills.forEach(skill => {
       if (skill.category) {
-        acc[skill.category] = (acc[skill.category] || 0) + 1;
+        categoryCoverage[skill.category] = (categoryCoverage[skill.category] || 0) + 1;
       }
-      return acc;
-    }, {} as Record<string, number>);
+    });
 
     return {
       totalHighlighted,
@@ -203,4 +220,8 @@ export class SkillHighlighter {
       categoryCoverage
     };
   }
-} 
+}
+
+module.exports = {
+  SkillHighlighter
+}; 

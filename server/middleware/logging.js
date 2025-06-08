@@ -1,7 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
+// @ts-check
 
-// Request logging middleware
-export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+/**
+ * Request logging middleware
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next function
+ */
+const requestLogger = (req, res, next) => {
   const start = Date.now();
 
   // Log request details
@@ -36,8 +41,14 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-// Error logging middleware
-export const errorLogger = (err: Error, req: Request, res: Response, next: NextFunction) => {
+/**
+ * Error logging middleware
+ * @param {Error} err - Error object
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next function
+ */
+const errorLogger = (err, req, res, next) => {
   console.error(`[${new Date().toISOString()}] ERROR ${req.method} ${req.path}`);
   console.error({
     type: 'error',
@@ -50,4 +61,9 @@ export const errorLogger = (err: Error, req: Request, res: Response, next: NextF
     }
   });
   next(err);
+};
+
+module.exports = {
+  requestLogger,
+  errorLogger
 }; 

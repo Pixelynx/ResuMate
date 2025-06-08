@@ -1,49 +1,49 @@
-import { SkillMatchResult } from '../core/interfaces/SkillMatcherType';
-import { SkillAnalyzer, SkillAnalysisResult } from '../core/analysis/SkillAnalyzer';
-import { ContextAnalyzer } from '../core/analysis/ContextAnalyzer';
-import { TechnologyMapper } from '../core/TechnologyMapper';
+// @ts-check
+const { SkillAnalyzer } = require('../core/analysis/SkillAnalyzer');
+const { ContextAnalyzer } = require('../core/analysis/ContextAnalyzer');
+const { TechnologyMapper } = require('../core/TechnologyMapper');
 
 /**
- * Input for skill highlighting in cover letter generation
+ * @typedef {import('../core/interfaces/SkillMatcherType').SkillMatchResult} SkillMatchResult
+ * @typedef {import('../core/analysis/SkillAnalyzer').SkillAnalysisResult} SkillAnalysisResult
  */
-export interface SkillHighlightInput {
-  jobSkills: string[];
-  candidateSkills: string[];
-  matchResults: SkillMatchResult;
-  context: string;
-}
 
 /**
- * Highlighted skill with context and relevance
+ * @typedef {Object} SkillHighlightInput
+ * @property {string[]} jobSkills - Required job skills
+ * @property {string[]} candidateSkills - Candidate's skills
+ * @property {SkillMatchResult} matchResults - Results of skill matching
+ * @property {string} context - Job context
  */
-export interface HighlightedSkill {
-  skill: string;
-  relevance: number;
-  context: string[];
-  matchType: 'direct' | 'related' | 'potential';
-  suggestedEmphasis: 'high' | 'medium' | 'low';
-}
 
 /**
- * Result of skill highlighting analysis
+ * @typedef {Object} HighlightedSkill
+ * @property {string} skill - Skill name
+ * @property {number} relevance - Skill relevance
+ * @property {string[]} context - Skill context
+ * @property {'direct' | 'related' | 'potential'} matchType - Type of match
+ * @property {'high' | 'medium' | 'low'} suggestedEmphasis - Suggested emphasis level
  */
-export interface SkillHighlightResult {
-  primarySkills: HighlightedSkill[];
-  secondarySkills: HighlightedSkill[];
-  suggestedOrder: string[];
-  contextualPhrases: string[];
-}
+
+/**
+ * @typedef {Object} SkillHighlightResult
+ * @property {HighlightedSkill[]} primarySkills - Primary skills
+ * @property {HighlightedSkill[]} secondarySkills - Secondary skills
+ * @property {string[]} suggestedOrder - Suggested order of skills
+ * @property {string[]} contextualPhrases - Contextual phrases
+ */
 
 /**
  * Handles skill highlighting for cover letter generation
  */
-export class SkillHighlighter {
-  private skillAnalyzer: SkillAnalyzer;
-  private contextAnalyzer: ContextAnalyzer;
-
+class SkillHighlighter {
+  /**
+   * @param {SkillAnalyzer} [skillAnalyzer] - Skill analyzer instance
+   * @param {ContextAnalyzer} [contextAnalyzer] - Context analyzer instance
+   */
   constructor(
-    skillAnalyzer: SkillAnalyzer = new SkillAnalyzer(),
-    contextAnalyzer: ContextAnalyzer = new ContextAnalyzer()
+    skillAnalyzer = new SkillAnalyzer(),
+    contextAnalyzer = new ContextAnalyzer()
   ) {
     this.skillAnalyzer = skillAnalyzer;
     this.contextAnalyzer = contextAnalyzer;
@@ -51,8 +51,10 @@ export class SkillHighlighter {
 
   /**
    * Generate skill highlights for cover letter
+   * @param {SkillHighlightInput} input - Input for highlighting
+   * @returns {Promise<SkillHighlightResult>} Highlight result
    */
-  public async generateHighlights(input: SkillHighlightInput): Promise<SkillHighlightResult> {
+  async generateHighlights(input) {
     try {
       // Analyze skills in context
       const analysisResult = await this.skillAnalyzer.analyzeSkills(
@@ -85,12 +87,14 @@ export class SkillHighlighter {
 
   /**
    * Generate individual skill highlights
+   * @param {SkillAnalysisResult} analysis - Skill analysis result
+   * @param {SkillMatchResult} matchResults - Match results
+   * @returns {HighlightedSkill[]} Highlighted skills
+   * @private
    */
-  private generateSkillHighlights(
-    analysis: SkillAnalysisResult,
-    matchResults: SkillMatchResult
-  ): HighlightedSkill[] {
-    const highlights: HighlightedSkill[] = [];
+  generateSkillHighlights(analysis, matchResults) {
+    /** @type {HighlightedSkill[]} */
+    const highlights = [];
 
     // Process direct matches
     matchResults.matches.forEach(match => {
@@ -124,10 +128,11 @@ export class SkillHighlighter {
 
   /**
    * Categorize skills into primary and secondary
+   * @param {HighlightedSkill[]} highlights - Skills to categorize
+   * @returns {{ primarySkills: HighlightedSkill[], secondarySkills: HighlightedSkill[] }} Categorized skills
+   * @private
    */
-  private categorizeSkills(
-    highlights: HighlightedSkill[]
-  ): { primarySkills: HighlightedSkill[]; secondarySkills: HighlightedSkill[] } {
+  categorizeSkills(highlights) {
     const sorted = [...highlights].sort((a, b) => b.relevance - a.relevance);
 
     const primaryThreshold = 0.7;
@@ -139,8 +144,11 @@ export class SkillHighlighter {
 
   /**
    * Calculate emphasis level based on relevance
+   * @param {number} relevance - Skill relevance
+   * @returns {'high' | 'medium' | 'low'} Emphasis level
+   * @private
    */
-  private calculateEmphasis(relevance: number): 'high' | 'medium' | 'low' {
+  calculateEmphasis(relevance) {
     if (relevance >= 0.8) return 'high';
     if (relevance >= 0.6) return 'medium';
     return 'low';
@@ -148,11 +156,12 @@ export class SkillHighlighter {
 
   /**
    * Generate suggested order for mentioning skills
+   * @param {HighlightedSkill[]} primary - Primary skills
+   * @param {HighlightedSkill[]} secondary - Secondary skills
+   * @returns {string[]} Ordered skill names
+   * @private
    */
-  private generateSuggestedOrder(
-    primary: HighlightedSkill[],
-    secondary: HighlightedSkill[]
-  ): string[] {
+  generateSuggestedOrder(primary, secondary) {
     // Start with high emphasis primary skills
     const order = primary
       .filter(s => s.suggestedEmphasis === 'high')
@@ -173,8 +182,11 @@ export class SkillHighlighter {
 
   /**
    * Generate contextual phrases for skills
+   * @param {HighlightedSkill[]} skills - Skills to generate phrases for
+   * @returns {string[]} Contextual phrases
+   * @private
    */
-  private generateContextualPhrases(skills: HighlightedSkill[]): string[] {
+  generateContextualPhrases(skills) {
     return skills.map(skill => {
       const contextPhrase = skill.context
         .slice(0, 2)
@@ -183,4 +195,8 @@ export class SkillHighlighter {
       return `${skill.skill} for ${contextPhrase}`;
     });
   }
-} 
+}
+
+module.exports = {
+  SkillHighlighter
+}; 

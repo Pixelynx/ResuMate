@@ -1,10 +1,10 @@
 require('dotenv').config();
 
-import express from 'express';
-import cors from 'cors';
-import db from './models';
-import matchingRoutes from './routes/matching.routes';
-import { errorLogger } from './middleware/logging';
+const express = require('express');
+const cors = require('cors');
+const db = require('./models');
+const matchingRoutes = require('./routes/matching.routes');
+const { errorLogger } = require('./middleware/logging');
 
 const app = express();
 
@@ -31,8 +31,6 @@ app.use(express.json());
 // Routes
 require('./routes/resume.routes')(app);
 require('./routes/coverLetter.routes')(app);
-
-// Consolidated job fit score routes
 require('./routes/jobFit.routes')(app);
 
 // Apply routes
@@ -41,7 +39,7 @@ app.use('/api/matching', matchingRoutes);
 // Error handling middleware
 app.use(errorLogger);
 app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
+  res.status(500).json({
     status: 'error',
     message: err.message || 'Internal server error',
     details: process.env.NODE_ENV === 'development' ? err.stack : undefined
@@ -76,12 +74,14 @@ const startServer = async () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    if (error.name === 'SequelizeConnectionError') {
-      console.error('Failed to connect to the database:', error.message);
-    } else if (error.name === 'SequelizeDatabaseError') {
-      console.error('Database error occurred:', error.message);
-    } else {
-      console.error('Unable to start server:', error);
+    if (error instanceof Error) {
+      if (error.name === 'SequelizeConnectionError') {
+        console.error('Failed to connect to the database:', error.message);
+      } else if (error.name === 'SequelizeDatabaseError') {
+        console.error('Database error occurred:', error.message);
+      } else {
+        console.error('Unable to start server:', error);
+      }
     }
     process.exit(1); // Exit if we can't start properly
   }

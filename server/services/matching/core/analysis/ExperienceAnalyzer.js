@@ -1,44 +1,37 @@
-import { TechnologyMapper } from '../TechnologyMapper';
+// @ts-check
+const { TechnologyMapper } = require('../TechnologyMapper');
 
 /**
- * Experience evaluation result
+ * @typedef {Object} ExperienceEvaluation
+ * @property {number} score - Overall score
+ * @property {number} relevanceScore - Relevance score
+ * @property {number} yearsScore - Years score
+ * @property {ExperienceDetail[]} details - Evaluation details
+ * @property {string[]} suggestions - Improvement suggestions
  */
-export interface ExperienceEvaluation {
-  score: number;
-  relevanceScore: number;
-  yearsScore: number;
-  details: ExperienceDetail[];
-  suggestions: string[];
-}
 
 /**
- * Detailed experience evaluation for a specific area
+ * @typedef {Object} ExperienceDetail
+ * @property {string} area - Experience area
+ * @property {number} requiredYears - Required years
+ * @property {number} actualYears - Actual years
+ * @property {number} relevance - Relevance score
+ * @property {number} score - Area score
+ * @property {string} explanation - Detailed explanation
  */
-export interface ExperienceDetail {
-  area: string;
-  requiredYears: number;
-  actualYears: number;
-  relevance: number;
-  score: number;
-  explanation: string;
-}
 
 /**
- * Configuration for experience evaluation
+ * @typedef {Object} ExperienceAnalyzerConfig
+ * @property {number} baseWeight - Base weight for scoring
+ * @property {number} yearsWeight - Weight for years of experience
+ * @property {number} relevanceWeight - Weight for relevance
+ * @property {number} maxYearsBonus - Maximum bonus for extra years
+ * @property {number} minYearsPenalty - Minimum penalty for missing years
+ * @property {number} relevanceThreshold - Threshold for relevance
  */
-export interface ExperienceAnalyzerConfig {
-  baseWeight: number;
-  yearsWeight: number;
-  relevanceWeight: number;
-  maxYearsBonus: number;
-  minYearsPenalty: number;
-  relevanceThreshold: number;
-}
 
-/**
- * Default configuration values
- */
-const DEFAULT_CONFIG: ExperienceAnalyzerConfig = {
+/** @type {ExperienceAnalyzerConfig} */
+const DEFAULT_CONFIG = {
   baseWeight: 1.0,
   yearsWeight: 0.6,
   relevanceWeight: 0.4,
@@ -50,24 +43,28 @@ const DEFAULT_CONFIG: ExperienceAnalyzerConfig = {
 /**
  * Analyzes and scores work experience
  */
-export class ExperienceAnalyzer {
-  private config: ExperienceAnalyzerConfig;
-
-  constructor(config: Partial<ExperienceAnalyzerConfig> = {}) {
+class ExperienceAnalyzer {
+  /**
+   * @param {Partial<ExperienceAnalyzerConfig>} [config] - Analyzer configuration
+   */
+  constructor(config = {}) {
+    /** @type {ExperienceAnalyzerConfig} */
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   /**
    * Evaluate experience against requirements
+   * @param {Object.<string, number>} requirements - Experience requirements
+   * @param {Object.<string, number>} experience - Actual experience
+   * @param {string} context - Job context
+   * @returns {ExperienceEvaluation} Experience evaluation
    */
-  public evaluateExperience(
-    requirements: { [area: string]: number },
-    experience: { [area: string]: number },
-    context: string
-  ): ExperienceEvaluation {
+  evaluateExperience(requirements, experience, context) {
     try {
-      const details: ExperienceDetail[] = [];
-      const suggestions: string[] = [];
+      /** @type {ExperienceDetail[]} */
+      const details = [];
+      /** @type {string[]} */
+      const suggestions = [];
 
       // Evaluate each required area
       for (const [area, requiredYears] of Object.entries(requirements)) {
@@ -109,8 +106,12 @@ export class ExperienceAnalyzer {
 
   /**
    * Calculate relevance of experience area to job context
+   * @param {string} area - Experience area
+   * @param {string} context - Job context
+   * @returns {number} Relevance score
+   * @private
    */
-  private calculateRelevance(area: string, context: string): number {
+  calculateRelevance(area, context) {
     const groupInfo = TechnologyMapper.findGroupForSkill(area);
     if (!groupInfo) return 0.5; // Default relevance for unknown areas
 
@@ -123,8 +124,8 @@ export class ExperienceAnalyzer {
     const contextWords = context.toLowerCase().split(/\s+/);
     
     // Calculate how many skills from the group appear in the context
-    const matchingSkills = groupSkills.filter((skill: string) => 
-      contextWords.some((word: string) => word.includes(skill.toLowerCase()))
+    const matchingSkills = groupSkills.filter(skill => 
+      contextWords.some(word => word.includes(skill.toLowerCase()))
     );
 
     return Math.min(1, (matchingSkills.length / groupSkills.length) + 0.3);
@@ -132,12 +133,13 @@ export class ExperienceAnalyzer {
 
   /**
    * Calculate score for a specific experience area
+   * @param {number} required - Required years
+   * @param {number} actual - Actual years
+   * @param {number} relevance - Relevance score
+   * @returns {number} Area score
+   * @private
    */
-  private calculateAreaScore(
-    required: number,
-    actual: number,
-    relevance: number
-  ): number {
+  calculateAreaScore(required, actual, relevance) {
     const yearsRatio = actual / required;
     let score = yearsRatio;
 
@@ -159,8 +161,11 @@ export class ExperienceAnalyzer {
 
   /**
    * Calculate overall years of experience score
+   * @param {ExperienceDetail[]} details - Experience details
+   * @returns {number} Years score
+   * @private
    */
-  private calculateYearsScore(details: ExperienceDetail[]): number {
+  calculateYearsScore(details) {
     if (details.length === 0) return 0;
 
     const totalScore = details.reduce((sum, detail) => 
@@ -171,8 +176,11 @@ export class ExperienceAnalyzer {
 
   /**
    * Calculate overall relevance score
+   * @param {ExperienceDetail[]} details - Experience details
+   * @returns {number} Relevance score
+   * @private
    */
-  private calculateRelevanceScore(details: ExperienceDetail[]): number {
+  calculateRelevanceScore(details) {
     if (details.length === 0) return 0;
 
     const totalRelevance = details.reduce((sum, detail) => 
@@ -183,8 +191,12 @@ export class ExperienceAnalyzer {
 
   /**
    * Calculate final overall score
+   * @param {number} yearsScore - Years score
+   * @param {number} relevanceScore - Relevance score
+   * @returns {number} Overall score
+   * @private
    */
-  private calculateOverallScore(yearsScore: number, relevanceScore: number): number {
+  calculateOverallScore(yearsScore, relevanceScore) {
     return (yearsScore * this.config.yearsWeight + 
       relevanceScore * this.config.relevanceWeight) * 
       this.config.baseWeight;
@@ -192,13 +204,14 @@ export class ExperienceAnalyzer {
 
   /**
    * Generate explanation for experience evaluation
+   * @param {string} area - Experience area
+   * @param {number} required - Required years
+   * @param {number} actual - Actual years
+   * @param {number} relevance - Relevance score
+   * @returns {string} Explanation
+   * @private
    */
-  private generateExplanation(
-    area: string,
-    required: number,
-    actual: number,
-    relevance: number
-  ): string {
+  generateExplanation(area, required, actual, relevance) {
     const yearsDiff = actual - required;
     const relevanceText = relevance >= 0.8 ? 'highly relevant' :
       relevance >= 0.5 ? 'moderately relevant' : 'less relevant';
@@ -214,8 +227,13 @@ export class ExperienceAnalyzer {
 
   /**
    * Generate suggestion for improving experience
+   * @param {string} area - Experience area
+   * @param {number} required - Required years
+   * @param {number} actual - Actual years
+   * @returns {string} Suggestion
+   * @private
    */
-  private generateSuggestion(area: string, required: number, actual: number): string {
+  generateSuggestion(area, required, actual) {
     const yearsDiff = required - actual;
     const group = TechnologyMapper.findGroupForSkill(area);
     
@@ -229,4 +247,9 @@ export class ExperienceAnalyzer {
 
     return `Gain ${yearsDiff} more years of experience in ${area}`;
   }
-} 
+}
+
+module.exports = {
+  ExperienceAnalyzer,
+  DEFAULT_CONFIG
+}; 

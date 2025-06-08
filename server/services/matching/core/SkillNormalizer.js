@@ -1,9 +1,13 @@
 /**
  * Utility class for normalizing and comparing skill names
  */
-export class SkillNormalizer {
-  // Common variations of skill names
-  private static readonly skillVariations: { [key: string]: string[] } = {
+class SkillNormalizer {
+  /**
+   * Common variations of skill names
+   * @type {Object.<string, string[]>}
+   * @private
+   */
+  static skillVariations = {
     'javascript': ['js', 'ecmascript', 'es6', 'es2015+'],
     'typescript': ['ts'],
     'python': ['py', 'python3'],
@@ -21,16 +25,22 @@ export class SkillNormalizer {
     'artificial intelligence': ['ai']
   };
 
-  // Common prefixes to normalize
-  private static readonly commonPrefixes = [
+  /**
+   * Common prefixes to normalize
+   * @type {string[]}
+   * @private
+   */
+  static commonPrefixes = [
     'senior', 'junior', 'lead', 'principal', 'expert',
     'certified', 'professional', 'advanced'
   ];
 
   /**
    * Normalize a skill name by removing common variations and formatting
+   * @param {string} skill - Skill name to normalize
+   * @returns {string} Normalized skill name
    */
-  public static normalizeSkill(skill: string): string {
+  static normalizeSkill(skill) {
     let normalized = skill.toLowerCase().trim();
     
     // Remove common prefixes
@@ -50,11 +60,15 @@ export class SkillNormalizer {
 
   /**
    * Calculate Levenshtein distance between two strings
+   * @param {string} str1 - First string
+   * @param {string} str2 - Second string
+   * @returns {number} Edit distance
+   * @private
    */
-  private static levenshteinDistance(str1: string, str2: string): number {
+  static levenshteinDistance(str1, str2) {
     const m = str1.length;
     const n = str2.length;
-    const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+    const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
 
     for (let i = 0; i <= m; i++) dp[i][0] = i;
     for (let j = 0; j <= n; j++) dp[0][j] = j;
@@ -78,8 +92,12 @@ export class SkillNormalizer {
 
   /**
    * Check if two skills are similar using fuzzy matching
+   * @param {string} skill1 - First skill
+   * @param {string} skill2 - Second skill
+   * @param {number} [threshold=0.8] - Similarity threshold
+   * @returns {boolean} Whether the skills are similar
    */
-  public static areSimilarSkills(skill1: string, skill2: string, threshold: number = 0.8): boolean {
+  static areSimilarSkills(skill1, skill2, threshold = 0.8) {
     const normalized1 = this.normalizeSkill(skill1);
     const normalized2 = this.normalizeSkill(skill2);
 
@@ -102,10 +120,13 @@ export class SkillNormalizer {
 
   /**
    * Find the closest matching skill from a list of skills
+   * @param {string} skill - Skill to match
+   * @param {string[]} skillList - List of skills to match against
+   * @returns {string|null} Closest matching skill or null if no match found
    */
-  public static findClosestSkill(skill: string, skillList: string[]): string | null {
+  static findClosestSkill(skill, skillList) {
     const normalized = this.normalizeSkill(skill);
-    let bestMatch: string | null = null;
+    let bestMatch = null;
     let bestSimilarity = 0;
 
     for (const candidate of skillList) {
@@ -127,4 +148,8 @@ export class SkillNormalizer {
 
     return bestSimilarity >= 0.8 ? bestMatch : null;
   }
-} 
+}
+
+module.exports = {
+  SkillNormalizer
+}; 

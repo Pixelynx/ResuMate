@@ -1,21 +1,27 @@
-import { 
-  ContextRule, 
-  RuleCondition, 
-  RuleEvaluationResult, 
-  EvaluationContext,
-  RuleEffect
-} from './ContextRule';
+// @ts-check
+
+/**
+ * @typedef {import('./ContextRule').ContextRule} ContextRule
+ * @typedef {import('./ContextRule').RuleCondition} RuleCondition
+ * @typedef {import('./ContextRule').RuleEvaluationResult} RuleEvaluationResult
+ * @typedef {import('./ContextRule').EvaluationContext} EvaluationContext
+ * @typedef {import('./ContextRule').RuleEffect} RuleEffect
+ */
 
 /**
  * Analyzes context and applies rules for skill and experience evaluation
  */
-export class ContextAnalyzer {
-  private rules: ContextRule[] = [];
+class ContextAnalyzer {
+  constructor() {
+    /** @type {ContextRule[]} */
+    this.rules = [];
+  }
 
   /**
    * Add a new context rule
+   * @param {ContextRule} rule - Rule to add
    */
-  public addRule(rule: ContextRule): void {
+  addRule(rule) {
     this.rules.push(rule);
     // Sort rules by priority (higher priority first)
     this.rules.sort((a, b) => b.priority - a.priority);
@@ -23,8 +29,10 @@ export class ContextAnalyzer {
 
   /**
    * Evaluate context rules against given context
+   * @param {EvaluationContext} context - Context to evaluate
+   * @returns {RuleEvaluationResult[]} Evaluation results
    */
-  public evaluateRules(context: EvaluationContext): RuleEvaluationResult[] {
+  evaluateRules(context) {
     try {
       return this.rules.map(rule => this.evaluateRule(rule, context));
     } catch (error) {
@@ -35,8 +43,10 @@ export class ContextAnalyzer {
 
   /**
    * Calculate context-based score adjustments
+   * @param {EvaluationContext} context - Context to evaluate
+   * @returns {number} Context score
    */
-  public calculateContextScore(context: EvaluationContext): number {
+  calculateContextScore(context) {
     try {
       const results = this.evaluateRules(context);
       let score = 1.0; // Base score
@@ -66,8 +76,12 @@ export class ContextAnalyzer {
 
   /**
    * Evaluate a single rule against the context
+   * @param {ContextRule} rule - Rule to evaluate
+   * @param {EvaluationContext} context - Context to evaluate against
+   * @returns {RuleEvaluationResult} Rule evaluation result
+   * @private
    */
-  private evaluateRule(rule: ContextRule, context: EvaluationContext): RuleEvaluationResult {
+  evaluateRule(rule, context) {
     try {
       const conditionsMatch = rule.conditions.every(condition => 
         this.evaluateCondition(condition, context)
@@ -93,14 +107,18 @@ export class ContextAnalyzer {
 
   /**
    * Evaluate a single condition against the context
+   * @param {RuleCondition} condition - Condition to evaluate
+   * @param {EvaluationContext} context - Context to evaluate against
+   * @returns {boolean} Whether condition is met
+   * @private
    */
-  private evaluateCondition(condition: RuleCondition, context: EvaluationContext): boolean {
+  evaluateCondition(condition, context) {
     switch (condition.type) {
       case 'skill_present':
-        return context.skills.includes(condition.value as string);
+        return context.skills.includes(/** @type {string} */ (condition.value));
 
       case 'experience_years':
-        const years = condition.value as number;
+        const years = /** @type {number} */ (condition.value);
         return Object.values(context.experienceYears).some(exp => 
           this.compareValues(exp, years, condition.operator || 'greater_than')
         );
@@ -108,12 +126,12 @@ export class ContextAnalyzer {
       case 'skill_count':
         return this.compareValues(
           context.skills.length,
-          condition.value as number,
+          /** @type {number} */ (condition.value),
           condition.operator || 'greater_than'
         );
 
       case 'skill_combination':
-        const requiredSkills = condition.value as string[];
+        const requiredSkills = /** @type {string[]} */ (condition.value);
         return condition.operator === 'all'
           ? requiredSkills.every(skill => context.skills.includes(skill))
           : requiredSkills.some(skill => context.skills.includes(skill));
@@ -125,8 +143,13 @@ export class ContextAnalyzer {
 
   /**
    * Compare values using the specified operator
+   * @param {number} a - First value
+   * @param {number} b - Second value
+   * @param {string} operator - Comparison operator
+   * @returns {boolean} Comparison result
+   * @private
    */
-  private compareValues(a: number, b: number, operator: string): boolean {
+  compareValues(a, b, operator) {
     switch (operator) {
       case 'equals':
         return a === b;
@@ -141,8 +164,11 @@ export class ContextAnalyzer {
 
   /**
    * Calculate score based on effect type
+   * @param {RuleEffect} effect - Rule effect
+   * @returns {number} Effect score
+   * @private
    */
-  private calculateEffectScore(effect: RuleEffect): number {
+  calculateEffectScore(effect) {
     switch (effect.type) {
       case 'score_multiplier':
         return effect.value;
@@ -157,10 +183,18 @@ export class ContextAnalyzer {
 
   /**
    * Generate explanation for rule evaluation
+   * @param {ContextRule} rule - Rule that was evaluated
+   * @param {boolean} matched - Whether rule matched
+   * @returns {string} Explanation
+   * @private
    */
-  private generateExplanation(rule: ContextRule, matched: boolean): string {
+  generateExplanation(rule, matched) {
     return matched
       ? `Rule "${rule.name}" matched: ${rule.description}`
       : `Rule "${rule.name}" did not match`;
   }
-} 
+}
+
+module.exports = {
+  ContextAnalyzer
+}; 
