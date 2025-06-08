@@ -133,8 +133,57 @@ const cleanResumeData = (resumeData) => {
   return cleanedData;
 };
 
+const validateRequiredFields = (data) => {
+  console.log('Starting basic resume validation...');
+  const errors = [];
+  
+  // Validate personal details
+  if (!data.personalDetails) {
+    errors.push('Personal details are required');
+    console.log('Validation failed: Personal details missing');
+    return errors;
+  }
+  
+  const { firstname, lastname, email, phone, location } = data.personalDetails;
+  
+  if (!firstname || firstname.trim() === '') {
+    errors.push('First name is required');
+    console.log('Validation failed: First name missing');
+  }
+  
+  if (!lastname || lastname.trim() === '') {
+    errors.push('Last name is required');
+    console.log('Validation failed: Last name missing');
+  }
+  
+  if (!email || email.trim() === '') {
+    errors.push('Email is required');
+    console.log('Validation failed: Email missing');
+  }
+  
+  if (!phone || phone.trim() === '') {
+    errors.push('Phone number is required');
+    console.log('Validation failed: Phone number missing');
+  }
+  
+  if (!location || location.trim() === '') {
+    errors.push('Location is required');
+    console.log('Validation failed: Location missing');
+  }
+  
+  // Log validation result
+  if (errors.length > 0) {
+    console.log('Validation errors:', errors);
+  } else {
+    console.log('Resume validation passed');
+  }
+  
+  return errors;
+};
+
 module.exports = {
   isSectionEmpty,
   filterEmptyArrayItems,
-  cleanResumeData
+  cleanResumeData,
+  validateRequiredFields
 }; 

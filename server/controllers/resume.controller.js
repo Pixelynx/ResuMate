@@ -161,10 +161,16 @@ exports.createResume = async (req, res) => {
     
     const formattedResume = formatResumeResponse(resume);
     console.log('Sending formatted resume response');
-    res.status(201).json(formattedResume);
+    res.status(201).json({
+      success: true,
+      data: formattedResume
+    });
   } catch (error) {
     console.error('Error creating resume:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
@@ -172,10 +178,16 @@ exports.getAllResumes = async (req, res) => {
   try {
     const resumes = await Resume.findAll();
     const formattedResumes = resumes.map(resume => formatResumeResponse(resume));
-    res.json(formattedResumes);
+    res.json({
+      success: true,
+      data: formattedResumes
+    });
   } catch (error) {
     console.error('Error fetching resumes:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
@@ -184,13 +196,22 @@ exports.getResumeById = async (req, res) => {
     const resume = await Resume.findByPk(req.params.id);
     if (resume) {
       const formattedResume = formatResumeResponse(resume);
-      res.json(formattedResume);
+      res.json({
+        success: true,
+        data: formattedResume
+      });
     } else {
-      res.status(404).json({ error: 'Resume not found' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Resume not found' 
+      });
     }
   } catch (error) {
     console.error('Error fetching resume:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      success: false,
+      error: error.message 
+    });
   }
 };
 
