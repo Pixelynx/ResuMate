@@ -7,6 +7,25 @@ const { scoreExperience } = require('../scoring/experienceScoring');
 /** @typedef {import('../analysis/technicalKeywordLibrary').CategoryScore} CategoryScore */
 
 /**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - List of skills
+ */
+
+/**
+ * @typedef {Object} Project
+ * @property {string} title - Project title
+ * @property {string} description - Project description
+ * @property {string} technologies - Technologies used
+ */
+
+/**
+ * @typedef {Object} Education
+ * @property {string} degree - Degree name
+ * @property {string} fieldOfStudy - Field of study
+ * @property {string} [graduationDate] - Graduation date
+ */
+
+/**
  * Component weights for overall score calculation
  * @type {Object.<string, number>}
  */
@@ -20,7 +39,7 @@ const COMPONENT_WEIGHTS = {
 
 /**
  * Calculates skills match score
- * @param {Object} skills - Resume skills section
+ * @param {Skills} skills - Resume skills section
  * @param {string} jobDescription - Job description
  * @returns {{ score: number, analysis: Object }}
  */
@@ -114,7 +133,7 @@ function calculateExperienceScore(experience, jobDescription, jobTitle) {
 
 /**
  * Calculates project relevance score
- * @param {Array<Object>} projects - Project entries
+ * @param {Project[]} projects - Project entries
  * @param {string} jobDescription - Job description
  * @returns {{ score: number, analysis: Object }}
  */
@@ -159,7 +178,7 @@ function calculateProjectScore(projects, jobDescription) {
 
 /**
  * Calculates education match score
- * @param {Array<Object>} education - Education entries
+ * @param {Education[]} education - Education entries
  * @param {string} jobDescription - Job description
  * @returns {{ score: number, analysis: Object }}
  */

@@ -2,15 +2,30 @@
 const { calculateTechnicalDensity, isTechnicalRole } = require('../analysis/technicalKeywordLibrary');
 
 /**
+ * @typedef {Object} WorkExperience
+ * @property {string} startDate - Start date of experience
+ * @property {string} [endDate] - End date of experience (optional)
+ */
+
+/**
+ * @typedef {Object} TechnicalMismatchResult
+ * @property {number} penalty - Penalty value (0-1)
+ * @property {boolean} hasSevereMismatch - Whether there's a severe mismatch
+ * @property {Object} analysis - Analysis details
+ */
+
+/**
+ * @typedef {Object} PenaltyCollection
+ * @property {{ penalty: number, hasSevereMismatch: boolean }} technicalMismatch
+ * @property {{ penalty: number }} experienceMismatch
+ */
+
+/**
  * Calculates technical mismatch penalty
  * @param {string} jobDescription - Job description
  * @param {string} resumeContent - Resume content
  * @param {string} jobTitle - Job title
- * @returns {{ 
- *   penalty: number, 
- *   hasSevereMismatch: boolean,
- *   analysis: Object 
- * }}
+ * @returns {TechnicalMismatchResult}
  */
 function calculateTechnicalMismatchPenalty(jobDescription, resumeContent, jobTitle) {
   const jobTechProfile = calculateTechnicalDensity(jobDescription);
@@ -49,7 +64,7 @@ function calculateTechnicalMismatchPenalty(jobDescription, resumeContent, jobTit
 
 /**
  * Calculates experience level mismatch penalty
- * @param {Array<Object>} workExperience - Work experience entries
+ * @param {WorkExperience[]} workExperience - Work experience entries
  * @param {string} jobDescription - Job description
  * @param {string} jobTitle - Job title
  * @returns {{ penalty: number, analysis: Object }}
@@ -104,7 +119,7 @@ function calculateExperienceMismatchPenalty(workExperience, jobDescription, jobT
 /**
  * Applies penalties to the base score
  * @param {number} baseScore - Original score before penalties
- * @param {Object} penalties - Collection of penalties to apply
+ * @param {PenaltyCollection} penalties - Collection of penalties to apply
  * @returns {{ finalScore: number, analysis: Object }}
  */
 function applyPenalties(baseScore, penalties) {

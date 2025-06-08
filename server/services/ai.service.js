@@ -4,14 +4,29 @@ const { generateEnhancedCoverLetter } = require('./generation/coverLetterGenerat
 const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
 /**
+ * @typedef {Object} PersonalDetails
+ * @property {string} [title] - Professional title
+ */
+
+/**
+ * @typedef {Object} Education
+ * @property {string} [endDate] - End date of education
+ */
+
+/**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
  * @typedef {Object} ResumeData
- * @property {Object} [personalDetails]
+ * @property {PersonalDetails} [personalDetails]
  * @property {string} [firstName]
  * @property {string} [lastName]
  * @property {string} [title]
  * @property {Array<Object>} [workExperience]
- * @property {Array<Object>} [education]
- * @property {Object} [skills]
+ * @property {Array<Education>} [education]
+ * @property {Skills} [skills]
  * @property {Array<Object>} [projects]
  * @property {string} [id] - Resume identifier
  */
@@ -42,6 +57,7 @@ const RETRY_LIMIT = 3;
 const RETRY_DELAY = 1000;
 const IS_TEST_MODE = process.env.NODE_ENV === 'test';
 
+/** @type {OpenAI | undefined} */
 let openaiClient;
 try {
   if (!IS_TEST_MODE) {
@@ -50,9 +66,30 @@ try {
     });
   }
 } catch (error) {
-  console.warn('OpenAI client initialization failed:', error.message);
+  const err = /** @type {Error} */ (error);
+  console.warn('OpenAI client initialization failed:', err.message);
   console.warn('API functionality will be limited to prompt generation only.');
 }
+
+/**
+ * Type guard for Skills object
+ * @param {unknown} value - Value to check
+ * @returns {value is Skills} Whether the value is a Skills object
+ */
+const isSkills = (value) => {
+  return typeof value === 'object' && value !== null && 'skills_' in value;
+};
+
+/**
+ * Type guard for Education array
+ * @param {unknown} value - Value to check
+ * @returns {value is Education[]} Whether the value is an Education array
+ */
+const isEducationArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null && 'endDate' in item
+  );
+};
 
 /**
  * Detects the candidate's profile type based on resume content
@@ -61,11 +98,18 @@ try {
  */
 const detectCandidateProfile = (resumeData) => {
   const hasStrongExperience = (resumeData.workExperience?.length ?? 0) >= 3;
-  const hasTechnicalSkills = resumeData.skills?.skills_?.toLowerCase().includes('programming') ||
-    resumeData.skills?.skills_?.toLowerCase().includes('software');
-  const isRecentGraduate = resumeData.education?.some(edu => 
-    edu.endDate && new Date(edu.endDate).getFullYear() >= new Date().getFullYear() - 1
+  
+  const skills = resumeData.skills;
+  const hasTechnicalSkills = isSkills(skills) && (
+    skills.skills_.toLowerCase().includes('programming') ||
+    skills.skills_.toLowerCase().includes('software')
   );
+  
+  const education = resumeData.education;
+  const isRecentGraduate = isEducationArray(education) && education.some(edu => {
+    if (!edu.endDate) return false;
+    return new Date(edu.endDate).getFullYear() >= new Date().getFullYear() - 1;
+  });
 
   if (hasStrongExperience) return 'EXPERIENCED';
   if (hasTechnicalSkills) return 'TECHNICAL';
@@ -176,6 +220,7 @@ const generateCoverLetter = async (resumeData, jobDetails, options = {}) => {
 
   try {
     // Create a content generation function that uses OpenAI
+    /** @type {(prompt: string) => Promise<string>} */
     const generateContent = async (prompt) => {
       const content = await makeAPIRequestWithRetry(prompt);
       if (!content) {
@@ -203,6 +248,7 @@ const generateCoverLetter = async (resumeData, jobDetails, options = {}) => {
  * Makes API request with retry logic
  * @param {string} prompt - Generation prompt
  * @param {number} [attempt] - Current attempt number
+ * @returns {Promise<string|undefined>} Generated content or undefined
  */
 const makeAPIRequestWithRetry = async (prompt, attempt = 1) => {
   if (IS_TEST_MODE) {
@@ -231,9 +277,10 @@ const makeAPIRequestWithRetry = async (prompt, attempt = 1) => {
       top_p: 1,
     });
 
-    return completion.choices[0].message.content;
+    const content = completion.choices[0]?.message?.content;
+    return content === null ? undefined : content;
   } catch (error) {
-    if (attempt < RETRY_LIMIT && shouldRetry(error)) {
+    if (attempt < RETRY_LIMIT && shouldRetry(/** @type {any} */ (error))) {
       console.log(`Retrying API request, attempt ${attempt + 1}`);
       await delay(RETRY_DELAY * attempt);
       return makeAPIRequestWithRetry(prompt, attempt + 1);
@@ -242,20 +289,38 @@ const makeAPIRequestWithRetry = async (prompt, attempt = 1) => {
   }
 };
 
+/**
+ * Checks if an error should trigger a retry
+ * @param {{ status?: number }} error - Error object
+ * @returns {boolean} Whether to retry
+ */
 const shouldRetry = (error) => {
-  return error.status === 429 || error.status >= 500;
+  return error.status === 429 || (error.status ?? 0) >= 500;
 };
 
+/**
+ * Handles API errors
+ * @param {unknown} error - Error object
+ * @returns {Error} Formatted error
+ */
 const handleError = (error) => {
-  if (error.status === 429) {
-    return new Error('Rate limit exceeded. Please try again later.');
-  }
-  if (error.status === 401) {
-    return new Error('Authentication error. Please check API key.');
+  if (typeof error === 'object' && error !== null) {
+    const typedError = /** @type {{ status?: number }} */ (error);
+    if (typedError.status === 429) {
+      return new Error('Rate limit exceeded. Please try again later.');
+    }
+    if (typedError.status === 401) {
+      return new Error('Authentication error. Please check API key.');
+    }
   }
   return new Error('Failed to generate cover letter. Please try again.');
 };
 
+/**
+ * Delays execution for specified milliseconds
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise<void>}
+ */
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 module.exports = {

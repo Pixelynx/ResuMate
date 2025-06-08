@@ -111,15 +111,20 @@ export class ExperienceAnalyzer {
    * Calculate relevance of experience area to job context
    */
   private calculateRelevance(area: string, context: string): number {
-    const group = TechnologyMapper.findGroupForSkill(area);
-    if (!group) return 0.5; // Default relevance for unknown areas
+    const groupInfo = TechnologyMapper.findGroupForSkill(area);
+    if (!groupInfo) return 0.5; // Default relevance for unknown areas
 
-    const groupSkills = TechnologyMapper.getGroupSkills(group);
+    // Get all skills from the group
+    const groupSkills = [
+      groupInfo.group.primary,
+      ...groupInfo.group.related
+    ];
+    
     const contextWords = context.toLowerCase().split(/\s+/);
     
     // Calculate how many skills from the group appear in the context
-    const matchingSkills = groupSkills.filter(skill => 
-      contextWords.some(word => word.includes(skill.toLowerCase()))
+    const matchingSkills = groupSkills.filter((skill: string) => 
+      contextWords.some((word: string) => word.includes(skill.toLowerCase()))
     );
 
     return Math.min(1, (matchingSkills.length / groupSkills.length) + 0.3);

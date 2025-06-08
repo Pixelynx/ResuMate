@@ -25,6 +25,11 @@
  * @property {Object.<string, string[]>} emphasisKeywords - Keywords to emphasize per section
  */
 
+/**
+ * @typedef {Object} JobDetails
+ * @property {string} jobDescription - Job description text
+ */
+
 /** @type {Object.<string, number>} */
 const SECTION_BASE_WEIGHTS = {
   workExperience: 0.35,
@@ -181,7 +186,7 @@ const assessContentQuality = (content) => {
 /**
  * Prioritizes resume content sections based on job requirements
  * @param {ResumeData} resumeData - Resume content by section
- * @param {Object} jobDetails - Job description and requirements
+ * @param {JobDetails} jobDetails - Job details
  * @returns {ContentAllocation} Prioritized content allocation
  */
 const prioritizeContent = (resumeData, jobDetails) => {
@@ -191,6 +196,7 @@ const prioritizeContent = (resumeData, jobDetails) => {
   
   // Calculate relevance and priority for each section
   for (const [section, weight] of Object.entries(SECTION_BASE_WEIGHTS)) {
+    // @ts-ignore - We know these sections exist in ResumeData
     const content = extractSectionContent(resumeData[section]);
     const relevance = calculateSectionRelevance(
       content,
@@ -230,6 +236,13 @@ const prioritizeContent = (resumeData, jobDetails) => {
 };
 
 /**
+ * Type guard for string values
+ * @param {unknown} val - Value to check
+ * @returns {val is string} Whether the value is a string
+ */
+const isString = (val) => typeof val === 'string';
+
+/**
  * Extracts content from a resume section
  * @param {any} sectionData - Section data in resume
  * @returns {string} Concatenated section content
@@ -239,13 +252,18 @@ const extractSectionContent = (sectionData) => {
   
   if (Array.isArray(sectionData)) {
     return sectionData
-      .map(item => Object.values(item).filter(val => typeof val === 'string').join(' '))
+      .map(item => {
+        if (typeof item !== 'object' || item === null) return '';
+        return Object.values(item)
+          .filter(isString)
+          .join(' ');
+      })
       .join(' ');
   }
   
-  if (typeof sectionData === 'object') {
+  if (typeof sectionData === 'object' && sectionData !== null) {
     return Object.values(sectionData)
-      .filter(val => typeof val === 'string')
+      .filter(isString)
       .join(' ');
   }
   

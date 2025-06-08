@@ -27,11 +27,21 @@
  */
 
 /**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
  * @typedef {Object} ContentQualityMetrics
  * @property {number} specificity - Score for specific details (0-1)
  * @property {number} relevance - Score for job relevance (0-1)
  * @property {number} impact - Score for measurable impact (0-1)
  * @property {number} freshness - Score for content recency (0-1)
+ */
+
+/**
+ * @typedef {Object} ScoredItem
+ * @property {ContentQualityMetrics} score - Quality metrics
  */
 
 /**
@@ -169,10 +179,22 @@ const selectOptimalContent = (resumeData, jobDetails) => {
     return contentAnalysisCache.get(cacheKey) || createEmptyContent();
   }
 
-  const experienceContent = selectExperienceContent(resumeData.workExperience || [], jobDetails);
-  const skillsContent = selectSkillsContent(resumeData.skills || {}, jobDetails);
-  const projectContent = selectProjectContent(resumeData.projects || [], jobDetails);
-  const educationContent = selectEducationContent(resumeData.education || [], jobDetails);
+  const experienceContent = selectExperienceContent(
+    /** @type {WorkExperience[]} */ (resumeData.workExperience || []), 
+    jobDetails
+  );
+  const skillsContent = selectSkillsContent(
+    /** @type {Skills} */ (resumeData.skills || { skills_: '' }), 
+    jobDetails
+  );
+  const projectContent = selectProjectContent(
+    /** @type {Project[]} */ (resumeData.projects || []), 
+    jobDetails
+  );
+  const educationContent = selectEducationContent(
+    /** @type {Education[]} */ (resumeData.education || []), 
+    jobDetails
+  );
 
   // Calculate overall metrics
   const metrics = {
@@ -250,13 +272,14 @@ const calculateOverallMetric = (sections, metric) => {
 
 /**
  * Selects most relevant work experience content
- * @param {Array<WorkExperience>} experiences - Work experience entries
+ * @param {WorkExperience[]} experiences - Work experience entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected experience content with scores
  */
 const selectExperienceContent = (experiences, jobDetails) => {
   if (!experiences?.length) return { content: [], score: 0 };
 
+  /** @type {(WorkExperience & ScoredItem)[]} */
   const scoredExperiences = experiences.map(exp => ({
     ...exp,
     score: assessContentQuality(
@@ -279,37 +302,39 @@ const selectExperienceContent = (experiences, jobDetails) => {
 
 /**
  * Selects most relevant skills content
- * @param {Object} skills - Skills section
+ * @param {Skills} skills - Skills section
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected skills content with scores
  */
 const selectSkillsContent = (skills, jobDetails) => {
   if (!skills?.skills_) return { content: [], score: 0 };
 
-  const skillsList = skills.skills_.split(',').map(s => s.trim());
-  const scoredSkills = skillsList.map(skill => ({
+  const skillsList = skills.skills_.split(',').map((s) => s.trim());
+  /** @type {Array<{ skill: string; score: number }>} */
+  const scoredSkills = skillsList.map((skill) => ({
     skill,
     score: calculateRelevanceScore(skill, jobDetails.jobDescription)
   }));
 
   return {
     content: scoredSkills
-      .filter(s => s.score > 0.3)
+      .filter((s) => s.score > 0.3)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8),
-    score: Math.max(...scoredSkills.map(s => s.score))
+    score: Math.max(...scoredSkills.map((s) => s.score))
   };
 };
 
 /**
  * Selects most relevant project content
- * @param {Array<Object>} projects - Project entries
+ * @param {Project[]} projects - Project entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected project content with scores
  */
 const selectProjectContent = (projects, jobDetails) => {
   if (!projects?.length) return { content: [], score: 0 };
 
+  /** @type {(Project & ScoredItem)[]} */
   const scoredProjects = projects.map(proj => ({
     ...proj,
     score: assessContentQuality(
@@ -332,13 +357,14 @@ const selectProjectContent = (projects, jobDetails) => {
 
 /**
  * Selects most relevant education content
- * @param {Array<Object>} education - Education entries
+ * @param {Education[]} education - Education entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected education content with scores
  */
 const selectEducationContent = (education, jobDetails) => {
   if (!education?.length) return { content: [], score: 0 };
 
+  /** @type {(Education & ScoredItem)[]} */
   const scoredEducation = education.map(edu => ({
     ...edu,
     score: assessContentQuality(
