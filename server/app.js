@@ -1,8 +1,10 @@
 require('dotenv').config();
 
-const express = require('express');
-const cors = require('cors');
-const db = require('./models');
+import express from 'express';
+import cors from 'cors';
+import db from './models';
+import matchingRoutes from './routes/matching.routes';
+import { errorLogger } from './middleware/logging';
 
 const app = express();
 
@@ -32,6 +34,19 @@ require('./routes/coverLetter.routes')(app);
 
 // Consolidated job fit score routes
 require('./routes/jobFit.routes')(app);
+
+// Apply routes
+app.use('/api/matching', matchingRoutes);
+
+// Error handling middleware
+app.use(errorLogger);
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    status: 'error',
+    message: err.message || 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 
