@@ -3,6 +3,7 @@ const CoverLetter = db.coverletters;
 const Resume = db.resumes;
 const { v4: uuidv4 } = require('uuid');
 const aiService = require('../services/ai.service');
+const { extractCompleteResumeData } = require('../services/generation/resumeDataProcessor');
 
 exports.create = async (req, res) => {
   try {
@@ -214,14 +215,6 @@ exports.delete = async (req, res) => {
 // Generate a Cover Letter using AI
 exports.generate = async (req, res) => {
   try {
-    // Validate request
-    if (!req.body.resumeid || !req.body.jobtitle || !req.body.company) {
-      return res.status(400).send({
-        success: false,
-        message: "Resume ID, job title, and company are required!"
-      });
-    }
-
     const resumeid = req.body.resumeid;
     const jobDetails = {
       jobTitle: req.body.jobtitle,
@@ -231,7 +224,7 @@ exports.generate = async (req, res) => {
 
     const options = {
       tone: req.body.options?.tone || 'professional',
-      length: req.body.options?.length || 'medium',
+      length: req.body.options?.length || 'standard',
       emphasis: req.body.options?.emphasis || [],
       customInstructions: req.body.options?.customInstructions,
       model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
@@ -243,31 +236,25 @@ exports.generate = async (req, res) => {
     // Fetch the resume data
     const resume = await Resume.findByPk(resumeid);
     if (!resume) {
-      return res.status(404).send({
+      return res.status(404).json({
         success: false,
         message: `Resume with id=${resumeid} was not found.`
       });
     }
 
-    // Generate cover letter using AI service
-    const aiReponse = await aiService.generateCoverLetter(resume, jobDetails, options);
-    const content = aiReponse.content;
-
-    // Extract previous employment from work experience
-    let prevEmployed = [];
-    if (resume.workExperience) {
-      try {
-        const workExp = typeof resume.workExperience === 'string' 
-          ? JSON.parse(resume.workExperience) 
-          : resume.workExperience;
-          
-        prevEmployed = workExp && Array.isArray(workExp)
-          ? workExp.map(job => job.companyName || '').filter(Boolean)
-          : [];
-      } catch (error) {
-        console.error('Error parsing work experience:', error);
-      }
+    // Process and validate resume data
+    const processedResumeData = await extractCompleteResumeData(resume);
+    
+    // Log data quality metrics
+    console.log('Resume data quality metrics:', processedResumeData.metadata.dataQuality);
+    
+    if (processedResumeData.metadata.completenessScore < 50) {
+      console.warn(`Low resume completeness score: ${processedResumeData.metadata.completenessScore}`);
     }
+
+    // Generate cover letter using AI service
+    const aiResponse = await aiService.generateCoverLetter(processedResumeData, jobDetails, options);
+    const content = aiResponse.content;
 
     // Create a new cover letter in the database
     const coverLetter = {
@@ -275,31 +262,42 @@ exports.generate = async (req, res) => {
       title: `${jobDetails.jobTitle} at ${jobDetails.company}`,
       content: content,
       resumeid: resumeid,
-      jobtitle: req.body.jobtitle,
+      jobtitle: jobDetails.jobTitle,
       company: jobDetails.company,
-      jobdescription: jobDetails.jobDescription || '',
-      firstname: resume.firstname || '',
-      lastname: resume.lastname || '',
-      email: resume.email || '',
-      phoneNumber: resume.phone || '',
-      prevEmployed,
+      jobdescription: jobDetails.jobDescription,
+      firstname: processedResumeData.personalDetails.fullName.split(' ')[0],
+      lastname: processedResumeData.personalDetails.fullName.split(' ').slice(1).join(' '),
+      email: processedResumeData.personalDetails.email,
+      phoneNumber: processedResumeData.personalDetails.phone,
+      prevEmployed: processedResumeData.workExperience.map(exp => exp.company),
       createdAt: new Date(),
-      generationOptions: options // Store the options used for reference
+      generationOptions: {
+        ...options,
+        dataQualityMetrics: processedResumeData.metadata.dataQuality,
+        completenessScore: processedResumeData.metadata.completenessScore
+      }
     };
 
     const savedCoverLetter = await CoverLetter.create(coverLetter);
     
     // Send response with success flag and data
-    res.status(201).send({
+    res.status(201).json({
       success: true,
       data: savedCoverLetter,
+      metadata: {
+        dataQuality: processedResumeData.metadata.dataQuality,
+        completenessScore: processedResumeData.metadata.completenessScore,
+        generationMetrics: aiResponse.metadata
+      },
       message: "Cover letter generated successfully"
     });
   } catch (err) {
     console.error('Error generating cover letter:', err);
-    res.status(500).send({
+    res.status(500).json({
       success: false,
-      message: err.message || "Failed to generate cover letter."
+      message: err.message || "Failed to generate cover letter.",
+      code: err.code || 'GENERATION_ERROR',
+      details: err.details || undefined
     });
   }
 };
