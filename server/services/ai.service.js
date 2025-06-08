@@ -24,6 +24,8 @@ const { prioritizeContent } = require('./generation/content/contentAnalysis');
  * @property {string} [firstName]
  * @property {string} [lastName]
  * @property {string} [title]
+ * @property {string} [email]
+ * @property {string} [phoneNumber]
  * @property {Array<Object>} [workExperience]
  * @property {Array<Education>} [education]
  * @property {Skills} [skills]
