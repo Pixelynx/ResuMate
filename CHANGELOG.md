@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### [2025-06-08]
+- Created core interfaces and directory structure for job matching system
+  - Added SkillMatcherType interface for skill matching operations
+  - Added ExperienceMatcherType interface for experience evaluation
+  - Added CompatibilityAssessorType interface for overall job compatibility assessment
+  - Implemented comprehensive TypeScript types with documentation
+
 ### [2025-06-07]
 ### Added
 - Backend utility functions for filtering empty resume sections
