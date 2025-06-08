@@ -59,7 +59,7 @@ export interface SkillMatchConfig {
 /**
  * Interface for skill matching operations
  */
-export interface ISkillMatcher {
+export interface SkillMatcherType {
   /**
    * Match candidate skills against job requirements
    * @param jobSkills Required skills from job description
