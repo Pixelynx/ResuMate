@@ -7,6 +7,20 @@
 const { PenaltyThresholdManager } = require('../scoring/penaltyThresholds');
 
 /**
+ * @typedef {Record<string, number>} Penalties
+ */
+
+/**
+ * @typedef {Object} PenaltyFields
+ * @property {number} [education] - Education penalty
+ * @property {number} [experience] - Experience penalty
+ * @property {number} [skills] - Skills penalty
+ * @property {number} [leadership] - Leadership penalty
+ * @property {number} [technical] - Technical penalty
+ * @property {number} [seniority] - Seniority penalty
+ */
+
+/**
  * @typedef {Object} SkillMatchThresholds
  * @property {number} MODERATE_MIN - Minimum threshold for moderate match (40%)
  * @property {number} HIGH_MIN - Minimum threshold for high match (70%)
@@ -112,16 +126,17 @@ const determineCompensationPower = (yearsExperience) => {
 
 /**
  * Applies compensation to penalties based on experience and skill levels
- * @param {Object} penalties - Original penalties
+ * @param {Penalties} penalties - Original penalties
  * @param {CompensationPower} compensationPower - Compensation power levels
  * @param {SkillMatchQuality} skillMatch - Skill match assessment
  * @param {boolean} isTechnicalRole - Whether this is a technical role
  * @param {number} requiredYears - Required years of experience
  * @param {number} actualYears - Actual years of experience
- * @returns {Object} Adjusted penalties and analysis
+ * @returns {{ adjustedPenalties: Penalties, compensatedPenalties: string[], analysis: Object }}
  */
 const applyCompensation = (penalties, compensationPower, skillMatch, isTechnicalRole, requiredYears, actualYears) => {
   const penaltyManager = new PenaltyThresholdManager();
+  /** @type {Penalties} */
   const adjustedPenalties = { ...penalties };
   const compensatedPenalties = [];
 
@@ -142,9 +157,9 @@ const applyCompensation = (penalties, compensationPower, skillMatch, isTechnical
   // Apply other penalty reductions
   if (compensationPower.otherPenaltyReduction > 0) {
     for (const [key, value] of Object.entries(adjustedPenalties)) {
-      if (key !== 'education') {
+      if (key !== 'education' && typeof value === 'number') {
         const originalPenalty = value;
-        adjustedPenalties[key] *= (1 - compensationPower.otherPenaltyReduction);
+        adjustedPenalties[key] = value * (1 - compensationPower.otherPenaltyReduction);
         if (adjustedPenalties[key] < originalPenalty) {
           compensatedPenalties.push(key);
         }
@@ -171,7 +186,7 @@ const applyCompensation = (penalties, compensationPower, skillMatch, isTechnical
 
 /**
  * Calculates final compensation result
- * @param {Object} penalties - Original penalties
+ * @param {Penalties} penalties - Original penalties
  * @param {number} skillMatchPercentage - Overall skill match percentage
  * @param {Array<{ startDate?: string, endDate?: string }>} workExperience - Work experience
  * @param {SkillMatchQuality} skillMatch - Skill match assessment
@@ -194,11 +209,11 @@ const calculateCompensation = (penalties, skillMatchPercentage, workExperience, 
   );
 
   // Calculate reductions
-  /** @type {Object.<string, number>} */
-  const reductions = Object.create(null);
-  for (const key in penalties) {
-    if (Object.prototype.hasOwnProperty.call(penalties, key)) {
-      reductions[key] = penalties[key] - (adjustedPenalties[key] || 0);
+  /** @type {{ [key: string]: number }} */
+  const reductions = {};
+  for (const [key, value] of Object.entries(penalties)) {
+    if (typeof value === 'number') {
+      reductions[key] = value - (adjustedPenalties[key] || 0);
     }
   }
 

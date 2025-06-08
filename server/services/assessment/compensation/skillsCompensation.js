@@ -143,6 +143,7 @@ const calculateStringSimilarity = (str1, str2) => {
  * @returns {boolean} Whether skills are synonymous
  */
 const areSkillsSynonymous = (skill1, skill2) => {
+  /** @param {string} s */
   const normalize = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
   const s1 = normalize(skill1);
   const s2 = normalize(skill2);
