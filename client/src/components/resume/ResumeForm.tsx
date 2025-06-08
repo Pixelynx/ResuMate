@@ -21,7 +21,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
-import { WorkExperienceValidation } from './types/validationTypes';
+import { ValidationState, WorkExperienceValidation, EducationValidation, FieldValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
@@ -33,18 +33,10 @@ import {
   prevStep,
   updatePersonalDetails,
   updateWorkExperience,
-  addWorkExperience,
-  removeWorkExperience,
   updateEducation,
-  addEducation,
-  removeEducation,
   updateSkills,
   updateCertification,
-  addCertification,
-  removeCertification,
   updateProject,
-  addProject,
-  removeProject,
   initNewDraftResume,
   clearError
 } from '../../redux/slices/resumeSlice';
@@ -60,6 +52,7 @@ import { ResumeFormData } from './types/resumeTypes';
 import ResumeParser from './ResumeParser';
 import ResumeFormStepper from './ResumeFormStepper';
 import dayjs from 'dayjs';
+import { useSectionManager } from '../../hooks/useSectionManager';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
@@ -114,8 +107,8 @@ const ResumeForm: React.FC = () => {
     };
 
     const {
-      setValidationState,
       validationState,
+      setValidationState,
       fieldRefs,
       handleBlur,
       validateWorkExperienceDates,
@@ -146,66 +139,173 @@ const ResumeForm: React.FC = () => {
       }
     }, [dispatch, resumeid]);
 
-    const submitResume = async () => {
-      if (!formData) return;
-      console.log("Starting resume submission");
-      
+    const workExperienceManager = useSectionManager('workExperience');
+    const educationManager = useSectionManager('education');
+    const skillsManager = useSectionManager('skills');
+    const certificationsManager = useSectionManager('certifications');
+    const projectsManager = useSectionManager('projects');
+
+    // Update step validation to handle dynamic sections
+    const isStepValid = (step: number): boolean => {
+      if (!formData) return false;
+
+      switch (step) {
+        case 0: // Personal Details
+          return Object.values(validationState.personalDetails)
+            .every((field) => {
+              const validationField = field as FieldValidation;
+              return !validationField.error || !validationField.touched;
+            });
+        
+        case 1: // Work Experience
+          if (workExperienceManager.isEmpty()) return true;
+          
+          return validationState.workExperience?.every((exp: WorkExperienceValidation) => {
+            // Check all fields except dates first
+            const fieldsValid = Object.entries(exp)
+              .filter(([key]) => !key.includes('Date') && !key.includes('Valid'))
+              .every(([_, value]) => {
+                const field = value as FieldValidation;
+                return !field.error || !field.touched;
+              });
+
+            // Check date validation separately
+            const datesValid = exp.startDateValid && exp.endDateValid;
+            
+            return fieldsValid && datesValid;
+          }) ?? true;
+        
+        case 2: // Education
+          if (educationManager.isEmpty()) return true;
+          
+          return validationState.education?.every((edu: EducationValidation) => 
+            Object.values(edu).every((field) => {
+              const validationField = field as FieldValidation;
+              return !validationField.error || !validationField.touched;
+            })
+          ) ?? true;
+        
+        case 3: // Skills - Optional
+          return true;
+        
+        case 4: // Certifications - Optional
+          return true;
+        
+        case 5: // Projects - Optional
+          return true;
+        
+        case 6: // Preview
+          return true;
+        
+        default:
+          return false;
+      }
+    };
+
+  const submitResume = async () => {
+    if (!formData) return;
+    console.log("Starting resume submission");
+
+    try {
+      // Ensure all required fields are present
+      if (!formData.personalDetails.firstname || !formData.personalDetails.lastname ||
+        !formData.personalDetails.email || !formData.personalDetails.phone ||
+        !formData.personalDetails.location) {
+        throw new Error('Please fill in all required personal details');
+      }
+
       // Create a serialized copy of form data to ensure all dates are in ISO format
       const serializedFormData = {
         ...formData,
         workExperience: formData.workExperience.map(exp => ({
           ...exp,
-          startDate: exp.startDate ? 
+          startDate: exp.startDate ?
             (typeof exp.startDate === 'string' ? exp.startDate : dayjs(exp.startDate).toISOString()) : null,
-          endDate: exp.endDate ? 
+          endDate: exp.endDate ?
             (typeof exp.endDate === 'string' ? exp.endDate : dayjs(exp.endDate).toISOString()) : null
         })),
         education: formData.education.map(edu => ({
           ...edu,
-          graduationDate: edu.graduationDate ? 
+          graduationDate: edu.graduationDate ?
             (typeof edu.graduationDate === 'string' ? edu.graduationDate : dayjs(edu.graduationDate).toISOString()) : null
         })),
         certifications: formData.certifications.map(cert => ({
           ...cert,
-          dateObtained: cert.dateObtained ? 
+          dateObtained: cert.dateObtained ?
             (typeof cert.dateObtained === 'string' ? cert.dateObtained : dayjs(cert.dateObtained).toISOString()) : null,
-          expirationDate: cert.expirationDate ? 
+          expirationDate: cert.expirationDate ?
             (typeof cert.expirationDate === 'string' ? cert.expirationDate : dayjs(cert.expirationDate).toISOString()) : null
         }))
       };
-      
-      if (serializedFormData.workExperience && serializedFormData.workExperience.length > 0) {
-        console.log("Serialized work experience date formats:");
-        serializedFormData.workExperience.forEach((exp, i) => {
-          const startDate = exp.startDate;
-          const endDate = exp.endDate;
-          
-          console.log(`Entry ${i+1}:`);
-          console.log(` - startDate:`, startDate, typeof startDate);
-          console.log(` - endDate:`, endDate, typeof endDate);
-        });
-      }
-      
-      try {
-        if (savedResumeId) {
-          console.log("Updating existing resume with ID:", savedResumeId);
-          await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
-          console.log("Resume updated successfully");
-        } else {
-          console.log("Creating new resume");
-          const result = await dispatch(createResume(serializedFormData)).unwrap();
-          if (result) {
-            console.log("Resume created successfully with ID:", result.id);
-            setSubmitSuccess(true);
-          }
+
+      console.log("Submitting resume data:", JSON.stringify(serializedFormData, null, 2));
+
+      if (savedResumeId) {
+        console.log("Updating existing resume with ID:", savedResumeId);
+        await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
+        console.log("Resume updated successfully");
+      } else {
+        console.log("Creating new resume");
+        const result = await dispatch(createResume(serializedFormData)).unwrap();
+        if (result) {
+          console.log("Resume created successfully with ID:", result.id);
+          setSubmitSuccess(true);
         }
-      } catch (error) {
-        console.error('Error submitting resume:', error);
+      }
+    } catch (error) {
+      console.error('Error submitting resume:', error);
+      throw error;
+    }
+  };
+  
+    const handleBack = () => {
+      // Clear any validation errors for the current step before going back
+      setValidationState((prev: ValidationState) => ({
+        ...prev,
+        ...(activeStep === 1 ? { 
+          workExperience: prev.workExperience.map((exp: WorkExperienceValidation) => ({
+            ...exp,
+            startDateValid: true,
+            endDateValid: true,
+            dateErrorMessage: ''
+          }))
+        } : {}),
+        ...(activeStep === 2 ? {
+          education: prev.education.map((edu: EducationValidation) => ({
+            ...edu,
+            graduationDate: { error: false, message: '', touched: false }
+          }))
+        } : {})
+      }));
+
+      dispatch(prevStep());
+    };
+
+    const handleNext = () => {
+      if (isStepValid(activeStep)) {
+        // Clear any validation errors for the current step before moving forward
+        setValidationState((prev: ValidationState) => ({
+          ...prev,
+          ...(activeStep === 1 ? { 
+            workExperience: prev.workExperience.map((exp: WorkExperienceValidation) => ({
+              ...exp,
+              startDateValid: true,
+              endDateValid: true,
+              dateErrorMessage: ''
+            }))
+          } : {}),
+          ...(activeStep === 2 ? {
+            education: prev.education.map((edu: EducationValidation) => ({
+              ...edu,
+              graduationDate: { error: false, message: '', touched: false }
+            }))
+          } : {})
+        }));
+
+        dispatch(nextStep());
       }
     };
-  
-    const handleNext = () => dispatch(nextStep());
-    const handleBack = () => dispatch(prevStep());
+
     const handleFinish = () => submitResume();
 
     const handleChange = (section: keyof ResumeFormData, index: number, field: string, value: any) => {
@@ -254,46 +354,6 @@ const ResumeForm: React.FC = () => {
         dispatch(updateCertification({ index, field, value: processedValue }));
       } else if (section === 'projects') {
         dispatch(updateProject({ index, field, value: processedValue }));
-      }
-    };
-  
-    const addEntry = (section: keyof ResumeFormData) => {
-      if (section === 'workExperience') {
-        setValidationState(prev => {
-          const updatedWorkExperience = [...(prev.workExperience as WorkExperienceValidation[] || [])];
-          updatedWorkExperience.push({
-            companyName: { error: false, message: '', touched: false },
-            jobtitle: { error: false, message: '', touched: false },
-            location: { error: false, message: '', touched: false },
-            description: { error: false, message: '', touched: false },
-            startDateValid: true,
-            endDateValid: true,
-            dateErrorMessage: '',
-          });
-          return {
-            ...prev,
-            workExperience: updatedWorkExperience
-          };
-        });
-        dispatch(addWorkExperience());
-      } else if (section === 'education') {
-        dispatch(addEducation());
-      } else if (section === 'certifications') {
-        dispatch(addCertification());
-      } else if (section === 'projects') {
-        dispatch(addProject());
-      }
-    };
-  
-    const removeEntry = (section: keyof ResumeFormData, index: number) => {
-      if (section === 'workExperience') {
-        dispatch(removeWorkExperience(index));
-      } else if (section === 'education') {
-        dispatch(removeEducation(index));
-      } else if (section === 'certifications') {
-        dispatch(removeCertification(index));
-      } else if (section === 'projects') {
-        dispatch(removeProject(index));
       }
     };
   
@@ -493,7 +553,7 @@ const ResumeForm: React.FC = () => {
         case 1:
           return (
             <Box>
-              {formData.workExperience.map((entry, index) => (
+              {workExperienceManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
@@ -617,8 +677,8 @@ const ResumeForm: React.FC = () => {
                   </Grid>
                   <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
                     <IconButton 
-                      onClick={() => removeEntry('workExperience', index)}
-                      disabled={formData.workExperience.length === 1}
+                      onClick={() => workExperienceManager.removeItem(index)}
+                      disabled={workExperienceManager.data?.length === 1}
                       aria-label={`Remove work experience entry ${index + 1}`}
                     >
                       <RemoveCircleOutlineIcon />
@@ -627,7 +687,7 @@ const ResumeForm: React.FC = () => {
                 </Box>
               ))}
               <Button 
-                onClick={() => addEntry('workExperience')} 
+                onClick={workExperienceManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
                 Add Another Work Experience
@@ -637,7 +697,7 @@ const ResumeForm: React.FC = () => {
         case 2:
           return (
             <Box>
-              {formData.education.map((entry, index) => (
+              {educationManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -687,10 +747,20 @@ const ResumeForm: React.FC = () => {
                       </LocalizationProvider>
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('education', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => educationManager.removeItem(index)}
+                    disabled={educationManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('education')} startIcon={<AddCircleOutlineIcon />}>Add Another Education</Button>
+              <Button 
+                onClick={educationManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Education
+              </Button>
             </Box>
           );
         case 3:
@@ -705,8 +775,8 @@ const ResumeForm: React.FC = () => {
                     multiline
                     rows={4}
                     placeholder="Enter your skills (e.g., Programming Languages, Frameworks, Tools)"
-                    value={formData.skills.skills_}
-                    onChange={(e) => handleChange('skills', 0, 'skills_', e.target.value)}
+                    value={skillsManager.data?.skills_ || ''}
+                    onChange={(e) => skillsManager.updateItem(0, 'skills_', e.target.value)}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -717,8 +787,8 @@ const ResumeForm: React.FC = () => {
                     multiline
                     rows={2}
                     placeholder="Enter languages you speak"
-                    value={formData.skills.languages}
-                    onChange={(e) => handleChange('skills', 0, 'languages', e.target.value)}
+                    value={skillsManager.data?.languages || ''}
+                    onChange={(e) => skillsManager.updateItem(0, 'languages', e.target.value)}
                   />
                 </Grid>
               </Grid>
@@ -727,7 +797,7 @@ const ResumeForm: React.FC = () => {
         case 4:
           return (
             <Box>
-              {formData.certifications.map((entry, index) => (
+              {certificationsManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -779,16 +849,26 @@ const ResumeForm: React.FC = () => {
                       />
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('certifications', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => certificationsManager.removeItem(index)}
+                    disabled={certificationsManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('certifications')} startIcon={<AddCircleOutlineIcon />}>Add Another Certification</Button>
+              <Button 
+                onClick={certificationsManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Certification
+              </Button>
             </Box>
           );
         case 5:
           return (
             <Box>
-              {formData.projects.map((entry, index) => (
+              {projectsManager.data?.map((entry, index) => (
                 <Box key={index} sx={{ mb: 2 }}>
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
@@ -849,10 +929,20 @@ const ResumeForm: React.FC = () => {
                       />
                     </Grid>
                   </Grid>
-                  <IconButton onClick={() => removeEntry('projects', index)}><RemoveCircleOutlineIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => projectsManager.removeItem(index)}
+                    disabled={projectsManager.data?.length === 1}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
                 </Box>
               ))}
-              <Button onClick={() => addEntry('projects')} startIcon={<AddCircleOutlineIcon />}>Add Another Project</Button>
+              <Button 
+                onClick={projectsManager.addItem} 
+                startIcon={<AddCircleOutlineIcon />}
+              >
+                Add Another Project
+              </Button>
             </Box>
           );
           case steps.length - 1:

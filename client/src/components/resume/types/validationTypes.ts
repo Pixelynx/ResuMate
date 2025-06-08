@@ -55,7 +55,7 @@ export interface PersonalDetailsValidation {
   }
 
   // Validation types
-  interface FieldValidation {
+  export interface FieldValidation {
     error: boolean;
     message: string;
     touched: boolean
