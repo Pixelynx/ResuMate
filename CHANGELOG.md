@@ -132,6 +132,35 @@
   - Improved error handling for missing personal details
 - Reduced redundant calculations
 
+### Fixed
+- Improved job fit scoring system to provide more accurate and lenient scores
+  - Reduced technical mismatch maximum penalty from 80% to 50%
+  - Added 30% credit for related/similar technologies
+  - Adjusted mismatch thresholds for better accuracy
+  - Reduced experience level penalties
+  - Added transferable skills credit (up to 20%)
+  - Implemented feature flags for scoring system
+  - Added legacy scoring system as fallback
+  - Enhanced base score calculation with new weights
+  - Added experience boost mechanism
+  - Implemented minimum score floor (4.0)
+  - Enhanced full-stack capability recognition
+  - Increased embedding similarity impact to 30-40%
+  - Adjusted final score calculation formula
+  - Enhanced weighted average calculations
+  - Added 70% credit for partial skill matches
+  - Implemented softer diminishing returns
+  - Increased full-stack bonus to 30%
+  - Set minimum technical score of 0.2
+  - Added recognition for 7 technology groups:
+    - Frontend
+    - Backend
+    - Database
+    - Cloud
+    - Testing
+    - DevOps
+    - Architecture
+
 ### [2025-06-07]
 ### Added
 - Backend utility functions for filtering empty resume sections
