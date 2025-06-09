@@ -416,11 +416,12 @@ const CoverLetterForm: React.FC = () => {
         </Box>
         
         {/* Form content */}
-        <Paper elevation={3} sx={{ 
+        <Paper elevation={isMobile ? 0 : 3} sx={{ 
           p: { xs: 2, sm: 4 }, 
           width: '100%',
-          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
-          maxWidth: isMobile ? '100%' : 'auto'
+          background: isMobile ? 'transparent' : 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+          maxWidth: isMobile ? '100%' : 'auto',
+          boxShadow: isMobile ? 'none' : undefined
         }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Create Cover Letter
@@ -440,12 +441,29 @@ const CoverLetterForm: React.FC = () => {
           
           {renderStepContent()}
           
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            mt: 2,
+            position: isMobile ? 'fixed' : 'static',
+            bottom: isMobile ? 0 : 'auto',
+            left: isMobile ? 0 : 'auto',
+            right: isMobile ? 0 : 'auto',
+            width: isMobile ? '100%' : 'auto',
+            p: isMobile ? 2 : 0,
+            bgcolor: isMobile ? 'background.paper' : 'transparent',
+            borderTop: isMobile ? 1 : 0,
+            borderColor: 'divider',
+            zIndex: isMobile ? 1200 : 'auto'
+          }}>
             <Button
               variant="outlined"
               onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
               disabled={loading}
-              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+              sx={{ 
+                minWidth: '100px',
+                minHeight: isMobile ? '44px' : '36px'
+              }}
             >
               {activeStep === 0 ? 'Cancel' : 'Back'}
             </Button>
@@ -456,7 +474,10 @@ const CoverLetterForm: React.FC = () => {
               onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
               disabled={loading || !validateCurrentStep()}
               startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
-              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+              sx={{ 
+                minWidth: '100px',
+                minHeight: isMobile ? '44px' : '36px'
+              }}
             >
               {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
             </Button>

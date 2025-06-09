@@ -10,7 +10,9 @@ import {
   Grid,
   CircularProgress,
   Divider,
-  Alert
+  Alert,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
@@ -55,6 +57,8 @@ function a11yProps(index: number) {
 }
 
 const Dashboard: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [resumes, setResumes] = useState<Resume[]>([]);
@@ -70,9 +74,12 @@ const Dashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch resumes
-        const resumes = await resumeService.getAllResumes();
-        setResumes(resumes);
+        // Fetch resumes and sort by updatedAt in descending order
+        const fetchedResumes = await resumeService.getAllResumes();
+        const sortedResumes = [...fetchedResumes].sort((a, b) => {
+          return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+        });
+        setResumes(sortedResumes);
         
         // Fetch cover letters
         try {
@@ -150,15 +157,17 @@ const Dashboard: React.FC = () => {
         mb: 10,
         minHeight: 'auto',
         width: { xs: '100%', sm: '85%', md: '75%' },
-        minWidth: { xs: '100%', sm: '50vw' } 
+        minWidth: { xs: '100%', sm: '50vw' },
+        background: 'white'
       }}
     >
       <Paper 
-        elevation={3} 
+        elevation={isMobile ? 0 : 3} 
         sx={{ 
           p: { xs: 2, sm: 3 },
           borderRadius: 2,
-          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+          background: isMobile ? 'white' : 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+          boxShadow: isMobile ? 'none' : undefined,
           maxHeight: 'calc(100vh - 160px)',
           overflow: 'auto'
         }}

@@ -13,8 +13,6 @@ import {
   Alert,
   CircularProgress,
   Divider,
-  useTheme,
-  useMediaQuery
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -60,8 +58,6 @@ import { useSectionManager } from '../../hooks/useSectionManager';
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
 const ResumeForm: React.FC = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
     const resumeid = searchParams.get('id');
@@ -964,7 +960,11 @@ const ResumeForm: React.FC = () => {
             </Box>
           );
           case steps.length - 1:
-            return <ResumePreview formData={formData} />;
+            return (
+              <Box>
+                <ResumePreview formData={formData} />
+              </Box>
+            );
           default:
             return 'Unknown step';
         }
@@ -984,75 +984,10 @@ const ResumeForm: React.FC = () => {
             <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
           </Box>
         ) : (
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: isMobile ? 'column' : 'row',
-            justifyContent: 'center', 
-            alignItems: isMobile ? 'center' : 'flex-start',
-            mt: isMobile ? 2 : 4, 
-            mb: 4 
-          }}>
-            {/* Stepper component */}
-            <Box sx={{ 
-              width: isMobile ? '100%' : 'auto',
-              mb: isMobile ? 2 : 0,
-              overflow: 'hidden'
-            }}>
-              <ResumeFormStepper activeStep={activeStep} steps={steps} />
-            </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+            <ResumeFormStepper activeStep={activeStep} steps={steps} />
             
-            {isMobile ? (
-              <Box sx={{ width: '100%', px: 2 }}>
-                <Typography variant="h5" component="div" gutterBottom>
-                  {steps[activeStep]}
-                </Typography>
-                {renderStepContent(activeStep)}
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  mt: 3,
-                  mb: 2,
-                  position: 'sticky',
-                  bottom: 0,
-                  backgroundColor: 'background.default',
-                  py: 2,
-                  borderTop: 1,
-                  borderColor: 'divider'
-                }}>
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    onClick={handleBack} 
-                    disabled={activeStep === 0}
-                    sx={{ minHeight: '44px' }}
-                  >
-                    Back
-                  </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                      sx={{ minHeight: '44px' }}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={handleNext}
-                      sx={{ minHeight: '44px' }}
-                    >
-                      {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
-                    </Button>
-                  )}
-                </Box>
-              </Box>
-            ) : (
-              <Card sx={{ 
+            <Card sx={{ 
                 maxWidth: 800,
                 width: '100%', 
                 p: 3,
@@ -1060,34 +995,46 @@ const ResumeForm: React.FC = () => {
                 boxShadow: 3,
                 background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
               }}>
-                <CardContent>
-                  <Typography variant="h5" component="div" gutterBottom>
-                    {steps[activeStep]}
-                  </Typography>
-                  {renderStepContent(activeStep)}
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between' }}>
-                  <Button variant="outlined" color="primary" onClick={handleBack} disabled={activeStep === 0}>
-                    Back
+              <CardContent>
+                <Typography variant="h5" component="div" gutterBottom>
+                  {steps[activeStep]}
+                </Typography>
+                {renderStepContent(activeStep)}
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'space-between' }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  onClick={handleBack} 
+                  disabled={activeStep === 0}
+                  sx={{ minWidth: '100px' }}
+                >
+                  Back
+                </Button>
+                <Box sx={{ flex: '1 1 auto' }} />
+                {activeStep === steps.length - 1 ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleFinish}
+                    disabled={submitting}
+                    startIcon={submitting ? <CircularProgress size={20} /> : null}
+                    sx={{ minWidth: '150px' }}
+                  >
+                    {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
                   </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
-                    </Button>
-                  ) : (
-                    <Button variant="contained" color="primary" onClick={handleNext}>
-                      {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
-            )}
+                ) : (
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleNext}
+                    sx={{ minWidth: '150px' }}
+                  >
+                    {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
+                  </Button>
+                )}
+              </CardActions>
+            </Card>
           </Box>
         )}
         

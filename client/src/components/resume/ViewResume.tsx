@@ -238,11 +238,12 @@ const ViewResume: React.FC = () => {
         }}
       >
         <Paper 
-          elevation={3} 
+          elevation={isMobile ? 0 : 3} 
           sx={{ 
             p: { xs: 2, sm: 3 },
             borderRadius: 2,
-            background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+            background: isMobile ? 'transparent' : 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+            boxShadow: isMobile ? 'none' : undefined,
             width: '100%',
             maxWidth: '800px',
             height: 'auto',
