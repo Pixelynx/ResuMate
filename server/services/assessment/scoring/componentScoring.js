@@ -62,41 +62,63 @@ function calculateSkillsScore(skills, jobDescription) {
   const jobTechProfile = calculateTechnicalDensity(jobDescription);
   const skillsTechProfile = calculateTechnicalDensity(skills.skills_);
 
-  // Calculate skill relevance
-  const relevantSkills = skillsTechProfile.matches.filter(skill =>
-    jobTechProfile.matches.includes(skill)
-  );
+  // Calculate skill relevance with partial matching
+  const relevantSkills = [];
+  const partialMatches = [];
+  
+  skillsTechProfile.matches.forEach(skill => {
+    if (jobTechProfile.matches.includes(skill)) {
+      relevantSkills.push(skill);
+    } else {
+      const isPartialMatch = jobTechProfile.matches.some(jobSkill => 
+        jobSkill.includes(skill) || skill.includes(jobSkill)
+      );
+      if (isPartialMatch) {
+        partialMatches.push(skill);
+      }
+    }
+  });
 
   // Calculate missing critical skills
   const missingSkills = jobTechProfile.matches.filter(skill =>
-    !skillsTechProfile.matches.includes(skill)
+    !relevantSkills.includes(skill) && !partialMatches.some(match => 
+      skill.includes(match) || match.includes(skill)
+    )
   );
 
-  // Base score from relevant skills
-  let score = relevantSkills.length / (jobTechProfile.matches.length || 1);
+  // Base score calculation with partial credit
+  const exactMatchScore = relevantSkills.length / (jobTechProfile.matches.length || 1);
+  const partialMatchScore = (partialMatches.length * 0.7) / (jobTechProfile.matches.length || 1); // 70% credit for partial matches
+  let score = exactMatchScore + partialMatchScore;
 
   // Apply diminishing returns
-  score = Math.sqrt(score);
+  score = Math.pow(score, 0.7); // Less aggressive diminishing returns
 
   // Check for full-stack capabilities
   const skillsLower = skills.skills_.toLowerCase();
   const fullStackScore = calculateFullStackBonus(skillsLower);
   
-  // Add full-stack bonus (up to 20% boost)
-  score = Math.min(1, score * (1 + fullStackScore * 0.2));
+  // Add full-stack bonus (up to 30% boost)
+  score = Math.min(1, score * (1 + fullStackScore * 0.3));
 
-  // Penalize for missing critical skills (reduced penalty)
-  const missingPenalty = missingSkills.length * 0.08; // Reduced from 0.1
-  score = Math.max(0, score - missingPenalty);
+  // Add transferable skills bonus
+  const transferableBonus = calculateTransferableSkillsBonus(skillsTechProfile, jobTechProfile);
+  score = Math.min(1, score + transferableBonus);
+
+  // Softer penalty for missing critical skills
+  const missingPenalty = Math.min(0.3, missingSkills.length * 0.05); // Cap at 30% penalty
+  score = Math.max(0.2, score - missingPenalty); // Minimum score of 0.2 if any technical skills present
 
   return {
     score,
     analysis: {
       relevantSkills,
+      partialMatches,
       missingSkills,
       technicalDensity: skillsTechProfile.score,
-      categoryScores: skillsTechProfile.categoryScores,
-      fullStackScore
+      categoryScores: skillsTechProfile.categories,
+      fullStackScore,
+      transferableBonus
     }
   };
 }
@@ -522,6 +544,43 @@ function extractIndustryTerms(jobDescription) {
   return commonIndustryTerms.filter(term => 
     jobDescription.toLowerCase().includes(term)
   );
+}
+
+/**
+ * Calculates bonus for transferable technical skills
+ * @param {Object} candidateProfile - Candidate's technical profile
+ * @param {Object} jobProfile - Job's technical profile
+ * @returns {number} Bonus score (0-0.2)
+ */
+function calculateTransferableSkillsBonus(candidateProfile, jobProfile) {
+  // Define related technology groups
+  const relatedTech = {
+    frontend: ['react', 'vue', 'angular', 'javascript', 'typescript'],
+    backend: ['node', 'express', 'django', 'flask', 'spring', 'go'],
+    database: ['sql', 'postgresql', 'mongodb', 'mysql', 'redis'],
+    cloud: ['aws', 'azure', 'gcp', 'cloud'],
+    testing: ['jest', 'mocha', 'pytest', 'junit', 'testing'],
+    devops: ['docker', 'kubernetes', 'jenkins', 'ci/cd', 'gitlab'],
+    architecture: ['microservices', 'api', 'rest', 'graphql', 'system design']
+  };
+
+  let bonus = 0;
+
+  // Check each technology group
+  Object.values(relatedTech).forEach(group => {
+    const jobHasGroup = group.some(tech => 
+      jobProfile.matches.some(skill => skill.includes(tech))
+    );
+    const candidateHasGroup = group.some(tech => 
+      candidateProfile.matches.some(skill => skill.includes(tech))
+    );
+
+    if (jobHasGroup && candidateHasGroup) {
+      bonus += 0.05; // 5% bonus for each matching tech group
+    }
+  });
+
+  return Math.min(0.2, bonus); // Cap bonus at 20%
 }
 
 module.exports = {
