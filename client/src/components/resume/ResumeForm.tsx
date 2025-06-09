@@ -994,7 +994,7 @@ const ResumeForm: React.FC = () => {
           }}>
             {/* Stepper component */}
             <Box sx={{ 
-              width: isMobile ? '100%' : '50%',
+              width: isMobile ? '100%' : 'auto',
               mb: isMobile ? 2 : 0,
               overflow: 'hidden'
             }}>
