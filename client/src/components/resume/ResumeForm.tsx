@@ -966,96 +966,112 @@ const ResumeForm: React.FC = () => {
             </Box>
           );
           case steps.length - 1:
-            return <ResumePreview formData={formData} />;
+            return (
+              <Box>
+                <ResumePreview formData={formData} />
+              </Box>
+            );
           default:
             return 'Unknown step';
         }
     };
   
     return (
-      <Container 
-        maxWidth="xl" 
-        sx={{ 
-          mt: 3, 
-          mb: 10,
-          minHeight: '80vh',
+      <Box sx={{ 
+          minHeight: '100vh',
           display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: 3,
-          width: '100%'
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          paddingBottom: '80px'
         }}>
-          <ResumeFormStepper activeStep={activeStep} steps={steps} />
-          
-          <Box sx={{ 
-            flex: 1,
-            minWidth: 0, // This prevents flex items from overflowing
-            maxWidth: isMobile ? '100%' : '800px',
-          }}>
-            <Paper 
-              elevation={isMobile ? 0 : 3} 
-              sx={{ 
-                p: { xs: 2, sm: 3 },
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <CircularProgress />
+            <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+            <ResumeFormStepper activeStep={activeStep} steps={steps} />
+            
+            <Card sx={{ 
+                maxWidth: 800,
+                width: '100%', 
+                p: 3,
                 borderRadius: 2,
-                background: isMobile ? 'transparent' : 'white',
-                boxShadow: isMobile ? 'none' : undefined
-              }}
-            >
-              {/* Form content */}
+                boxShadow: 3
+              }}>
               <CardContent>
                 <Typography variant="h5" component="div" gutterBottom>
                   {steps[activeStep]}
                 </Typography>
                 {renderStepContent(activeStep)}
               </CardContent>
-            </Paper>
-
-            {/* Navigation buttons */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              mt: 2,
-              position: isMobile ? 'fixed' : 'static',
-              bottom: isMobile ? 0 : 'auto',
-              left: isMobile ? 0 : 'auto',
-              right: isMobile ? 0 : 'auto',
-              width: isMobile ? '100%' : 'auto',
-              p: isMobile ? 2 : 0,
-              bgcolor: isMobile ? 'background.paper' : 'transparent',
-              borderTop: isMobile ? 1 : 0,
-              borderColor: 'divider',
-              zIndex: isMobile ? 1200 : 'auto'
-            }}>
-              <Button
-                variant='outlined'
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                sx={{ 
-                  minWidth: '100px',
-                  minHeight: isMobile ? '44px' : '36px'
-                }}
-              >
-                Back
-              </Button>
-              <Button
-                variant="contained"
-                color='primary'
-                onClick={handleNext}
-                sx={{ 
-                  minWidth: '100px',
-                  minHeight: isMobile ? '44px' : '36px'
-                }}
-              >
-                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-              </Button>
-            </Box>
+              <CardActions sx={{ justifyContent: 'space-between' }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  onClick={handleBack} 
+                  disabled={activeStep === 0}
+                  sx={{ minWidth: '100px' }}
+                >
+                  Back
+                </Button>
+                <Box sx={{ flex: '1 1 auto' }} />
+                {activeStep === steps.length - 1 ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleFinish}
+                    disabled={submitting}
+                    startIcon={submitting ? <CircularProgress size={20} /> : null}
+                    sx={{ minWidth: '150px' }}
+                  >
+                    {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="contained" 
+                    color="primary" 
+                    onClick={handleNext}
+                    sx={{ minWidth: '150px' }}
+                  >
+                    {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
+                  </Button>
+                )}
+              </CardActions>
+            </Card>
           </Box>
-        </Box>
-      </Container>
+        )}
+        
+        {/* Success/Error Notifications */}
+        <Snackbar 
+          open={submitSuccess} 
+          autoHideDuration={6000} 
+          onClose={() => {
+            setSubmitSuccess(false);
+            // Navigate to the preview step after successful submission
+            if (activeStep !== steps.length - 1) {
+              handleNext();
+            }
+          }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setSubmitSuccess(false)} severity="success">
+            Resume {savedResumeId ? 'updated' : 'saved'} successfully!
+          </Alert>
+        </Snackbar>
+        
+        <Snackbar 
+          open={!!submitError} 
+          autoHideDuration={6000} 
+          onClose={() => dispatch(clearError())}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => dispatch(clearError())} severity="error">
+            {submitError}
+          </Alert>
+        </Snackbar>
+      </Box>
     );
   };
   
