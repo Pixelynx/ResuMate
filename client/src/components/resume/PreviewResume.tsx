@@ -108,6 +108,39 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
       </Box>
       
       <Divider sx={{ mb: 3 }} />
+
+      {/* Skills */}
+      {hasSkills && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Skills
+          </Typography>
+          
+          <Grid container spacing={2}>
+            {skills.skills_ && (
+              <Grid item xs={12} md={skills.languages ? 6 : 12}>
+                <Typography variant="subtitle1">Professional Skills</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                  {skills.skills_.split(',').map((skill, index) => (
+                    skill.trim() && <Chip key={index} label={skill.trim()} size="small" />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+            
+            {skills.languages && (
+              <Grid item xs={12} md={skills.skills_ ? 6 : 12}>
+                <Typography variant="subtitle1">Languages</Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                  {skills.languages.split(',').map((language, index) => (
+                    language.trim() && <Chip key={index} label={language.trim()} size="small" />
+                  ))}
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+      )}
       
       {/* Work Experience */}
       {hasWorkExperience && (
@@ -142,6 +175,52 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
         </Box>
       )}
       
+      {/* Projects */}
+      {hasProjects && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Projects
+          </Typography>
+          
+          {projects
+            .filter(project => project.title.trim() || project.description.trim())
+            .map((project, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                <Typography variant="h6">{project.title}</Typography>
+                {(project.role || project.duration) && (
+                  <Typography variant="subtitle1" color="primary">
+                    {project.role}{project.role && project.duration && " | "}{project.duration}
+                  </Typography>
+                )}
+                
+                {project.technologies && project.technologies.trim() && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 1 }}>
+                    {project.technologies.split(',').map((tech, techIndex) => (
+                      tech.trim() && <Chip key={techIndex} label={tech.trim()} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                )}
+                
+                {project.description && (
+                  <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
+                    {project.description}
+                  </Typography>
+                )}
+                
+                {project.projectUrl && (
+                  <Box sx={{ mt: 1 }}>
+                    <Link href={project.projectUrl} target="_blank" rel="noopener noreferrer">
+                      View Project
+                    </Link>
+                  </Box>
+                )}
+                
+                {index < projects.filter(p => p.title.trim() || p.description.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
+              </Box>
+            ))}
+        </Box>
+      )}
+
       {/* Education */}
       {hasEducation && (
         <Box sx={{ mb: 3 }}>
@@ -167,39 +246,6 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                 {index < education.filter(e => e.institutionName.trim() || e.degree.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
               </Box>
             ))}
-        </Box>
-      )}
-      
-      {/* Skills */}
-      {hasSkills && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Skills
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {skills.skills_ && (
-              <Grid item xs={12} md={skills.languages ? 6 : 12}>
-                <Typography variant="subtitle1">Professional Skills</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {skills.skills_.split(',').map((skill, index) => (
-                    skill.trim() && <Chip key={index} label={skill.trim()} size="small" />
-                  ))}
-                </Box>
-              </Grid>
-            )}
-            
-            {skills.languages && (
-              <Grid item xs={12} md={skills.skills_ ? 6 : 12}>
-                <Typography variant="subtitle1">Languages</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {skills.languages.split(',').map((language, index) => (
-                    language.trim() && <Chip key={index} label={language.trim()} size="small" />
-                  ))}
-                </Box>
-              </Grid>
-            )}
-          </Grid>
         </Box>
       )}
       
@@ -248,52 +294,6 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                 </ListItem>
               ))}
           </List>
-        </Box>
-      )}
-      
-      {/* Projects */}
-      {hasProjects && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Projects
-          </Typography>
-          
-          {projects
-            .filter(project => project.title.trim() || project.description.trim())
-            .map((project, index) => (
-              <Box key={index} sx={{ mb: 2 }}>
-                <Typography variant="h6">{project.title}</Typography>
-                {(project.role || project.duration) && (
-                  <Typography variant="subtitle1" color="primary">
-                    {project.role}{project.role && project.duration && " | "}{project.duration}
-                  </Typography>
-                )}
-                
-                {project.technologies && project.technologies.trim() && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 1 }}>
-                    {project.technologies.split(',').map((tech, techIndex) => (
-                      tech.trim() && <Chip key={techIndex} label={tech.trim()} size="small" variant="outlined" />
-                    ))}
-                  </Box>
-                )}
-                
-                {project.description && (
-                  <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
-                    {project.description}
-                  </Typography>
-                )}
-                
-                {project.projectUrl && (
-                  <Box sx={{ mt: 1 }}>
-                    <Link href={project.projectUrl} target="_blank" rel="noopener noreferrer">
-                      View Project
-                    </Link>
-                  </Box>
-                )}
-                
-                {index < projects.filter(p => p.title.trim() || p.description.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
-              </Box>
-            ))}
         </Box>
       )}
     </Container>

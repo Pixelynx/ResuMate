@@ -22,7 +22,7 @@
 }
 
 .title {
-  color: rgba(106, 27, 154, 0.1) !important;
+  color: rgba(106, 27, 154, 0.2) !important;
   font-size: 1.25rem !important;
   font-weight: 600 !important;
   margin: 0;
@@ -36,7 +36,7 @@
 }
 
 .menuButton {
-  color: rgba(106, 27, 154, 0.1) !important;
+  color: rgba(106, 27, 154, 0.2) !important;
 }
 
 .card:hover .menuButton {
@@ -120,7 +120,7 @@
 }
 
 .date {
-  color: rgba(106, 27, 154, 0.1);
+  color: rgba(106, 27, 154, 0.2);
   font-size: 0.875rem !important;
   margin-bottom: 12px;
 }
@@ -137,7 +137,7 @@
 }
 
 .button {
-  color: rgba(106, 27, 154, 0.1) !important;
+  color: rgba(106, 27, 154, 0.2) !important;
   text-transform: none !important;
 }
 
@@ -151,7 +151,7 @@
 }
 
 .button:disabled {
-  color: rgba(106, 27, 154, 0.1) !important;
+  color: rgba(106, 27, 154, 0.2) !important;
 }
 
 .buttonText {
@@ -163,6 +163,10 @@
     background: white;
   }
 
+  .menuButton {
+    color: rgba(106, 27, 154, 0.2) !important;
+  }
+
   .title {
     color: rgba(106, 27, 154, 0.95) !important;
   }
@@ -171,7 +175,6 @@
     transform: none;
     box-shadow: none;
   }
-
   .sections {
     flex-direction: column;
   }

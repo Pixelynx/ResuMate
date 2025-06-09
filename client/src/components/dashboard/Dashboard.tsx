@@ -230,8 +230,17 @@ const Dashboard: React.FC = () => {
               value={tabValue} 
               onChange={handleTabChange} 
               aria-label="dashboard tabs"
-              textColor="primary"
-              indicatorColor="primary"
+              sx={{
+                '& .MuiTab-root': {
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  '&.Mui-selected': {
+                    color: 'rgb(160, 56, 224) !important'
+                  }
+                },
+                '& .MuiTabs-indicator': {
+                  backgroundColor: 'rgb(160, 56, 224) !important'
+                }
+              }}
               variant="scrollable"
               scrollButtons="auto"
             >
