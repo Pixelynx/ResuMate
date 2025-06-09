@@ -119,6 +119,31 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
 
         <Divider sx={{ mb: 3 }} />
 
+        {/* Skills */}
+        {resume.skills && (resume.skills.skills_ || resume.skills.languages) && (
+          <SectionContent>
+            <SectionTitle variant="h4">Skills</SectionTitle>
+            <Grid container spacing={2}>
+              {resume.skills.skills_ && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" sx={{ whiteSpace: 'pre-line'}}>Professional</Typography>
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                    {resume.skills.skills_}
+                  </Typography>
+                </Grid>
+              )}
+              {resume.skills.languages && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" component="h4">Languages</Typography>
+                  <Typography variant="body1">
+                    {resume.skills.languages}
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
+          </SectionContent>
+        )}
+
         {/* Work Experience */}
         {resume.workExperience && resume.workExperience.length > 0 && (
           <SectionContent>
@@ -151,65 +176,6 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                 </Typography>
               </Box>
             ))}
-          </SectionContent>
-        )}
-
-        {/* Education */}
-        {resume.education && resume.education.length > 0 && (
-          <SectionContent>
-            <SectionTitle variant="h4">Education</SectionTitle>
-            {resume.education.map((edu, index) => (
-              <Box key={index} sx={{ mb: 2 }}>
-                <Grid container justifyContent="space-between">
-                  <Grid item xs={9}>
-                    <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
-                      {edu.institutionName}
-                    </Typography>
-                    <Typography variant="body1">
-                      {edu.degree} in {edu.fieldOfStudy}
-                    </Typography>
-                    {edu.location && (
-                      <Typography variant="body2" color="textSecondary">
-                        {edu.location}
-                      </Typography>
-                    )}
-                  </Grid>
-                  <Grid item xs={3} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">
-                      {edu.graduationDate ? new Date(edu.graduationDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short'
-                      }) : ''}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
-            ))}
-          </SectionContent>
-        )}
-
-        {/* Skills */}
-        {resume.skills && (resume.skills.skills_ || resume.skills.languages) && (
-          <SectionContent>
-            <SectionTitle variant="h4">Skills</SectionTitle>
-            <Grid container spacing={2}>
-              {resume.skills.skills_ && (
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" sx={{ whiteSpace: 'pre-line'}}>Professional</Typography>
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                    {resume.skills.skills_}
-                  </Typography>
-                </Grid>
-              )}
-              {resume.skills.languages && (
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" component="h4">Languages</Typography>
-                  <Typography variant="body1">
-                    {resume.skills.languages}
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
           </SectionContent>
         )}
 
@@ -247,6 +213,40 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                     <strong>Technologies:</strong> {project.technologies}
                   </Typography>
                 )}
+              </Box>
+            ))}
+          </SectionContent>
+        )}
+
+        {/* Education */}
+        {resume.education && resume.education.length > 0 && (
+          <SectionContent>
+            <SectionTitle variant="h4">Education</SectionTitle>
+            {resume.education.map((edu, index) => (
+              <Box key={index} sx={{ mb: 2 }}>
+                <Grid container justifyContent="space-between">
+                  <Grid item xs={9}>
+                    <Typography variant="h6" component="h3" sx={{ fontWeight: 'bold' }}>
+                      {edu.institutionName}
+                    </Typography>
+                    <Typography variant="body1">
+                      {edu.degree} in {edu.fieldOfStudy}
+                    </Typography>
+                    {edu.location && (
+                      <Typography variant="body2" color="textSecondary">
+                        {edu.location}
+                      </Typography>
+                    )}
+                  </Grid>
+                  <Grid item xs={3} sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2">
+                      {edu.graduationDate ? new Date(edu.graduationDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short'
+                      }) : ''}
+                    </Typography>
+                  </Grid>
+                </Grid>
               </Box>
             ))}
           </SectionContent>

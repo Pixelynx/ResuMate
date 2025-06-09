@@ -31,7 +31,7 @@ const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeS
       display: 'flex', 
       flexDirection: isMobile ? 'row' : 'column',
       mr: isMobile ? 0 : 3,
-      mb: isMobile ? 3 : 0,
+      mb: isMobile ? 1 : 0,
       width: isMobile ? '100%' : '250px',
       overflowX: isMobile ? 'auto' : 'visible',
       py: isMobile ? 1 : 0,
@@ -41,7 +41,7 @@ const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeS
         container 
         spacing={2} 
         sx={{ 
-          mb: isMobile ? 0 : 2,
+          mb: isMobile ? 3 : 2,
           flexWrap: isMobile ? 'nowrap' : 'wrap',
           width: isMobile ? 'max-content' : '100%',
           justifyContent: isMobile ? 'center' : 'flex-start'
@@ -67,7 +67,7 @@ const CoverLetterFormStepper: React.FC<CoverLetterFormStepperProps> = ({ activeS
                     ? 'linear-gradient(45deg, #6a1b9a 30%, #8e24aa 90%)' 
                     : isCompleted
                     ? 'linear-gradient(45deg, #4a148c 30%, #6a1b9a 90%)'
-                    : 'white',
+                    : 'linear-gradient(45deg, #f9f4fa 30%, #f4eaf6 90%)',
                   color: isActive || isCompleted ? 'white' : 'text.primary',
                   borderRadius: '8px',
                   boxShadow: isActive 

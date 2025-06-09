@@ -125,9 +125,9 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        minHeight: '30vh',
+        minHeight: '10vh',
         justifyContent: 'center',
-        mt: 2,
+        mt: 5,
         mb: 2
       }}
     >
@@ -183,7 +183,7 @@ const JobScore: React.FC<JobScoreProps> = ({ coverLetterId }) => {
             fontWeight: 'bold',
             color: '#6A1B9A',
             pt: 3,
-            pr: 6 // Add space for the close button
+            pr: 6
           }}
         >
           Job Fit Analysis

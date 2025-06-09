@@ -273,7 +273,6 @@ const ViewCoverLetter: React.FC = () => {
             documentId={coverLetter.id} 
             documentType="coverLetter" 
             contentRef={printableRef}
-            // TODO: Investigate button prop error
             // @ts-ignore
             buttonProps={{
               sx: { 
@@ -297,7 +296,7 @@ const ViewCoverLetter: React.FC = () => {
               onClick={() => handleButtonClick(handleBack)}
               sx={{ 
                 position: 'fixed',
-                bottom: 80,
+                top: 66,
                 left: 16,
                 zIndex: 2
               }}
@@ -313,7 +312,7 @@ const ViewCoverLetter: React.FC = () => {
               onClick={() => handleButtonClick(handleEdit)}
               sx={{ 
                 position: 'fixed',
-                bottom: 16,
+                bottom: 70,
                 right: 16,
                 zIndex: 2
               }}
@@ -334,7 +333,7 @@ const ViewCoverLetter: React.FC = () => {
               }}
               sx={{ 
                 position: 'fixed',
-                bottom: 16,
+                bottom: 70,
                 right: 88,
                 zIndex: 2
               }}
@@ -350,7 +349,7 @@ const ViewCoverLetter: React.FC = () => {
               onClick={() => handleButtonClick(handleDelete)}
               sx={{ 
                 position: 'fixed',
-                bottom: 16,
+                bottom: 70,
                 right: 160,
                 zIndex: 2
               }}
@@ -384,50 +383,80 @@ const ViewCoverLetter: React.FC = () => {
           }
         `}</style>
         
-        <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, mt: 4, mb: 4 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
-                {coverLetter.content}
-              </Typography>
-            </Grid>
-
-            {!isMobile && (
+        <Container 
+          maxWidth="lg" 
+          sx={{ 
+            mt: 5, 
+            mb: 2,
+            pb: 10,
+            display: 'flex',
+            justifyContent: 'center',
+            width: '100%',
+            minHeight: 'auto'
+          }}
+        >
+          <Paper 
+            elevation={3} 
+            sx={{ 
+              p: { xs: 2, sm: 4 },
+              borderRadius: 2,
+              background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+              width: '100%',
+              maxWidth: '800px',
+              height: 'auto',
+              overflow: 'visible'
+            }}
+          >
+            <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Box display="flex" gap={2} mt={3}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleButtonClick(handleEdit)}
-                    disabled={loading}
-                    sx={{ 
-                      minHeight: '48px',
-                      minWidth: '120px',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => handleButtonClick(handleDelete)}
-                    disabled={loading}
-                    sx={{ 
-                      minHeight: '48px',
-                      minWidth: '120px',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </Box>
+                <Typography variant="body1" style={{ whiteSpace: 'pre-line' }}>
+                  {coverLetter.content}
+                </Typography>
               </Grid>
-            )}
-          </Grid>
-        </Paper>
+            </Grid>
+          </Paper>
+        </Container>
+
+        {!isMobile && (
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              gap: 2, 
+              mt: 3,
+              mb: 8,
+              ml: 3
+            }}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<EditIcon />}
+              onClick={() => handleButtonClick(handleEdit)}
+              disabled={loading}
+              sx={{ 
+                minHeight: '48px',
+                minWidth: '120px',
+                borderRadius: '8px'
+              }}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => handleButtonClick(handleDelete)}
+              disabled={loading}
+              sx={{ 
+                minHeight: '48px',
+                minWidth: '120px',
+                borderRadius: '8px'
+              }}
+            >
+              Delete
+            </Button>
+          </Box>
+        )}
       </Box>
       
       {/* Hidden printable view - only shown during printing */}
