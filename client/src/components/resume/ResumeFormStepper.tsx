@@ -54,7 +54,7 @@ const ResumeFormStepper: React.FC<ResumeFormStepperProps> = ({ activeStep, steps
           width: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
-          py: 1,
+          py: 3,
           px: 2,
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
