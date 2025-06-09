@@ -1,20 +1,21 @@
 .footer {
   position: fixed;
-  bottom: 4px;
+  bottom: 0;
   left: 50%;
-  width: calc(100% - 32px);
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
   max-width: 1200px;
   padding: 16px 24px;
-  border-radius: 12px;
   background-color: rgba(106, 27, 154, 0.95);
   backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateX(-50%);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: white;
   z-index: 10;
+  margin: 0 auto;
+  border-radius: 8px 8px 0 0;
 }
 
 .copyright {
@@ -29,11 +30,11 @@
 .link {
   opacity: 0.9;
   transition: opacity 0.2s;
-  color: inherit;
+  color: white !important;
   text-decoration: none;
 }
 
 .link:hover {
   opacity: 1;
   text-decoration: underline;
-} 
+}

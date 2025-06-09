@@ -36,7 +36,7 @@ function App() {
         position: 'relative',
         flexDirection: 'column',
         justifyItems: 'center',
-        minHeight: '100vh'
+        maxHeight: '100vh'
       }}
     >
       <ErrorBoundary FallbackComponent={ErrorFallback}>

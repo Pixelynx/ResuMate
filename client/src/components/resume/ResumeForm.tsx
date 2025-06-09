@@ -23,7 +23,7 @@ import { useFormValidation } from './validation/useFormValidation';
 import { formatPhone } from '../../utils/validation';
 import { ValidationState, WorkExperienceValidation, EducationValidation, FieldValidation } from './types/validationTypes';
 import ResumePreview from './PreviewResume';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { 
   fetchResumeById, 
@@ -38,7 +38,8 @@ import {
   updateCertification,
   updateProject,
   initNewDraftResume,
-  clearError
+  clearError,
+  resetState
 } from '../../redux/slices/resumeSlice';
 import { 
   selectActiveStep, 
@@ -60,6 +61,7 @@ const ResumeForm: React.FC = () => {
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
     const resumeid = searchParams.get('id');
+    const navigate = useNavigate();
     
     // Redux state
     const activeStep = useAppSelector(selectActiveStep);
@@ -138,6 +140,14 @@ const ResumeForm: React.FC = () => {
         dispatch(fetchResumeById(resumeid));
       }
     }, [dispatch, resumeid]);
+
+    // Cleanup effect
+    useEffect(() => {
+      return () => {
+        // Reset state when component unmounts
+        dispatch(resetState());
+      };
+    }, [dispatch]);
 
     const workExperienceManager = useSectionManager('workExperience');
     const educationManager = useSectionManager('education');
@@ -244,12 +254,16 @@ const ResumeForm: React.FC = () => {
         console.log("Updating existing resume with ID:", savedResumeId);
         await dispatch(updateResume({ id: savedResumeId, formData: serializedFormData })).unwrap();
         console.log("Resume updated successfully");
+        dispatch(resetState());
+        navigate(`/resume/${savedResumeId}`);
       } else {
         console.log("Creating new resume");
         const result = await dispatch(createResume(serializedFormData)).unwrap();
         if (result) {
           console.log("Resume created successfully with ID:", result.id);
           setSubmitSuccess(true);
+          dispatch(resetState());
+          navigate(`/resume/${result.id}`);
         }
       }
     } catch (error) {
