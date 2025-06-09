@@ -14,7 +14,9 @@ import {
   CircularProgress,
   Divider,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Container,
+  Paper
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -971,155 +973,83 @@ const ResumeForm: React.FC = () => {
     };
   
     return (
-      <Box sx={{ 
-          minHeight: '100vh',
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          mt: 3, 
+          mb: 10,
+          minHeight: '80vh',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          paddingBottom: '80px'
+          flexDirection: 'column'
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: 3,
+          width: '100%'
         }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress />
-            <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
-          </Box>
-        ) : (
+          <ResumeFormStepper activeStep={activeStep} steps={steps} />
+          
           <Box sx={{ 
-            display: 'flex', 
-            flexDirection: isMobile ? 'column' : 'row',
-            justifyContent: 'center', 
-            alignItems: isMobile ? 'center' : 'flex-start',
-            mt: isMobile ? 2 : 4, 
-            mb: 4 
+            flex: 1,
+            minWidth: 0, // This prevents flex items from overflowing
+            maxWidth: isMobile ? '100%' : '800px',
           }}>
-            {/* Stepper component */}
-            <Box sx={{ 
-              width: isMobile ? '100%' : 'auto',
-              mb: isMobile ? 2 : 0,
-              overflow: 'hidden'
-            }}>
-              <ResumeFormStepper activeStep={activeStep} steps={steps} />
-            </Box>
-            
-            {isMobile ? (
-              <Box sx={{ width: '100%', px: 2 }}>
-                <Typography variant="h5" component="div" gutterBottom>
-                  {steps[activeStep]}
-                </Typography>
-                {renderStepContent(activeStep)}
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  mt: 3,
-                  mb: 2,
-                  position: 'sticky',
-                  bottom: 0,
-                  backgroundColor: 'background.default',
-                  py: 2,
-                  borderTop: 1,
-                  borderColor: 'divider'
-                }}>
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    onClick={handleBack} 
-                    disabled={activeStep === 0}
-                    sx={{ minHeight: '44px' }}
-                  >
-                    Back
-                  </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                      sx={{ minHeight: '44px' }}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={handleNext}
-                      sx={{ minHeight: '44px' }}
-                    >
-                      {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
-                    </Button>
-                  )}
-                </Box>
-              </Box>
-            ) : (
-              <Card sx={{ 
-                maxWidth: 800,
-                width: '100%', 
-                p: 3,
+            <Paper 
+              elevation={isMobile ? 0 : 3} 
+              sx={{ 
+                p: { xs: 2, sm: 3 },
                 borderRadius: 2,
-                boxShadow: 3,
-                background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
-              }}>
-                <CardContent>
-                  <Typography variant="h5" component="div" gutterBottom>
-                    {steps[activeStep]}
-                  </Typography>
-                  {renderStepContent(activeStep)}
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between' }}>
-                  <Button variant="outlined" color="primary" onClick={handleBack} disabled={activeStep === 0}>
-                    Back
-                  </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
-                    </Button>
-                  ) : (
-                    <Button variant="contained" color="primary" onClick={handleNext}>
-                      {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
-            )}
+                background: isMobile ? 'transparent' : 'white',
+                boxShadow: isMobile ? 'none' : undefined
+              }}
+            >
+              {/* Form content */}
+              {renderStepContent(activeStep)}
+            </Paper>
+
+            {/* Navigation buttons */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              mt: 2,
+              position: isMobile ? 'fixed' : 'static',
+              bottom: isMobile ? 0 : 'auto',
+              left: isMobile ? 0 : 'auto',
+              right: isMobile ? 0 : 'auto',
+              width: isMobile ? '100%' : 'auto',
+              p: isMobile ? 2 : 0,
+              bgcolor: isMobile ? 'background.paper' : 'transparent',
+              borderTop: isMobile ? 1 : 0,
+              borderColor: 'divider',
+              zIndex: isMobile ? 1200 : 'auto'
+            }}>
+              <Button
+                color="inherit"
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                sx={{ 
+                  minWidth: '100px',
+                  minHeight: isMobile ? '44px' : '36px'
+                }}
+              >
+                Back
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                sx={{ 
+                  minWidth: '100px',
+                  minHeight: isMobile ? '44px' : '36px'
+                }}
+              >
+                {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+              </Button>
+            </Box>
           </Box>
-        )}
-        
-        {/* Success/Error Notifications */}
-        <Snackbar 
-          open={submitSuccess} 
-          autoHideDuration={6000} 
-          onClose={() => {
-            setSubmitSuccess(false);
-            // Navigate to the preview step after successful submission
-            if (activeStep !== steps.length - 1) {
-              handleNext();
-            }
-          }}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setSubmitSuccess(false)} severity="success">
-            Resume {savedResumeId ? 'updated' : 'saved'} successfully!
-          </Alert>
-        </Snackbar>
-        
-        <Snackbar 
-          open={!!submitError} 
-          autoHideDuration={6000} 
-          onClose={() => dispatch(clearError())}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => dispatch(clearError())} severity="error">
-            {submitError}
-          </Alert>
-        </Snackbar>
-      </Box>
+        </Box>
+      </Container>
     );
   };
   
