@@ -441,12 +441,29 @@ const CoverLetterForm: React.FC = () => {
           
           {renderStepContent()}
           
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            mt: 2,
+            position: isMobile ? 'fixed' : 'static',
+            bottom: isMobile ? 0 : 'auto',
+            left: isMobile ? 0 : 'auto',
+            right: isMobile ? 0 : 'auto',
+            width: isMobile ? '100%' : 'auto',
+            p: isMobile ? 2 : 0,
+            bgcolor: isMobile ? 'background.paper' : 'transparent',
+            borderTop: isMobile ? 1 : 0,
+            borderColor: 'divider',
+            zIndex: isMobile ? 1200 : 'auto'
+          }}>
             <Button
               variant="outlined"
               onClick={activeStep === 0 ? () => navigate('/dashboard') : handleBack}
               disabled={loading}
-              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+              sx={{ 
+                minWidth: '100px',
+                minHeight: isMobile ? '44px' : '36px'
+              }}
             >
               {activeStep === 0 ? 'Cancel' : 'Back'}
             </Button>
@@ -457,7 +474,10 @@ const CoverLetterForm: React.FC = () => {
               onClick={activeStep === steps.length - 1 ? saveCoverLetter : handleNext}
               disabled={loading || !validateCurrentStep()}
               startIcon={loading && activeStep === steps.length - 1 ? <CircularProgress size={20} /> : null}
-              sx={{ minHeight: isMobile ? '44px' : 'inherit' }}
+              sx={{ 
+                minWidth: '100px',
+                minHeight: isMobile ? '44px' : '36px'
+              }}
             >
               {activeStep === steps.length - 1 ? 'Save Cover Letter' : 'Next'}
             </Button>

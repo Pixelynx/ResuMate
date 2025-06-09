@@ -74,9 +74,12 @@ const Dashboard: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch resumes
-        const resumes = await resumeService.getAllResumes();
-        setResumes(resumes);
+        // Fetch resumes and sort by updatedAt in descending order
+        const fetchedResumes = await resumeService.getAllResumes();
+        const sortedResumes = [...fetchedResumes].sort((a, b) => {
+          return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+        });
+        setResumes(sortedResumes);
         
         // Fetch cover letters
         try {

@@ -1026,7 +1026,7 @@ const ResumeForm: React.FC = () => {
               zIndex: isMobile ? 1200 : 'auto'
             }}>
               <Button
-                color="inherit"
+                variant='outlined'
                 disabled={activeStep === 0}
                 onClick={handleBack}
                 sx={{ 
@@ -1038,6 +1038,7 @@ const ResumeForm: React.FC = () => {
               </Button>
               <Button
                 variant="contained"
+                color='primary'
                 onClick={handleNext}
                 sx={{ 
                   minWidth: '100px',
