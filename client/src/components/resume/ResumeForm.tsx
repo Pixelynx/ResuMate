@@ -1006,7 +1006,12 @@ const ResumeForm: React.FC = () => {
               }}
             >
               {/* Form content */}
-              {renderStepContent(activeStep)}
+              <CardContent>
+                <Typography variant="h5" component="div" gutterBottom>
+                  {steps[activeStep]}
+                </Typography>
+                {renderStepContent(activeStep)}
+              </CardContent>
             </Paper>
 
             {/* Navigation buttons */}
