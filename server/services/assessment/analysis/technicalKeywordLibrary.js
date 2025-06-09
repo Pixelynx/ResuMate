@@ -198,40 +198,44 @@ function calculateTermConfidence(term, context) {
  * @returns {{ 
  *   score: number, 
  *   matches: string[],
- *   categoryScores: { [key: string]: CategoryScore }
+ *   keywords: string[],
+ *   categories: { [key: string]: CategoryScore }
  * }}
  */
 function calculateTechnicalDensity(text) {
   const textLower = text.toLowerCase();
-  const words = textLower.split(/\W+/);
-  const matches = new Set();
+  const words = new Set(textLower.split(/\W+/));
+  const matches = [];
   /** @type {{ [key: string]: CategoryScore }} */
-  const categoryScores = {};
+  const categories = {};
   
-  // Calculate per-category scores
+  // Check each category
   for (const [category, keywords] of Object.entries(TECHNICAL_CATEGORIES)) {
     const categoryMatches = keywords.filter(keyword => {
-      // Check for exact word match or phrase match
-      return keyword.includes(' ') ? 
-        textLower.includes(keyword) : 
-        words.includes(keyword);
+      const keywordLower = keyword.toLowerCase();
+      return textLower.includes(keywordLower) || 
+             words.has(keywordLower) ||
+             keywordLower.split(' ').every(word => words.has(word));
     });
     
-    categoryMatches.forEach(match => matches.add(match));
-    
-    categoryScores[category] = {
-      score: categoryMatches.length / keywords.length,
-      matches: categoryMatches
-    };
+    if (categoryMatches.length > 0) {
+      matches.push(...categoryMatches);
+      categories[category] = {
+        score: categoryMatches.length / keywords.length,
+        matches: categoryMatches
+      };
+    }
   }
   
-  // Calculate overall technical density
-  const totalScore = matches.size / ALL_TECHNICAL_KEYWORDS.length;
+  // Calculate overall technical density score
+  const uniqueMatches = [...new Set(matches)];
+  const score = uniqueMatches.length / (ALL_TECHNICAL_KEYWORDS.length * 0.2); // Normalize to 0-1
   
   return {
-    score: totalScore,
-    matches: Array.from(matches),
-    categoryScores
+    score: Math.min(1, score),
+    matches: uniqueMatches,
+    keywords: uniqueMatches, // Add keywords to match expected interface
+    categories
   };
 }
 

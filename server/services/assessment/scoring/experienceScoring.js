@@ -120,22 +120,50 @@ const detectIndustry = (text) => {
 };
 
 /**
- * Calculates industry relevance score
+ * Enhanced industry relevance calculation with transferable skills
  * @param {WorkExperience} experience - Work experience
  * @param {string} targetIndustry - Target industry
- * @returns {number} Industry relevance score (0-1)
+ * @returns {{ score: number, transferableSkills: string[] }}
  */
-const calculateIndustryScore = (experience, targetIndustry) => {
+const calculateEnhancedIndustryScore = (experience, targetIndustry) => {
   const expIndustry = detectIndustry(
     `${experience.companyName} ${experience.description}`
   );
 
+  // Define transferable skills by industry
+  const TRANSFERABLE_SKILLS = {
+    tech: ['scalability', 'optimization', 'architecture', 'agile', 'testing'],
+    finance: ['security', 'compliance', 'analytics', 'risk management'],
+    healthcare: ['security', 'compliance', 'data privacy', 'integration']
+  };
+
+  // Identify transferable skills
+  const transferableSkills = (TRANSFERABLE_SKILLS[targetIndustry] || [])
+    .filter(skill => experience.description.toLowerCase().includes(skill));
+
+  let score = 0;
+  
+  // Direct industry match
   if (expIndustry.industry === targetIndustry) {
-    return 0.7 + (0.3 * expIndustry.confidence);
+    score = 0.8 + (0.2 * expIndustry.confidence);
+  } 
+  // Related industry
+  else if (RELATED_INDUSTRIES.get(targetIndustry)?.has(expIndustry.industry)) {
+    score = 0.6;
+  } 
+  // Different industry but with transferable skills
+  else if (transferableSkills.length > 0) {
+    score = 0.3 + Math.min(0.3, transferableSkills.length * 0.1);
+  }
+  // Different industry
+  else {
+    score = 0.2;
   }
 
-  const related = RELATED_INDUSTRIES.get(targetIndustry)?.has(expIndustry.industry);
-  return related ? 0.5 : 0.2;
+  return {
+    score,
+    transferableSkills
+  };
 };
 
 /**
@@ -231,80 +259,69 @@ const calculateExperienceMismatchPenalty = (workExperience, jobDescription, jobT
 };
 
 /**
- * Scores work experience relevance
- * @param {WorkExperience} experience - Work experience entry
+ * Scores a single experience entry
+ * @param {WorkExperience} experience - Experience entry
  * @param {JobDetails} jobDetails - Job details
- * @param {(text: string) => { matchScore: number, exactMatches: string[], partialMatches: string[], missingSkills: string[] }} calculateSkillsScore - Skills scoring function
- * @returns {ExperienceScore} Experience score details
+ * @param {Function} calculateSkillsScore - Skills scoring function
+ * @returns {ExperienceScore}
  */
 const scoreExperience = (experience, jobDetails, calculateSkillsScore) => {
-  // Calculate seniority match
-  const expSeniority = detectSeniorityLevel(experience.jobtitle, experience.description);
-  const jobSeniority = detectSeniorityLevel(
-    jobDetails.title ?? '',
-    jobDetails.description
+  // Calculate base relevance
+  const skillsMatch = calculateSkillsScore(experience.description);
+  
+  // Calculate recency score with default empty string
+  const recencyScore = calculateRecencyScore(
+    experience.startDate || '',
+    experience.endDate || ''
   );
   
-  const seniorityScore = expSeniority.level === jobSeniority.level ? 
-    0.7 + (0.3 * Math.min(expSeniority.confidence, jobSeniority.confidence)) :
-    Math.max(0.2, 0.5 - Math.abs(
+  // Calculate enhanced industry score
+  const industryResult = calculateEnhancedIndustryScore(
+    experience,
+    detectIndustry(jobDetails.description).industry
+  );
+  
+  // Calculate seniority match
+  const expSeniority = detectSeniorityLevel(experience.jobtitle, experience.description);
+  const jobSeniority = detectSeniorityLevel(jobDetails.title || '', jobDetails.description);
+  const seniorityScore = expSeniority.level === jobSeniority.level ? 1 :
+    Math.max(0, 1 - Math.abs(
       ['JUNIOR', 'MID', 'SENIOR'].indexOf(expSeniority.level) -
       ['JUNIOR', 'MID', 'SENIOR'].indexOf(jobSeniority.level)
-    ) * 0.2);
+    ) * 0.3);
 
-  // Calculate recency score
-  const recencyScore = calculateRecencyScore(
-    experience.startDate ?? '',
-    experience.endDate ?? ''
-  );
-
-  // Calculate industry relevance
-  const industryScore = calculateIndustryScore(
-    experience,
-    jobDetails.industry ?? detectIndustry(jobDetails.description).industry
-  );
-
-  // Calculate skill match
-  const skillMatch = calculateSkillsScore(experience.description);
-
+  // Calculate overall relevance score with industry boost
   const relevanceScore = (
-    skillMatch.matchScore * 0.4 +
-    seniorityScore * 0.3 +
-    industryScore * 0.2 +
+    skillsMatch.matchScore * 0.4 +
+    industryResult.score * 0.3 +
+    seniorityScore * 0.2 +
     recencyScore * 0.1
   );
 
-  // Identify strengths and gaps
-  const strengths = [];
-  const gaps = [];
-
-  if (skillMatch.matchScore > 0.7) strengths.push('Strong skill alignment');
-  if (seniorityScore > 0.8) strengths.push('Appropriate seniority level');
-  if (industryScore > 0.7) strengths.push('Relevant industry experience');
-  if (recencyScore > 0.7) strengths.push('Recent experience');
-
-  if (skillMatch.missingSkills.length > 0) {
-    gaps.push(`Missing skills: ${skillMatch.missingSkills.join(', ')}`);
-  }
-  if (seniorityScore < 0.5) {
-    gaps.push('Seniority level mismatch');
-  }
-
   return {
-    relevanceScore,
+    relevanceScore: Math.min(1, relevanceScore * 1.2), // 20% potential boost
     seniorityScore,
     recencyScore,
-    industryScore,
-    matchedKeywords: [...skillMatch.exactMatches, ...skillMatch.partialMatches],
-    strengths,
-    gaps
+    industryScore: industryResult.score,
+    matchedKeywords: skillsMatch.exactMatches,
+    strengths: [
+      ...industryResult.transferableSkills,
+      ...(skillsMatch.exactMatches.length > 3 ? ['Strong technical match'] : []),
+      ...(industryResult.score > 0.7 ? ['Relevant industry experience'] : []),
+      ...(recencyScore > 0.8 ? ['Recent experience'] : [])
+    ],
+    gaps: [
+      ...skillsMatch.missingSkills,
+      ...(industryResult.score < 0.3 ? ['Limited industry experience'] : []),
+      ...(recencyScore < 0.3 ? ['Experience not recent'] : [])
+    ]
   };
 };
 
 module.exports = {
   calculateRecencyScore,
   calculateTotalExperience,
-  calculateIndustryScore,
+  calculateEnhancedIndustryScore,
   detectIndustry,
   detectSeniorityLevel,
   calculateExperienceMismatchPenalty,

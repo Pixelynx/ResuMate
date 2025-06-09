@@ -74,6 +74,7 @@ const { classifyJob, getRelatedSkills, getCategoryWeight } = require('./assessme
  * @property {ComponentScores} componentScores - Component-wise scores
  * @property {PenaltyAnalysis} penalties - Penalty analysis
  * @property {ClassificationResult} [jobClassification] - Job classification
+ * @property {number} similarityScore - Overall similarity score
  */
 
 /**
@@ -210,8 +211,8 @@ const calculateJobFitScore = async (resume, coverLetter) => {
       const workExperience = /** @type {ScoringWorkExperience[]} */ (
         resume.workExperience?.map(exp => ({
           ...exp,
-          startDate: exp.startDate || new Date().toISOString(), // Default to current date if missing
-          endDate: exp.endDate || new Date().toISOString() // Default to current date if missing
+          startDate: exp.startDate || new Date().toISOString(),
+          endDate: exp.endDate || new Date().toISOString()
         })) || []
       );
       
@@ -223,28 +224,49 @@ const calculateJobFitScore = async (resume, coverLetter) => {
         )
       );
       
-      // Use embeddings as a minor adjustment factor
+      // Calculate embedding similarity with increased weight
       console.log('Calculating embedding similarity...');
       const similarity = await calculateEmbeddingSimilarity(resumeContent, coverLetter.jobdescription);
       
       // Calculate base score (0-10)
       const baseScore = componentResult.score * 10;
       
-      // Apply embedding adjustment (±20% max)
-      const embeddingAdjustment = (similarity - 0.5) * 2; // Convert 0-1 to -1 to 1
-      const adjustedScore = baseScore * (1 + (embeddingAdjustment * 0.2));
+      // New weighted score calculation
+      // - Embedding similarity: 35% (increased from ~20%)
+      // - Component score: 45% (reduced from ~60%)
+      // - Penalties: 20% (reduced from ~20%)
       
-      // Apply penalties with category context
+      // Normalize similarity to 0-10 scale and apply weight
+      const similarityScore = similarity * 10;
+      const weightedSimilarity = similarityScore * 0.35;
+      
+      // Apply reduced weight to component score
+      const weightedComponentScore = baseScore * 0.45;
+      
+      // Calculate initial combined score
+      let combinedScore = weightedSimilarity + weightedComponentScore;
+      
+      // Apply penalties with reduced impact
       console.log('Applying penalties...');
+      console.log('Technical Mismatch:', JSON.stringify(technicalMismatch, null, 2));
+      console.log('Experience Mismatch:', JSON.stringify(experienceMismatch, null, 2));
+      
       const { finalScore, analysis: penaltyAnalysis } = applyPenalties(
-        adjustedScore,
+        combinedScore,
         {
           technicalMismatch,
           experienceMismatch
         }
       );
       
+      console.log('Penalty Analysis:', JSON.stringify(penaltyAnalysis, null, 2));
+      
       console.log(`Final score calculated: ${finalScore}/10`);
+      console.log('Score breakdown:', {
+        similarityContribution: weightedSimilarity,
+        componentContribution: weightedComponentScore,
+        penaltyImpact: combinedScore - finalScore
+      });
       
       // Generate explanation with job category context
       console.log('Generating explanation...');
@@ -258,7 +280,8 @@ const calculateJobFitScore = async (resume, coverLetter) => {
             technical: technicalMismatch,
             experience: experienceMismatch
           },
-          jobClassification
+          jobClassification,
+          similarityScore: similarity
         }
       );
       
@@ -306,18 +329,12 @@ const generateScoreExplanation = async (resume, coverLetter, score, analysis) =>
       - Category: ${analysis.jobClassification?.category || "Not specified"} (Confidence: ${analysis.jobClassification?.confidence?.toFixed(2) || "N/A"})
       - Suggested Skills: ${analysis.jobClassification?.suggestedSkills?.join(', ') || "None"}
 
-      Candidate's Resume:
-      - Skills: ${resume.skills?.skills_ || "Not provided"}
-      - Work Experience: ${resume.workExperience?.map(exp => `${exp.jobtitle} at ${exp.companyName}`).join(', ') || "Not provided"}
-      - Projects: ${resume.projects?.map(proj => proj.title).join(', ') || "Not provided"}
-      - Education: ${resume.education?.map(edu => `${edu.degree} in ${edu.fieldOfStudy}`).join(', ') || "Not provided"}
-
-      Score Analysis:
-      - Skills match: ${(analysis.componentScores.skills * 10).toFixed(1)}/10
-      - Work Experience match: ${(analysis.componentScores.experience * 10).toFixed(1)}/10
-      - Projects match: ${(analysis.componentScores.projects * 10).toFixed(1)}/10
-      - Job Title match: ${(analysis.componentScores.jobTitle * 10).toFixed(1)}/10
-      - Education match: ${(analysis.componentScores.education * 10).toFixed(1)}/10
+      Score Breakdown:
+      - Overall Profile Match: ${(analysis.similarityScore * 10).toFixed(1)}/10
+      - Technical Skills: ${(analysis.componentScores.skills * 10).toFixed(1)}/10
+      - Work Experience: ${(analysis.componentScores.experience * 10).toFixed(1)}/10
+      - Projects: ${(analysis.componentScores.projects * 10).toFixed(1)}/10
+      - Education: ${(analysis.componentScores.education * 10).toFixed(1)}/10
 
       ${analysis.penalties.technical.hasSevereMismatch ? 
         "Note: A significant technical skills mismatch was detected between the job requirements and the candidate's background." : ""}
@@ -325,14 +342,14 @@ const generateScoreExplanation = async (resume, coverLetter, score, analysis) =>
       ${analysis.penalties.experience.analysis.reason ? 
         `Experience Level Note: ${analysis.penalties.experience.analysis.reason}` : ""}
 
-      IMPORTANT: Provide a 3-7 sentence explanation of the job fit score with the following elements:
-      1. Maintain a helpful, friendly tone throughout
-      2. Specifically highlight details that make the candidate a good match for this role
-      3. Provide specific, actionable suggestions for how they could improve their resume to better match this job description
-      4. If their background doesn't align with the role, suggest how they could highlight transferable skills or relevant experiences
-      5. Consider the job category and its typical requirements in your suggestions
-
-      Be specific about which qualifications align well with the job and which ones could be better aligned. Provide tangible examples when suggesting improvements.
+      IMPORTANT: Provide a 3-7 sentence explanation of the job fit score that:
+      1. Starts with an overview of the overall profile match
+      2. Highlights the strongest matching areas
+      3. Identifies key areas for improvement
+      4. Provides specific, actionable suggestions
+      5. Maintains an encouraging tone while being honest about fit
+      
+      Focus more on the overall match and transferable skills rather than specific technical requirements.
     `;
 
     const { default: axiosInstance } = await import('axios');

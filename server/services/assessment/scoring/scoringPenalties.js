@@ -59,27 +59,27 @@ function calculateTechnicalMismatchPenalty(jobDescription, resumeContent, jobTit
   const { isTechnical: isJobTechnical, confidence: jobTechConfidence } = isTechnicalRole(jobTitle);
 
   // Calculate technical density difference with more lenient gap
-  const techDensityGap = Math.max(0, (jobTechProfile.score - resumeTechProfile.score) * 0.7);
+  const techDensityGap = Math.max(0, (jobTechProfile.score - resumeTechProfile.score) * 0.5); // Reduced from 0.7
   
   // Calculate partial credit for related technologies
   const relatedTechCredit = calculateRelatedTechCredit(jobTechProfile, resumeTechProfile);
   
   // Determine if this is a severe mismatch (technical job, non-technical resume)
   const hasSevereMismatch = isJobTechnical && 
-    jobTechConfidence > 0.7 && 
-    jobTechProfile.score > 0.4 && // Increased threshold for severe mismatch
-    resumeTechProfile.score < 0.25; // More lenient threshold
+    jobTechConfidence > 0.8 && // Increased threshold for severe mismatch confidence
+    jobTechProfile.score > 0.5 && // Increased threshold for job technical score
+    resumeTechProfile.score < 0.3; // More lenient threshold
 
   // Calculate base penalty with partial credit
   let penalty = Math.max(0, techDensityGap - relatedTechCredit);
 
   // Add reduced penalty for severe mismatches
   if (hasSevereMismatch) {
-    penalty = Math.max(penalty, 0.4); // Reduced from 0.6 to 0.4
+    penalty = Math.max(penalty, 0.3); // Reduced from 0.4
   }
 
   return {
-    penalty: Math.min(0.5, penalty), // Cap penalty at 50% instead of 80%
+    penalty: Math.min(0.4, penalty), // Cap penalty at 40% instead of 50%
     hasSevereMismatch,
     analysis: {
       jobTechnicalProfile: jobTechProfile,
@@ -108,16 +108,20 @@ function calculateRelatedTechCredit(jobProfile, resumeProfile) {
     general: ['git', 'docker', 'kubernetes', 'ci/cd']
   };
 
+  // Handle undefined or missing keywords
+  const jobKeywords = jobProfile?.keywords || [];
+  const resumeKeywords = resumeProfile?.keywords || [];
+
   let credit = 0;
   const maxCredit = 0.3;
 
   // Check each tech group for partial matches
   for (const [category, technologies] of Object.entries(techGroups)) {
     const jobHasCategory = technologies.some(tech => 
-      jobProfile.keywords.some(k => k.toLowerCase().includes(tech))
+      jobKeywords.some(k => k?.toLowerCase().includes(tech))
     );
     const resumeHasCategory = technologies.some(tech => 
-      resumeProfile.keywords.some(k => k.toLowerCase().includes(tech))
+      resumeKeywords.some(k => k?.toLowerCase().includes(tech))
     );
     
     if (jobHasCategory && resumeHasCategory) {
@@ -252,26 +256,29 @@ function applyPenalties(baseScore, penalties) {
 
   // Apply technical mismatch penalty
   if (penalties.technicalMismatch.hasSevereMismatch) {
-    finalScore = Math.min(finalScore, 5.0);
+    finalScore = Math.min(finalScore, 6.0);
   }
-  finalScore *= (1 - penalties.technicalMismatch.penalty);
+  const technicalPenaltyImpact = finalScore * penalties.technicalMismatch.penalty * 0.8; // Reduce penalty impact by 20%
+  finalScore -= technicalPenaltyImpact;
+  
   appliedPenalties.push({
     type: 'Technical Mismatch',
     penalty: penalties.technicalMismatch.penalty,
-    impact: baseScore - finalScore
+    impact: technicalPenaltyImpact
   });
 
   // Apply experience mismatch penalty
-  const postExpScore = finalScore * (1 - penalties.experienceMismatch.penalty);
+  const experiencePenaltyImpact = finalScore * penalties.experienceMismatch.penalty * 0.7; // Reduce penalty impact by 30%
+  finalScore -= experiencePenaltyImpact;
+  
   appliedPenalties.push({
     type: 'Experience Mismatch',
     penalty: penalties.experienceMismatch.penalty,
-    impact: finalScore - postExpScore
+    impact: experiencePenaltyImpact
   });
-  finalScore = postExpScore;
 
   // Ensure score stays within bounds
-  finalScore = Math.max(2.0, Math.min(10.0, finalScore));
+  finalScore = Math.max(3.0, Math.min(10.0, finalScore));
 
   return {
     finalScore,
