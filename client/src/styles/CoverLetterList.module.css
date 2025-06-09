@@ -148,7 +148,7 @@
 
 @media (max-width: 768px) {
   .card {
-    background: white;
+    background: linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05));
   }
 
   .title {
