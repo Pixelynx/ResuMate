@@ -30,11 +30,22 @@ const { scoreExperience } = require('../scoring/experienceScoring');
  * @type {Object.<string, number>}
  */
 const COMPONENT_WEIGHTS = {
-  SKILLS: 0.30,
-  WORK_EXPERIENCE: 0.25,
-  PROJECTS: 0.20,
-  EDUCATION: 0.15,
-  JOB_TITLE: 0.10
+  SKILLS: 0.35,
+  WORK_EXPERIENCE: 0.30,
+  PROJECTS: 0.15,
+  EDUCATION: 0.12,
+  JOB_TITLE: 0.08
+};
+
+/**
+ * Full-stack technology indicators
+ * @type {Object.<string, string[]>}
+ */
+const FULL_STACK_INDICATORS = {
+  FRONTEND: ['react', 'angular', 'vue', 'javascript', 'typescript', 'html', 'css'],
+  BACKEND: ['node', 'python', 'java', 'c#', 'php', 'ruby', 'go'],
+  DATABASE: ['sql', 'mongodb', 'postgresql', 'mysql', 'redis'],
+  DEVOPS: ['aws', 'docker', 'kubernetes', 'ci/cd', 'jenkins']
 };
 
 /**
@@ -67,8 +78,15 @@ function calculateSkillsScore(skills, jobDescription) {
   // Apply diminishing returns
   score = Math.sqrt(score);
 
-  // Penalize for missing critical skills
-  const missingPenalty = missingSkills.length * 0.1;
+  // Check for full-stack capabilities
+  const skillsLower = skills.skills_.toLowerCase();
+  const fullStackScore = calculateFullStackBonus(skillsLower);
+  
+  // Add full-stack bonus (up to 20% boost)
+  score = Math.min(1, score * (1 + fullStackScore * 0.2));
+
+  // Penalize for missing critical skills (reduced penalty)
+  const missingPenalty = missingSkills.length * 0.08; // Reduced from 0.1
   score = Math.max(0, score - missingPenalty);
 
   return {
@@ -77,9 +95,28 @@ function calculateSkillsScore(skills, jobDescription) {
       relevantSkills,
       missingSkills,
       technicalDensity: skillsTechProfile.score,
-      categoryScores: skillsTechProfile.categoryScores
+      categoryScores: skillsTechProfile.categoryScores,
+      fullStackScore
     }
   };
+}
+
+/**
+ * Calculates full-stack capability bonus
+ * @param {string} skills - Lowercase skills string
+ * @returns {number} Full-stack score (0-1)
+ */
+function calculateFullStackBonus(skills) {
+  const coverage = Object.entries(FULL_STACK_INDICATORS).map(([category, techs]) => {
+    const matches = techs.filter(tech => skills.includes(tech)).length;
+    return matches / techs.length;
+  });
+  
+  // Calculate average coverage across all categories
+  const avgCoverage = coverage.reduce((sum, score) => sum + score, 0) / coverage.length;
+  
+  // Bonus is based on balanced coverage across categories
+  return Math.min(1, avgCoverage * 1.5);
 }
 
 /**
@@ -378,42 +415,50 @@ function compareSeniorityLevels(role1, role2) {
  * @returns {{ score: number, componentScores: Object, analysis: Object }}
  */
 function calculateComponentScores(resume, jobDescription, jobTitle) {
-  const skills = calculateSkillsScore(resume.skills, jobDescription);
-  const experience = calculateExperienceScore(resume.workExperience, jobDescription, jobTitle);
-  const projects = calculateProjectScore(resume.projects, jobDescription);
-  const education = calculateEducationScore(resume.education, jobDescription);
-  
-  // Calculate job title match
-  const titleMatch = calculateJobTitleScore(resume.workExperience, jobTitle);
+  // Calculate individual component scores
+  const skillsResult = calculateSkillsScore(resume.skills, jobDescription);
+  const experienceResult = calculateExperienceScore(resume.workExperience, jobDescription, jobTitle);
+  const projectsResult = calculateProjectScore(resume.projects, jobDescription);
+  const educationResult = calculateEducationScore(resume.education, jobDescription);
+  const jobTitleResult = calculateJobTitleScore(resume.workExperience, jobTitle);
+
+  // Calculate base score
+  const baseScore = (
+    skillsResult.score * COMPONENT_WEIGHTS.SKILLS +
+    experienceResult.score * COMPONENT_WEIGHTS.WORK_EXPERIENCE +
+    projectsResult.score * COMPONENT_WEIGHTS.PROJECTS +
+    educationResult.score * COMPONENT_WEIGHTS.EDUCATION +
+    jobTitleResult.score * COMPONENT_WEIGHTS.JOB_TITLE
+  );
 
   // Calculate transferable skills bonus
   const transferableBonus = calculateTransferableBonus(resume, jobDescription);
+  
+  // Apply transferable skills bonus (up to 15% boost)
+  let finalScore = baseScore * (1 + transferableBonus * 0.15);
 
-  // Calculate weighted score
-  const weightedScore = 
-    (skills.score * COMPONENT_WEIGHTS.SKILLS) +
-    (experience.score * COMPONENT_WEIGHTS.WORK_EXPERIENCE) +
-    (projects.score * COMPONENT_WEIGHTS.PROJECTS) +
-    (titleMatch.score * COMPONENT_WEIGHTS.JOB_TITLE) +
-    (education.score * COMPONENT_WEIGHTS.EDUCATION) +
-    (transferableBonus * 0.10);
+  // Apply minimum score threshold for qualified candidates
+  if (finalScore >= 0.35 && (skillsResult.score > 0.4 || experienceResult.score > 0.4)) {
+    finalScore = Math.max(0.4, finalScore); // Minimum 4.0/10 for qualified candidates
+  }
 
   return {
-    score: weightedScore,
+    score: finalScore,
     componentScores: {
-      skills: skills.score,
-      experience: experience.score,
-      projects: projects.score,
-      jobTitle: titleMatch.score,
-      education: education.score
+      skills: skillsResult.score,
+      experience: experienceResult.score,
+      projects: projectsResult.score,
+      education: educationResult.score,
+      jobTitle: jobTitleResult.score
     },
     analysis: {
-      skills: skills.analysis,
-      experience: experience.analysis,
-      projects: projects.analysis,
-      education: education.analysis,
-      jobTitle: titleMatch.analysis,
-      transferableBonus
+      skills: skillsResult.analysis,
+      experience: experienceResult.analysis,
+      projects: projectsResult.analysis,
+      education: educationResult.analysis,
+      jobTitle: jobTitleResult.analysis,
+      transferableBonus,
+      qualifiedCandidate: finalScore >= 0.4
     }
   };
 }
