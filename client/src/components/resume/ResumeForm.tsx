@@ -614,7 +614,7 @@ const ResumeForm: React.FC = () => {
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment Start Date"
-                      value={entry.startDate}
+                      value={entry.startDate ? dayjs(entry.startDate) : null}
                       onChange={(date) => {
                         handleChange('workExperience', index, 'startDate', date);
                         validateWorkExperienceDates(index, date, entry.endDate);
@@ -637,7 +637,7 @@ const ResumeForm: React.FC = () => {
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Employment End Date"
-                      value={entry.endDate}
+                      value={entry.endDate ? dayjs(entry.endDate) : null}
                       onChange={(date) => {
                         handleChange('workExperience', index, 'endDate', date);
                         validateWorkExperienceDates(index, entry.startDate, date);
@@ -740,7 +740,7 @@ const ResumeForm: React.FC = () => {
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                           label="Graduation Date"
-                          value={entry.graduationDate}
+                          value={entry.graduationDate ? dayjs(entry.graduationDate) : null}
                           onChange={(date) => handleChange('education', index, 'graduationDate', date)}
                           slotProps={{ textField: { fullWidth: true } }}
                         />
@@ -822,7 +822,7 @@ const ResumeForm: React.FC = () => {
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                           label="Date Obtained"
-                          value={entry.dateObtained}
+                          value={entry.dateObtained ? dayjs(entry.dateObtained) : null}
                           onChange={(date) => handleChange('certifications', index, 'dateObtained', date)}
                           slotProps={{ textField: { fullWidth: true } }}
                         />
@@ -832,7 +832,7 @@ const ResumeForm: React.FC = () => {
                       <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                           label="Expiration Date"
-                          value={entry.expirationDate}
+                          value={entry.expirationDate ? dayjs(entry.expirationDate) : null}
                           onChange={(date) => handleChange('certifications', index, 'expirationDate', date)}
                           slotProps={{ textField: { fullWidth: true } }}
                         />

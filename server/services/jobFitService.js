@@ -186,7 +186,6 @@ const calculateJobFitScore = async (resume, coverLetter) => {
         coverLetter.jobtitle ?? ''
       ));
 
-      // Ensure proper typing of component scores
       const componentResult = {
         score: rawComponentResult.score,
         componentScores: {

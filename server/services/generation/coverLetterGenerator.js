@@ -303,38 +303,38 @@ const buildPersonalDetailsSection = (resumeData) => {
 const buildExperienceSection = (resumeData, jobDetails) => {
   if (!resumeData.workExperience?.length) {
     return `
-EXPERIENCE CONTEXT:
-Candidate is new to the workforce or transitioning careers.
-Focus on transferable skills, education, and projects instead of direct work experience.
-`;
-  }
+      EXPERIENCE CONTEXT:
+      Candidate is new to the workforce or transitioning careers.
+      Focus on transferable skills, education, and projects instead of direct work experience.
+    `;
+    }
 
-  // Sort experiences by relevance and recency
-  const sortedExperience = [...resumeData.workExperience].sort((a, b) => {
-    const dateA = new Date(a.endDate || Date.now());
-    const dateB = new Date(b.endDate || Date.now());
-    return dateB.getTime() - dateA.getTime();
-  });
+    // Sort experiences by relevance and recency
+    const sortedExperience = [...resumeData.workExperience].sort((a, b) => {
+      const dateA = new Date(a.endDate || Date.now());
+      const dateB = new Date(b.endDate || Date.now());
+      return dateB.getTime() - dateA.getTime();
+    });
 
-  const experienceDetails = sortedExperience.map(exp => `
-Position: ${exp.jobtitle}
-Company: ${exp.companyName}
-${exp.startDate ? `Duration: ${exp.startDate} to ${exp.endDate || 'Present'}` : ''}
-Key Responsibilities:
-${exp.description}
-`).join('\n');
+    const experienceDetails = sortedExperience.map(exp => `
+      Position: ${exp.jobtitle}
+      Company: ${exp.companyName}
+      ${exp.startDate ? `Duration: ${exp.startDate} to ${exp.endDate || 'Present'}` : ''}
+      Key Responsibilities:
+      ${exp.description}
+    `).join('\n');
 
-  return `
-RELEVANT EXPERIENCE:
-Use these specific experiences - DO NOT generalize or use placeholders.
-${experienceDetails}
+    return `
+      RELEVANT EXPERIENCE:
+      Use these specific experiences - DO NOT generalize or use placeholders.
+      ${experienceDetails}
 
-EXPERIENCE GUIDELINES:
-- Reference specific company names and roles
-- Include actual dates and durations
-- Use concrete achievements and metrics from the descriptions
-- Maintain professional tone while being specific
-`;
+      EXPERIENCE GUIDELINES:
+      - Reference specific company names and roles
+      - Include actual dates and durations
+      - Use concrete achievements and metrics from the descriptions
+      - Maintain professional tone while being specific
+    `;
 };
 
 /**
@@ -346,25 +346,25 @@ EXPERIENCE GUIDELINES:
 const buildSkillsSection = (resumeData, jobDetails) => {
   if (!resumeData.skills?.skills_) {
     return `
-SKILLS CONTEXT:
-Focus on demonstrating capabilities through experience and projects.
-Emphasize learning ability and adaptability.
-`;
-  }
+      SKILLS CONTEXT:
+      Focus on demonstrating capabilities through experience and projects.
+      Emphasize learning ability and adaptability.
+    `;
+    }
 
-  const skills = resumeData.skills.skills_.split(',').map(s => s.trim());
-  
-  return `
-TECHNICAL AND PROFESSIONAL SKILLS:
-${skills.join(', ')}
+    const skills = resumeData.skills.skills_.split(',').map(s => s.trim());
+        
+    return `
+      TECHNICAL AND PROFESSIONAL SKILLS:
+      ${skills.join(', ')}
 
-SKILLS USAGE GUIDELINES:
-- Reference these exact skills when relevant to the position
-- Demonstrate practical application in experience or projects
-- Do not invent or assume additional skills
-- Connect skills directly to job requirements
-`;
-};
+      SKILLS USAGE GUIDELINES:
+      - Reference these exact skills when relevant to the position
+      - Demonstrate practical application in experience or projects
+      - Do not invent or assume additional skills
+      - Connect skills directly to job requirements
+    `;
+  };
 
 /**
  * Builds enhanced prompt with strict data usage rules
@@ -387,48 +387,48 @@ const buildEnhancedPrompt = (resumeData, jobDetails, options = {}) => {
   const skillsSection = buildSkillsSection(resumeData, jobDetails);
 
   return `
-You are a professional cover letter writer creating a personalized letter.
-Your task is to write a compelling cover letter using ONLY the provided information.
+    You are a professional cover letter writer creating a personalized letter.
+    Your task is to write a compelling cover letter using ONLY the provided information.
 
-JOB DETAILS:
-Company: ${jobDetails.company}
-Position: ${jobDetails.jobTitle}
-Description: ${jobDetails.jobDescription}
+    JOB DETAILS:
+    Company: ${jobDetails.company}
+    Position: ${jobDetails.jobTitle}
+    Description: ${jobDetails.jobDescription}
 
-${personalDetails}
+    ${personalDetails}
 
-${experienceSection}
+    ${experienceSection}
 
-${skillsSection}
+    ${skillsSection}
 
-STRICT REQUIREMENTS:
-1. NEVER use placeholder text like [Company Name] or [Your Name]
-2. NEVER mention missing information or gaps
-3. ONLY use details provided above
-4. Maintain professional tone
-5. Focus on specific, relevant experiences
-6. Include measurable achievements where available
+    STRICT REQUIREMENTS:
+    1. NEVER use placeholder text like [Company Name] or [Your Name]
+    2. NEVER mention missing information or gaps
+    3. ONLY use details provided above
+    4. Maintain professional tone
+    5. Focus on specific, relevant experiences
+    6. Include measurable achievements where available
 
-FORBIDDEN ELEMENTS:
-- Generic phrases like "I am writing to express my interest"
-- Placeholder text in brackets or parentheses
-- Hypothetical or assumed experiences
-- Unsubstantiated claims
+    FORBIDDEN ELEMENTS:
+    - Generic phrases like "I am writing to express my interest"
+    - Placeholder text in brackets or parentheses
+    - Hypothetical or assumed experiences
+    - Unsubstantiated claims
 
-TONE AND STYLE:
-${options.tone ? `- Maintain a ${options.tone} tone` : '- Maintain a professional, confident tone'}
-- Be specific and direct
-- Show enthusiasm through concrete examples
-- Demonstrate understanding of the company and role
+    TONE AND STYLE:
+    ${options.tone ? `- Maintain a ${options.tone} tone` : '- Maintain a professional, confident tone'}
+    - Be specific and direct
+    - Show enthusiasm through concrete examples
+    - Demonstrate understanding of the company and role
 
-FORMAT:
-- Standard business letter format
-- 2-3 focused paragraphs
-- Clear opening and closing
-- Professional signature with provided contact details
+    FORMAT:
+    - Standard business letter format
+    - 2-3 focused paragraphs
+    - Clear opening and closing
+    - Professional signature with provided contact details
 
-Remember: Quality over quantity. Be specific and relevant rather than comprehensive.
-`;
+    Remember: Quality over quantity. Be specific and relevant rather than comprehensive.
+  `;
 };
 
 /**
