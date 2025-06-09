@@ -3,6 +3,35 @@
 ## [Unreleased]
 
 ### [2025-06-08]
+[client]
+### Added
+- Enhanced mobile responsiveness in ResumeFormStepper:
+  - Implemented horizontal scrollable stepper for mobile view
+  - Added auto-scrolling to active step
+  - Improved touch interaction with smooth scrolling
+  - Added visual indicators for active steps
+  - Implemented proper spacing and sizing for mobile
+  - Hidden scrollbars while maintaining functionality
+  - Added proper padding to prevent edge touching
+
+### Changed
+- Improved mobile form layout in ResumeForm:
+  - Removed Paper component wrapping on mobile for better space utilization
+  - Added sticky navigation bar at bottom of screen
+  - Enhanced button sizing for better touch targets
+  - Improved content spacing and readability
+  - Added subtle border separation for navigation
+  - Maintained consistent styling with desktop version
+  - Optimized layout for small screen sizes
+
+### Fixed
+- Fixed stepper visibility issues on mobile:
+  - Resolved cut-off items in stepper navigation
+  - Fixed horizontal scrolling functionality
+  - Improved active step visibility
+  - Enhanced touch scrolling experience
+
+### [2025-06-08]
 ### Added
 [server]
 - Created core interfaces and directory structure for job matching system

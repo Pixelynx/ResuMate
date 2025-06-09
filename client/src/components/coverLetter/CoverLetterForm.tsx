@@ -389,7 +389,7 @@ const CoverLetterForm: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ px: isMobile ? 2 : 3 }}>
+    <Container maxWidth="md" sx={{ px: isMobile ? 2 : 3, pb: 6 }}>
       {generationStatus.isGenerating && (
         <LoadingOverlay
           message={generationStatus.message}
@@ -408,8 +408,8 @@ const CoverLetterForm: React.FC = () => {
       }}>
         {/* Stepper component */}
         <Box sx={{ 
-          width: isMobile ? '100%' : 'auto',
-          mb: isMobile ? 4 : 0,
+          width: isMobile ? '100%' : '50%',
+          mb: isMobile ? 2 : 0,
           overflow: 'hidden'
         }}>
           <CoverLetterFormStepper activeStep={activeStep} steps={steps} />
@@ -419,6 +419,7 @@ const CoverLetterForm: React.FC = () => {
         <Paper elevation={3} sx={{ 
           p: { xs: 2, sm: 4 }, 
           width: '100%',
+          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
           maxWidth: isMobile ? '100%' : 'auto'
         }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
