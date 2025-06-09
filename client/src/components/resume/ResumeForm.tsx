@@ -13,10 +13,6 @@ import {
   Alert,
   CircularProgress,
   Divider,
-  useTheme,
-  useMediaQuery,
-  Container,
-  Paper
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -62,8 +58,6 @@ import { useSectionManager } from '../../hooks/useSectionManager';
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
 const ResumeForm: React.FC = () => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
     const resumeid = searchParams.get('id');
@@ -998,7 +992,8 @@ const ResumeForm: React.FC = () => {
                 width: '100%', 
                 p: 3,
                 borderRadius: 2,
-                boxShadow: 3
+                boxShadow: 3,
+                background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
               }}>
               <CardContent>
                 <Typography variant="h5" component="div" gutterBottom>
