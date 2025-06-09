@@ -47,29 +47,105 @@ async function calculateEmbeddingSimilarity(text1, text2) {
     
     console.log('Calculating embedding similarity between resume and job description...');
     
-    // Get embeddings for both texts
-    const [embedding1, embedding2] = await Promise.all([
-      getEmbedding(text1),
-      getEmbedding(text2)
-    ]);
+    // Split texts into chunks if they're too long
+    const chunks1 = splitTextIntoChunks(text1);
+    const chunks2 = splitTextIntoChunks(text2);
     
-    if (!embedding1 || !embedding2) {
+    // Get embeddings for all chunks
+    const embeddings1 = await Promise.all(chunks1.map(chunk => getEmbedding(chunk)));
+    const embeddings2 = await Promise.all(chunks2.map(chunk => getEmbedding(chunk)));
+    
+    // Filter out null embeddings
+    const validEmbeddings1 = embeddings1.filter(Boolean);
+    const validEmbeddings2 = embeddings2.filter(Boolean);
+    
+    if (!validEmbeddings1.length || !validEmbeddings2.length) {
       console.warn('Failed to get embeddings, using fallback keyword matching');
       return 0.5;
     }
     
-    // Calculate similarity
-    const similarity = cosineSimilarity(embedding1, embedding2);
+    // Calculate similarity matrix between all chunks
+    const similarities = [];
+    for (const emb1 of validEmbeddings1) {
+      for (const emb2 of validEmbeddings2) {
+        similarities.push(cosineSimilarity(emb1, emb2));
+      }
+    }
+    
+    // Use the maximum similarity as the final score
+    // This helps capture the best matching sections
+    const maxSimilarity = Math.max(...similarities);
+    
+    // Calculate average of top 3 similarities for more stability
+    const topSimilarities = similarities
+      .sort((a, b) => b - a)
+      .slice(0, 3);
+    const avgTopSimilarity = topSimilarities.reduce((a, b) => a + b, 0) / topSimilarities.length;
+    
+    // Combine max and average with weights
+    const similarity = maxSimilarity * 0.7 + avgTopSimilarity * 0.3;
+    
     console.log(`Embedding similarity calculation successful: ${similarity.toFixed(4)}`);
+    console.log('Similarity details:', {
+      maxSimilarity: maxSimilarity.toFixed(4),
+      avgTopSimilarity: avgTopSimilarity.toFixed(4),
+      finalSimilarity: similarity.toFixed(4)
+    });
     
     // Convert similarity (-1 to 1) to a 0 to 1 score
-    // Typically for text embeddings, similarity will be positive
-    return (similarity + 1) / 2;
+    // Apply a sigmoid-like transformation to emphasize mid-range differences
+    return transformSimilarityScore(similarity);
   } catch (error) {
     console.error('Error calculating embedding similarity:', error);
     console.error('Stack trace:', error.stack);
     return 0.5; // Return middle value on error
   }
+}
+
+/**
+ * Splits text into chunks of appropriate size for embedding
+ * @param {string} text - Text to split
+ * @returns {string[]} Array of text chunks
+ */
+function splitTextIntoChunks(text) {
+  const MAX_CHUNK_LENGTH = 7000; // Slightly below OpenAI's limit
+  const chunks = [];
+  
+  // Split text into sentences
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  
+  let currentChunk = '';
+  for (const sentence of sentences) {
+    if ((currentChunk + sentence).length > MAX_CHUNK_LENGTH) {
+      if (currentChunk) chunks.push(currentChunk.trim());
+      currentChunk = sentence;
+    } else {
+      currentChunk += ' ' + sentence;
+    }
+  }
+  
+  if (currentChunk) chunks.push(currentChunk.trim());
+  return chunks;
+}
+
+/**
+ * Transforms raw similarity score to final score
+ * @param {number} similarity - Raw similarity score (-1 to 1)
+ * @returns {number} Transformed score (0 to 1)
+ */
+function transformSimilarityScore(similarity) {
+  // Convert from -1:1 to 0:1 range
+  const normalized = (similarity + 1) / 2;
+  
+  // Apply sigmoid-like transformation to emphasize mid-range differences
+  // and de-emphasize extremes
+  const k = 12; // Steepness
+  const midpoint = 0.5;
+  const transformed = 1 / (1 + Math.exp(-k * (normalized - midpoint)));
+  
+  // Rescale to use full 0-1 range
+  return (transformed - 1/(1 + Math.exp(k * midpoint))) / 
+         (1/(1 + Math.exp(-k * (1 - midpoint))) - 1/(1 + Math.exp(k * midpoint)));
 }
 
 /**

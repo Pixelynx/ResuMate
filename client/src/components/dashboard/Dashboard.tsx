@@ -13,7 +13,6 @@ import {
   Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DescriptionIcon from '@mui/icons-material/Description';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import { useNavigate } from 'react-router-dom';
 import { resumeService, coverLetterService } from '../../utils/api';
@@ -216,7 +215,7 @@ const Dashboard: React.FC = () => {
                   }
                 }}
               >
-                Generate Letter
+                Create Cover Letter
               </Button>
             </Grid>
           </Grid>
@@ -237,14 +236,12 @@ const Dashboard: React.FC = () => {
               scrollButtons="auto"
             >
               <Tab 
-                label="My Resumes" 
-                icon={<DescriptionIcon />} 
+                label="My Resumes"
                 iconPosition="start" 
                 {...a11yProps(0)} 
               />
               <Tab 
-                label="My Cover Letters" 
-                icon={<NoteAddIcon />} 
+                label="My Cover Letters"
                 iconPosition="start" 
                 {...a11yProps(1)} 
               />

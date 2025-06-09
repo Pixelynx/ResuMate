@@ -1,0 +1,41 @@
+.header {
+  background: linear-gradient(to right, #6a1b9a, #8e24aa);
+}
+
+.logo {
+  flex-grow: 1;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.navButton {
+  color: white !important;
+}
+
+.navButtonActive {
+  color: white !important;
+  font-weight: bold;
+  border-bottom: 2px solid white !important;
+}
+
+.navContainer {
+  display: flex;
+  gap: 16px;
+}
+
+.menuIcon {
+  color: white !important;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.menuItemIcon {
+  margin-right: 8px;
+} 

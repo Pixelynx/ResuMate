@@ -1,262 +1,243 @@
 // @ts-check
-
-/** @typedef {import('../../ai.service').ResumeData} ResumeData */
+const { calculateJobFitScore } = require('../../jobFitService');
+const { extractKeywords } = require('../../assessment/analysis/jobCategories');
 
 /**
- * @typedef {Object} ContentRelevance
- * @property {number} score - Relevance score (0-1)
- * @property {string[]} matchedKeywords - Keywords found in both resume and job description
- * @property {string[]} missingKeywords - Important keywords from job description not found in content
- * @property {Object.<string, number>} subsectionScores - Individual scores for subsections
+ * @typedef {import('../../jobFitService').CoverLetter} CoverLetter
+ * @typedef {import('../../jobFitService').JobFitResult} JobFitResult
  */
 
 /**
- * @typedef {Object} SectionPriority
- * @property {'PRIMARY' | 'SECONDARY' | 'MINIMAL'} tier - Priority tier based on relevance
- * @property {number} allocationPercentage - Percentage of content to allocate (0-100)
- * @property {string[]} focusPoints - Key points to emphasize
- * @property {string[]} suggestedTransitions - Suggested transition phrases
+ * @typedef {Object} ContentAnalysisResult
+ * @property {number} relevanceScore - Score indicating content relevance (0-1)
+ * @property {number} impactScore - Score indicating achievement impact (0-1)
+ * @property {number} specificityScore - Score indicating detail level (0-1)
+ * @property {string[]} keywords - Extracted relevant keywords
+ * @property {Object} metrics - Additional analysis metrics
  */
 
 /**
- * @typedef {Object} ContentAllocation
- * @property {Object.<string, SectionPriority>} sections - Priority and allocation for each section
- * @property {string[]} suggestedOrder - Recommended order of sections
- * @property {Object.<string, string[]>} emphasisKeywords - Keywords to emphasize per section
+ * Analyzes content quality and relevance
+ * @param {Object} content - Content to analyze
+ * @param {CoverLetter} jobDetails - Job details for context
+ * @returns {Promise<ContentAnalysisResult>} Analysis results
  */
-
-/** @type {Object.<string, number>} */
-const SECTION_BASE_WEIGHTS = {
-  workExperience: 0.35,
-  skills: 0.25,
-  projects: 0.25,
-  education: 0.15
-};
-
-/** @type {Object.<string, string[]>} */
-const SECTION_INDICATORS = {
-  workExperience: [
-    'experience', 'work', 'history', 'background', 'role', 'position',
-    'responsibilities', 'achievements', 'track record'
-  ],
-  skills: [
-    'skills', 'abilities', 'competencies', 'proficiency', 'expertise',
-    'qualifications', 'technical', 'technologies', 'tools'
-  ],
-  projects: [
-    'projects', 'portfolio', 'implementations', 'developments',
-    'initiatives', 'solutions', 'applications', 'systems'
-  ],
-  education: [
-    'education', 'degree', 'certification', 'academic', 'university',
-    'college', 'diploma', 'qualification', 'training'
-  ]
-};
-
-/**
- * Calculates relevance score for a section's content against job requirements
- * @param {string} content - Section content to analyze
- * @param {string} jobDescription - Job description to match against
- * @param {string[]} [sectionIndicators] - Keywords indicating section relevance
- * @returns {ContentRelevance} Relevance analysis
- */
-const calculateSectionRelevance = (content, jobDescription, sectionIndicators = []) => {
-  if (!content || !jobDescription) {
-    return {
-      score: 0,
-      matchedKeywords: [],
-      missingKeywords: [],
-      subsectionScores: {}
-    };
-  }
-
-  const contentLower = content.toLowerCase();
-  const jobLower = jobDescription.toLowerCase();
-
-  // Extract key phrases from job description
-  const jobPhrases = jobLower
-    .split(/[.,!?]/)
-    .map(phrase => phrase.trim())
-    .filter(phrase => phrase.length > 0);
-
-  // Find matching keywords and calculate basic score
-  const matchedKeywords = sectionIndicators.filter(keyword =>
-    jobLower.includes(keyword) && contentLower.includes(keyword)
-  );
-
-  const missingKeywords = sectionIndicators.filter(keyword =>
-    jobLower.includes(keyword) && !contentLower.includes(keyword)
-  );
-
-  // Calculate phrase-level matches
-  const phraseMatches = jobPhrases.filter(phrase =>
-    contentLower.includes(phrase.toLowerCase())
-  );
-
-  // Calculate weighted score
-  const keywordScore = matchedKeywords.length / Math.max(1, sectionIndicators.length);
-  const phraseScore = phraseMatches.length / Math.max(1, jobPhrases.length);
-  
-  const score = (keywordScore * 0.4) + (phraseScore * 0.6);
-
-  return {
-    score: Math.min(1, score),
-    matchedKeywords,
-    missingKeywords,
-    subsectionScores: {
-      keywordMatch: keywordScore,
-      phraseMatch: phraseScore
-    }
-  };
-};
-
-/**
- * Determines priority tier and allocation percentage based on relevance score
- * @param {number} relevanceScore - Section relevance score (0-1)
- * @param {number} contentQuality - Content quality score (0-1)
- * @returns {SectionPriority} Priority and allocation details
- */
-const calculateSectionPriority = (relevanceScore, contentQuality) => {
-  const combinedScore = (relevanceScore * 0.7) + (contentQuality * 0.3);
-  
-  if (combinedScore >= 0.7) {
-    return {
-      tier: 'PRIMARY',
-      allocationPercentage: Math.min(40, Math.round(combinedScore * 50)),
-      focusPoints: ['Emphasize specific achievements', 'Use detailed examples'],
-      suggestedTransitions: [
-        'Most notably,',
-        'Of particular relevance,',
-        'A key highlight of my background is'
-      ]
-    };
-  }
-  
-  if (combinedScore >= 0.4) {
-    return {
-      tier: 'SECONDARY',
-      allocationPercentage: Math.min(30, Math.round(combinedScore * 40)),
-      focusPoints: ['Summarize relevant aspects', 'Focus on transferable elements'],
-      suggestedTransitions: [
-        'Additionally,',
-        'I also bring experience in',
-        'My background includes'
-      ]
-    };
-  }
-  
-  return {
-    tier: 'MINIMAL',
-    allocationPercentage: Math.min(20, Math.round(combinedScore * 30)),
-    focusPoints: ['Brief mention if relevant', 'Focus on strongest connection'],
-    suggestedTransitions: [
-      'Furthermore,',
-      'I have also',
-      'My experience extends to'
-    ]
-  };
-};
-
-/**
- * Assesses the quality of available content
- * @param {string} content - Content to assess
- * @returns {number} Quality score (0-1)
- */
-const assessContentQuality = (content) => {
-  if (!content) return 0;
-  
-  const metrics = {
-    length: Math.min(1, content.length / 500),  // Ideal length ~500 chars
-    specificity: content.match(/\b\d+%|\d+ years|\$\d+|\d+ projects/g)?.length || 0,
-    actionVerbs: content.match(/\b(developed|implemented|managed|led|created|designed)\b/gi)?.length || 0
-  };
-  
-  return Math.min(1, (
-    (metrics.length * 0.4) +
-    (Math.min(1, metrics.specificity / 3) * 0.3) +
-    (Math.min(1, metrics.actionVerbs / 4) * 0.3)
-  ));
-};
-
-/**
- * Prioritizes resume content sections based on job requirements
- * @param {ResumeData} resumeData - Resume content by section
- * @param {Object} jobDetails - Job description and requirements
- * @returns {ContentAllocation} Prioritized content allocation
- */
-const prioritizeContent = (resumeData, jobDetails) => {
-  /** @type {Object.<string, SectionPriority>} */
-  const sectionScores = {};
-  let totalAllocation = 0;
-  
-  // Calculate relevance and priority for each section
-  for (const [section, weight] of Object.entries(SECTION_BASE_WEIGHTS)) {
-    const content = extractSectionContent(resumeData[section]);
-    const relevance = calculateSectionRelevance(
-      content,
-      jobDetails.jobDescription,
-      SECTION_INDICATORS[section]
-    );
-    const quality = assessContentQuality(content);
-    const priority = calculateSectionPriority(relevance.score * weight, quality);
+const analyzeContent = async (content, jobDetails) => {
+  try {
+    // Extract keywords from content
+    const keywords = extractKeywords(content);
     
-    sectionScores[section] = priority;
-    totalAllocation += priority.allocationPercentage;
+    // Calculate relevance score
+    const relevanceScore = await calculateRelevanceScore(content, jobDetails);
+    
+    // Calculate impact score
+    const impactScore = calculateImpactScore(content);
+    
+    // Calculate specificity score
+    const specificityScore = calculateSpecificityScore(content);
+    
+    // Calculate additional metrics
+    const metrics = {
+      keywordDensity: calculateKeywordDensity(content, keywords),
+      sentimentScore: analyzeSentiment(content),
+      readabilityScore: calculateReadability(content),
+      technicalityScore: calculateTechnicality(content, keywords)
+    };
+
+    return {
+      relevanceScore,
+      impactScore,
+      specificityScore,
+      keywords,
+      metrics
+    };
+  } catch (error) {
+    console.error('Error in content analysis:', error);
+    return {
+      relevanceScore: 0,
+      impactScore: 0,
+      specificityScore: 0,
+      keywords: [],
+      metrics: {
+        keywordDensity: 0,
+        sentimentScore: 0,
+        readabilityScore: 0,
+        technicalityScore: 0
+      }
+    };
   }
-  
-  // Normalize allocations to 100%
-  if (totalAllocation > 100) {
-    const scale = 100 / totalAllocation;
-    Object.values(sectionScores).forEach(section => {
-      section.allocationPercentage = Math.round(section.allocationPercentage * scale);
-    });
-  }
-  
-  // Determine optimal section order
-  const sectionOrder = Object.entries(sectionScores)
-    .sort(([,a], [,b]) => b.allocationPercentage - a.allocationPercentage)
-    .map(([section]) => section);
-  
-  return {
-    sections: sectionScores,
-    suggestedOrder: sectionOrder,
-    emphasisKeywords: Object.fromEntries(
-      Object.entries(sectionScores).map(([section, priority]) => [
-        section,
-        priority.tier === 'PRIMARY' ? SECTION_INDICATORS[section].slice(0, 5) : []
-      ])
-    )
-  };
 };
 
 /**
- * Extracts content from a resume section
- * @param {any} sectionData - Section data in resume
- * @returns {string} Concatenated section content
+ * Calculates content relevance score
+ * @param {Object} content - Content to analyze
+ * @param {CoverLetter} jobDetails - Job details
+ * @returns {Promise<number>} Relevance score (0-1)
  */
-const extractSectionContent = (sectionData) => {
-  if (!sectionData) return '';
+const calculateRelevanceScore = async (content, jobDetails) => {
+  const result = await calculateJobFitScore(content, jobDetails);
+  return Math.min(1, Math.max(0, result?.score || 0));
+};
+
+/**
+ * Calculates impact score based on achievements and metrics
+ * @param {Object} content - Content to analyze
+ * @returns {number} Impact score (0-1)
+ */
+const calculateImpactScore = (content) => {
+  const text = JSON.stringify(content).toLowerCase();
   
-  if (Array.isArray(sectionData)) {
-    return sectionData
-      .map(item => Object.values(item).filter(val => typeof val === 'string').join(' '))
-      .join(' ');
-  }
+  // Impact indicators
+  const metrics = text.match(/\d+%|\$\d+|\d+ million|\d+ billion/g) || [];
+  const achievements = text.match(/achieved|improved|increased|reduced|saved|led|managed|developed/g) || [];
+  const scale = text.match(/team of \d+|company-wide|enterprise|global|international/g) || [];
   
-  if (typeof sectionData === 'object') {
-    return Object.values(sectionData)
-      .filter(val => typeof val === 'string')
-      .join(' ');
-  }
+  const score = (
+    (metrics.length * 0.4) +
+    (achievements.length * 0.4) +
+    (scale.length * 0.2)
+  ) / 10; // Normalize to 0-1
   
-  return String(sectionData);
+  return Math.min(1, Math.max(0, score));
+};
+
+/**
+ * Calculates specificity score based on detail level
+ * @param {Object} content - Content to analyze
+ * @returns {number} Specificity score (0-1)
+ */
+const calculateSpecificityScore = (content) => {
+  const text = JSON.stringify(content).toLowerCase();
+  
+  // Specificity indicators
+  const numbers = text.match(/\d+/g) || [];
+  const technologies = text.match(/\w+\.\w+|[A-Z][a-z]*[A-Z]\w+|\w+\.js/g) || [];
+  const timeframes = text.match(/\d{4}|\d+ months|\d+ years/g) || [];
+  const details = text.match(/specifically|detailed|through|using|by|with/g) || [];
+  
+  const score = (
+    (numbers.length * 0.3) +
+    (technologies.length * 0.3) +
+    (timeframes.length * 0.2) +
+    (details.length * 0.2)
+  ) / 15; // Normalize to 0-1
+  
+  return Math.min(1, Math.max(0, score));
+};
+
+/**
+ * Calculates keyword density
+ * @param {Object} content - Content to analyze
+ * @param {string[]} keywords - Keywords to check
+ * @returns {number} Keyword density score (0-1)
+ */
+const calculateKeywordDensity = (content, keywords) => {
+  const text = JSON.stringify(content).toLowerCase();
+  const words = text.split(/\W+/);
+  
+  let keywordCount = 0;
+  keywords.forEach(keyword => {
+    const regex = new RegExp(keyword.toLowerCase(), 'g');
+    const matches = text.match(regex);
+    if (matches) keywordCount += matches.length;
+  });
+  
+  return Math.min(1, keywordCount / words.length * 10);
+};
+
+/**
+ * Analyzes content sentiment
+ * @param {Object} content - Content to analyze
+ * @returns {number} Sentiment score (0-1)
+ */
+const analyzeSentiment = (content) => {
+  const text = JSON.stringify(content).toLowerCase();
+  
+  const positiveWords = [
+    'achieved', 'improved', 'increased', 'successful', 'innovative',
+    'efficient', 'effective', 'optimized', 'enhanced', 'excellent'
+  ];
+  
+  const negativeWords = [
+    'failed', 'decreased', 'reduced', 'problem', 'difficult',
+    'challenging', 'limited', 'restricted', 'constrained', 'issue'
+  ];
+  
+  let positiveCount = 0;
+  let negativeCount = 0;
+  
+  positiveWords.forEach(word => {
+    const regex = new RegExp(word, 'g');
+    const matches = text.match(regex);
+    if (matches) positiveCount += matches.length;
+  });
+  
+  negativeWords.forEach(word => {
+    const regex = new RegExp(word, 'g');
+    const matches = text.match(regex);
+    if (matches) negativeCount += matches.length;
+  });
+  
+  const total = positiveCount + negativeCount;
+  return total === 0 ? 0.5 : (positiveCount / total);
+};
+
+/**
+ * Calculates content readability
+ * @param {Object} content - Content to analyze
+ * @returns {number} Readability score (0-1)
+ */
+const calculateReadability = (content) => {
+  const text = JSON.stringify(content);
+  
+  // Simple readability metrics
+  const sentences = text.split(/[.!?]+/).length;
+  const words = text.split(/\W+/).length;
+  const longWords = text.split(/\W+/).filter(word => word.length > 6).length;
+  
+  const avgWordsPerSentence = words / sentences;
+  const longWordRatio = longWords / words;
+  
+  // Penalize very short or very long sentences, and too many long words
+  const score = (
+    (1 - Math.abs(avgWordsPerSentence - 15) / 15) * 0.6 +
+    (1 - longWordRatio) * 0.4
+  );
+  
+  return Math.min(1, Math.max(0, score));
+};
+
+/**
+ * Calculates technical content score
+ * @param {Object} content - Content to analyze
+ * @param {string[]} keywords - Technical keywords
+ * @returns {number} Technical score (0-1)
+ */
+const calculateTechnicality = (content, keywords) => {
+  const text = JSON.stringify(content).toLowerCase();
+  const technicalTerms = keywords.filter(keyword => 
+    /^[A-Z]/.test(keyword) || // Capitalized terms
+    keyword.includes('.') || // Software/versions
+    /\d/.test(keyword) // Contains numbers
+  );
+  
+  let technicalCount = 0;
+  technicalTerms.forEach(term => {
+    const regex = new RegExp(term.toLowerCase(), 'g');
+    const matches = text.match(regex);
+    if (matches) technicalCount += matches.length;
+  });
+  
+  return Math.min(1, technicalCount / 10); // Normalize to 0-1
 };
 
 module.exports = {
-  calculateSectionRelevance,
-  calculateSectionPriority,
-  assessContentQuality,
-  prioritizeContent,
-  SECTION_BASE_WEIGHTS,
-  SECTION_INDICATORS
+  analyzeContent,
+  calculateRelevanceScore,
+  calculateImpactScore,
+  calculateSpecificityScore,
+  calculateKeywordDensity,
+  analyzeSentiment,
+  calculateReadability,
+  calculateTechnicality
 }; 

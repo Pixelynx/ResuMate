@@ -1,0 +1,201 @@
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05));
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(106, 27, 154, 0.15);
+  background: white;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 8px;
+}
+
+.title {
+  color: rgba(106, 27, 154, 0.1) !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card:hover .title {
+  color: rgba(106, 27, 154, 0.95) !important;
+}
+
+.menuButton {
+  color: rgba(106, 27, 154, 0.1) !important;
+}
+
+.card:hover .menuButton {
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.content {
+  padding: 12px;
+  flex-grow: 1;
+}
+
+.sections {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.section {
+  flex: 1;
+  border: 2px solid rgba(106, 27, 154, 0.1);
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.card:hover .section {
+  border: 1.75px solid rgba(106, 27, 154, 0.8);
+}
+
+.sectionTitle {
+  color: rgba(106, 27, 154, 0.8);
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+}
+
+.skillsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 12px;
+  gap: 8px;
+}
+
+.skill {
+  color: rgba(106, 27, 154, 0.2);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.card:hover .skill {
+  color: rgba(106, 27, 154, 0.8);
+}
+
+.qualifiersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-items: center;
+  align-content: center;
+  height: 100%;
+  /* padding: 6px 2px; */
+}
+
+.qualifier {
+  width: 40%;
+  margin: 6px;
+  color: rgba(106, 27, 154, 0.2);
+  text-align: center;
+}
+
+.qualifier p {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.card:hover .qualifier {
+  color: rgba(106, 27, 154, 0.8);
+}
+
+.footer {
+  margin-top: auto;
+  padding: 16px;
+}
+
+.date {
+  color: rgba(106, 27, 154, 0.1);
+  font-size: 0.875rem !important;
+  margin-bottom: 12px;
+}
+
+.card:hover .date {
+  color: rgba(106, 27, 154, 0.6);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.button {
+  color: rgba(106, 27, 154, 0.1) !important;
+  text-transform: none !important;
+}
+
+.card:hover .button:not(:disabled) {
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.button:hover {
+  background-color: rgba(106, 27, 154, 0.3) !important;
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.button:disabled {
+  color: rgba(106, 27, 154, 0.1) !important;
+}
+
+.buttonText {
+  margin-left: 4px;
+}
+
+@media (max-width: 768px) {
+  .card {
+    background: white;
+  }
+
+  .title {
+    color: rgba(106, 27, 154, 0.95) !important;
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .sections {
+    flex-direction: column;
+  }
+
+  .section {
+    border: 2px solid rgba(106, 27, 154, 0.8);
+  }
+
+  .skill, .qualifier {
+    color: rgba(106, 27, 154, 0.8);
+  }
+
+  .date {
+    color: rgba(106, 27, 154, 0.6);
+  }
+
+  .actions {
+    padding-top: 6px;
+  }
+
+  .button {
+    color: rgba(106, 27, 154, 0.8) !important;
+  }
+  .buttonText {
+    display: none;
+  }
+} 

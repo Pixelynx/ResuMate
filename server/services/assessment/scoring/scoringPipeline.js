@@ -9,6 +9,33 @@ const { classifyJob } = require('../analysis/jobCategories');
 /** @typedef {import('../compensation/skillsCompensation').SkillMatchQuality} SkillMatchQuality */
 /** @typedef {import('../compensation/projectCompensation').ProjectRelevance} ProjectRelevance */
 /** @typedef {import('../compensation/compensationSystem').CompensationResult} CompensationResult */
+/** @typedef {import('../compensation/projectCompensation').Project} Project */
+
+/**
+ * @typedef {Object} Resume
+ * @property {{ skills_: string[] }} [skills]
+ * @property {Array<{ jobtitle: string }>} [workExperience]
+ * @property {Array<Object>} [education]
+ * @property {Project[]} [projects]
+ */
+
+/**
+ * @typedef {Object} JobDetails
+ * @property {string[]} [requiredSkills]
+ * @property {string} [description]
+ * @property {string} [title]
+ * @property {number} [requiredYears]
+ * @property {boolean} [isTechnicalRole]
+ */
+
+/**
+ * @typedef {Object} TimingAnalytics
+ * @property {number} [baseScores]
+ * @property {number} [skillMatch]
+ * @property {number} [projectComp]
+ * @property {number} [compensations]
+ * @property {number} [total]
+ */
 
 /**
  * @typedef {Object} ComponentScore
@@ -27,7 +54,7 @@ const { classifyJob } = require('../analysis/jobCategories');
  * @property {number} titleBonus - Job title bonus applied
  * @property {string[]} strengths - Identified strengths
  * @property {string[]} improvements - Suggested improvements
- * @property {Object} timing - Processing time analytics
+ * @property {TimingAnalytics} timing - Processing time analytics
  */
 
 /**
@@ -35,6 +62,12 @@ const { classifyJob } = require('../analysis/jobCategories');
  * @property {number} finalScore - Final calculated score (0-10)
  * @property {ScoringAnalytics} analytics - Detailed scoring analytics
  * @property {string} explanation - Human-readable explanation
+ */
+
+/**
+ * @typedef {Object} ProjectCompensation
+ * @property {Object.<string, number>} reductions
+ * @property {Array<ProjectRelevance>} relevantProjects
  */
 
 class ScoringPipeline {
@@ -45,8 +78,8 @@ class ScoringPipeline {
 
   /**
    * Calculates base component scores
-   * @param {Object} resume - Candidate's resume
-   * @param {Object} jobDetails - Job details and requirements
+   * @param {Resume} resume - Candidate's resume
+   * @param {JobDetails} jobDetails - Job details and requirements
    * @returns {Promise<ComponentScore>} Base component scores
    */
   async calculateBaseScores(resume, jobDetails) {
@@ -55,7 +88,7 @@ class ScoringPipeline {
       assessSkillMatchQuality(
         resume.skills.skills_,
         jobDetails.requiredSkills || [],
-        jobDetails.description
+        jobDetails.description || ''
       ).overallMatch : 0;
 
     // Calculate experience score
@@ -73,7 +106,7 @@ class ScoringPipeline {
       calculateProjectCompensation(
         resume.projects,
         jobDetails.requiredSkills || [],
-        jobDetails.description
+        jobDetails.description || ''
       ).relevantProjects.reduce((score, proj) => score + (proj.relevanceScore || 0), 0) / 
       resume.projects.length : 0;
 
@@ -104,6 +137,7 @@ class ScoringPipeline {
       return this.cache.get(cacheKey);
     }
 
+    /** @param {string} title */
     const normalize = (title) => title.toLowerCase().replace(/[^\w\s]/g, '');
     const candidateNorm = normalize(candidateTitle);
     const jobNorm = normalize(jobTitle);
@@ -116,7 +150,7 @@ class ScoringPipeline {
     // Partial match
     const words = new Set(jobNorm.split(' '));
     const matchedWords = candidateNorm.split(' ')
-      .filter(word => words.has(word)).length;
+      .filter(/** @param {string} word */ (word) => words.has(word)).length;
     
     const score = Math.min(0.5, matchedWords / words.size);
     const result = {
@@ -130,8 +164,8 @@ class ScoringPipeline {
 
   /**
    * Calculates final score with all compensations and bonuses
-   * @param {Object} resume - Candidate's resume
-   * @param {Object} jobDetails - Job details and requirements
+   * @param {Resume} resume - Candidate's resume
+   * @param {JobDetails} jobDetails - Job details and requirements
    * @returns {Promise<ScoringResult>} Final scoring result
    */
   async calculateScore(resume, jobDetails) {
@@ -152,28 +186,29 @@ class ScoringPipeline {
       const skillMatch = assessSkillMatchQuality(
         resume.skills?.skills_ || [],
         jobDetails.requiredSkills || [],
-        jobDetails.description
+        jobDetails.description || ''
       );
-      analytics.timing.skillMatch = Date.now() - startTime - analytics.timing.baseScores;
+      analytics.timing.skillMatch = Date.now() - startTime - (analytics.timing.baseScores || 0);
 
       // 2. Calculate project relevance and compensation
+      /** @type {ProjectCompensation} */
       const projectComp = calculateProjectCompensation(
         resume.projects || [],
         jobDetails.requiredSkills || [],
-        jobDetails.description
+        jobDetails.description || ''
       );
-      analytics.timing.projectComp = Date.now() - startTime - analytics.timing.skillMatch;
+      analytics.timing.projectComp = Date.now() - startTime - (analytics.timing.skillMatch || 0);
 
       // 3. Apply compensations in priority order
       const { adjustedPenalties, compensations } = this.applyCompensations(
         analytics.baseScores,
         skillMatch,
         projectComp,
-        jobDetails.isTechnicalRole,
+        jobDetails.isTechnicalRole || false,
         jobDetails.requiredYears || 0
       );
       analytics.compensations = compensations;
-      analytics.timing.compensations = Date.now() - startTime - analytics.timing.projectComp;
+      analytics.timing.compensations = Date.now() - startTime - (analytics.timing.projectComp || 0);
 
       // 4. Calculate and apply job title bonus
       const titleBonus = this.calculateTitleBonus(
@@ -213,10 +248,10 @@ class ScoringPipeline {
    * Applies all compensations in priority order
    * @param {ComponentScore} baseScores - Base component scores
    * @param {SkillMatchQuality} skillMatch - Skill match assessment
-   * @param {Object} projectComp - Project compensation data
+   * @param {ProjectCompensation} projectComp - Project compensation data
    * @param {boolean} isTechnicalRole - Whether this is a technical role
    * @param {number} requiredYears - Required years of experience
-   * @returns {Object} Adjusted penalties and applied compensations
+   * @returns {{ adjustedPenalties: Object.<string, number>, compensations: Object.<string, number> }}
    */
   applyCompensations(baseScores, skillMatch, projectComp, isTechnicalRole, requiredYears) {
     // Convert base scores to initial penalties
@@ -265,6 +300,7 @@ class ScoringPipeline {
    */
   calculateFinalScore(baseScores, penalties, titleBonus) {
     // Weight the components
+    /** @type {Record<keyof ComponentScore, number>} */
     const weights = {
       skills: 0.3,
       experience: 0.25,
@@ -275,6 +311,7 @@ class ScoringPipeline {
 
     let score = 0;
     for (const [component, weight] of Object.entries(weights)) {
+      // @ts-ignore - We know these properties exist
       const baseScore = baseScores[component] || 0;
       const penalty = penalties[component] || 0;
       score += (baseScore * (1 - penalty)) * weight;
@@ -292,7 +329,7 @@ class ScoringPipeline {
    * @param {number} finalScore - Final calculated score
    * @param {ComponentScore} baseScores - Base component scores
    * @param {Object} compensations - Applied compensations
-   * @param {Object} titleBonus - Job title bonus info
+   * @param {{ score: number, explanation: string }} titleBonus - Job title bonus info
    * @param {SkillMatchQuality} skillMatch - Skill match assessment
    * @returns {Promise<string>} Score explanation
    */

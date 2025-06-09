@@ -1,7 +1,6 @@
 import React, { forwardRef, useEffect } from 'react';
 import { 
   Typography, 
-  Box, 
   Paper
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -66,15 +65,6 @@ const PrintableCoverLetter = forwardRef<HTMLDivElement, PrintableCoverLetterProp
   return (
     <div ref={ref}>
       <PrintContainer>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 2 }}>
-            {coverLetter.title}
-          </Typography>
-          <Typography variant="h5" color="textSecondary" gutterBottom>
-            {coverLetter.jobtitle} at {coverLetter.company}
-          </Typography>
-        </Box>
-        
         <CoverLetterContent variant="body1">
           {coverLetter.content}
         </CoverLetterContent>

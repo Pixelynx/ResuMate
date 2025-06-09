@@ -45,7 +45,8 @@ db.resumes.hasMany(db.coverletters, {
   onUpdate: 'CASCADE'
 });
 db.coverletters.belongsTo(db.resumes, { 
-  foreignKey: 'resumeid'
+  foreignKey: 'resumeid',
+  as: 'resume'
 });
 
 module.exports = db; 

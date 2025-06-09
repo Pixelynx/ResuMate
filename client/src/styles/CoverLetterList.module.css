@@ -1,0 +1,182 @@
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05));
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(106, 27, 154, 0.15);
+  background: white;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 8px;
+}
+
+.title {
+  color: rgba(106, 27, 154, 0.1) !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card:hover .title {
+  color: rgba(106, 27, 154, 0.95) !important;
+}
+
+.subtitle {
+  color: rgba(106, 27, 154, 0.1);
+  font-size: 0.875rem;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card:hover .subtitle {
+  color: rgba(106, 27, 154, 0.8);
+}
+
+.content {
+  padding: 12px;
+  flex-grow: 1;
+}
+
+.resumeSection {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  color: rgba(106, 27, 154, 0.1);
+}
+
+.card:hover .resumeSection {
+  color: rgba(106, 27, 154, 0.8);
+}
+
+.resumeLabel {
+  margin-right: 8px;
+  font-size: 0.875rem;
+}
+
+.resumeTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.footer {
+  margin-top: auto;
+  padding: 16px;
+}
+
+.date {
+  color: rgba(106, 27, 154, 0.1);
+  font-size: 0.875rem !important;
+  margin-bottom: 12px;
+}
+
+.card:hover .date {
+  color: rgba(106, 27, 154, 0.6);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.button {
+  color: rgba(106, 27, 154, 0.1) !important;
+  text-transform: none !important;
+  min-height: 44px;
+  border-radius: 8px;
+}
+
+.card:hover .button:not(:disabled) {
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.button:hover {
+  background-color: rgba(106, 27, 154, 0.3) !important;
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.deleteButton {
+  color: rgba(106, 27, 154, 0.1) !important;
+  text-transform: none !important;
+  min-height: 44px;
+  border-radius: 8px;
+  margin-left: auto !important;
+}
+
+.card:hover .deleteButton:not(:disabled) {
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.deleteButton:hover {
+  background-color: rgba(106, 27, 154, 0.3) !important;
+  color: rgba(106, 27, 154, 0.8) !important;
+}
+
+.buttonText {
+  margin-left: 4px;
+}
+
+.dialog {
+  padding: 24px;
+}
+
+.dialogActions {
+  padding: 16px;
+}
+
+.dialogButton {
+  min-height: 44px;
+  min-width: 88px;
+}
+
+@media (max-width: 768px) {
+  .card {
+    background: white;
+  }
+
+  .title {
+    color: rgba(106, 27, 154, 0.95) !important;
+  }
+
+  .subtitle {
+    color: rgba(106, 27, 154, 0.8);
+  }
+
+  .resumeSection {
+    color: rgba(106, 27, 154, 0.8);
+  }
+
+  .date {
+    color: rgba(106, 27, 154, 0.6);
+  }
+
+  .button {
+    color: rgba(106, 27, 154, 0.8) !important;
+  }
+
+  .buttonText {
+    display: none;
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+} 

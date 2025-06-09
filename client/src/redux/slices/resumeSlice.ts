@@ -394,7 +394,14 @@ const resumeSlice = createSlice({
       .addCase(fetchResumeById.fulfilled, (state: ResumeState, action: PayloadAction<Resume>) => {
         state.loading = false;
         state.currentResume = action.payload;
-        state.draftResume = action.payload;
+        state.draftResume = {
+          ...action.payload,
+          workExperience: action.payload.workExperience || [],
+          education: action.payload.education || [],
+          skills: action.payload.skills || { skills_: '', languages: '' },
+          certifications: action.payload.certifications || [],
+          projects: action.payload.projects || []
+        };
         state.savedResumeId = action.payload.id;
       })
       .addCase(fetchResumeById.rejected, (state: ResumeState, action: any) => {

@@ -1,7 +1,6 @@
 // @ts-check
 const { selectOptimalContent } = require('./content/contentSelection');
 const { validateContentAuthenticity } = require('./content/contentAuthenticity');
-const { prioritizeContent } = require('./content/contentAnalysis');
 
 /**
  * @typedef {import('../ai.service').ResumeData} ResumeData
@@ -9,11 +8,29 @@ const { prioritizeContent } = require('./content/contentAnalysis');
  */
 
 /**
+ * @typedef {Object} Education
+ * @property {string} endDate - End date of education
+ */
+
+/**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
  * @typedef {Object} ValidationResult
  * @property {boolean} isValid - Whether content is valid
  * @property {string[]} errors - List of validation errors
  * @property {string[]} warnings - List of validation warnings
- * @property {Object} metrics - Validation metrics
+ * @property {ValidationMetrics} metrics - Validation metrics
+ */
+
+/**
+ * @typedef {Object} ValidationMetrics
+ * @property {number} specificity - Specificity score
+ * @property {number} personalization - Personalization score
+ * @property {number} completeness - Completeness score
+ * @property {number} professionalism - Professionalism score
  */
 
 /**
@@ -53,6 +70,26 @@ const REQUIRED_ELEMENTS = new Set([
   'greeting',
   'closing'
 ]);
+
+/**
+ * Type guard for education array
+ * @param {unknown} value - Value to check
+ * @returns {boolean} Whether the value is an education array
+ */
+const isEducationArray = (value) => {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === 'object' && item !== null && 'endDate' in item
+  );
+};
+
+/**
+ * Type guard for skills object
+ * @param {unknown} value - Value to check
+ * @returns {boolean} Whether the value is a skills object
+ */
+const isSkills = (value) => {
+  return typeof value === 'object' && value !== null && 'skills_' in value;
+};
 
 /**
  * Validates generated content for quality and completeness
@@ -205,130 +242,200 @@ const calculateProfessionalismScore = (content) => {
 };
 
 /**
- * Builds dynamic prompt based on content analysis
- * @param {ResumeData} resumeData - Resume data
- * @param {JobDetails} jobDetails - Job details
- * @param {import('./content/contentAnalysis').ContentAllocation} contentPriority
- * @returns {string} Generated prompt
+ * Custom error class for prompt generation failures
+ * @extends Error
  */
-const buildDynamicPrompt = (resumeData, jobDetails, contentPriority) => {
-  const profile = detectCandidateProfile(resumeData);
-  const spaceAllocation = allocateContentSpace(contentPriority.sections);
-  
-  const profileGuidance = {
-    EXPERIENCED: 'Emphasize career progression and key achievements',
-    TECHNICAL: 'Focus on technical expertise and project implementations',
-    CAREER_CHANGER: 'Highlight transferable skills and relevant projects',
-    NEW_GRADUATE: 'Emphasize academic projects and technical capabilities'
-  }[profile];
+class PromptGenerationError extends Error {
+  constructor(message, details = {}) {
+    super(message);
+    this.name = 'PromptGenerationError';
+    this.details = details;
+  }
+}
+
+/**
+ * Validates and formats personal details from resume data
+ * @param {import('../ai.service').ResumeData} resumeData - Resume data object
+ * @throws {PromptGenerationError} If required personal details are missing
+ * @returns {string} Formatted personal details section
+ */
+const buildPersonalDetailsSection = (resumeData) => {
+  const {
+    personalDetails,
+    title: resumeTitle
+  } = resumeData;
+
+  // Get firstName and lastName from personalDetails
+  const firstName = personalDetails?.firstname;
+  const lastName = personalDetails?.lastname;
+
+  // Validate required fields
+  const missingFields = [];
+  if (!firstName) missingFields.push('firstName');
+  if (!lastName) missingFields.push('lastName');
+
+  if (missingFields.length > 0) {
+    throw new PromptGenerationError('Missing required personal details', {
+      missingFields,
+      resumeData
+    });
+  }
+
+  const professionalTitle = personalDetails?.title || resumeTitle || `${firstName} ${lastName}`;
 
   return `
-    DYNAMIC COVER LETTER GENERATION INSTRUCTIONS:
-    
-    Profile Type: ${profile}
-    Primary Strategy: ${profileGuidance}
-    
-    Content Priority Structure:
-    ${contentPriority.suggestedOrder.map(section => 
-      `- ${section} (${contentPriority.sections[section].allocationPercentage}% focus, ~${spaceAllocation[section]} chars)`
-    ).join('\n    ')}
-    
-    Section-Specific Guidance:
-    ${Object.entries(contentPriority.sections)
-      .filter(([, priority]) => priority.tier === 'PRIMARY')
-      .map(([section, priority]) => `
-    ${section}:
-    - Focus Points: ${priority.focusPoints.join(', ')}
-    - Key Transitions: "${priority.suggestedTransitions[0]}"
-    - Emphasis Keywords: ${contentPriority.emphasisKeywords[section].join(', ')}
-    `).join('\n')}
-    
-    Job Details:
-    - Company: ${jobDetails.company}
-    - Position: ${jobDetails.jobTitle}
-    - Key Requirements: ${extractKeyRequirements(jobDetails.jobDescription)}
-    
-    Content Quality Requirements:
-    - Only include sections meeting quality thresholds
-    - Maintain natural flow between sections
-    - Use provided transition phrases
-    - Focus on concrete examples and metrics
-    - Adapt tone to match company culture
-    
-    DO NOT:
-    - Include placeholder text
-    - Mention missing information
-    - Exceed allocated section lengths
-    - Use generic statements without context
+    CANDIDATE DETAILS:
+    Full Name: ${firstName} ${lastName}
+    Professional Title: ${professionalTitle}
+    ${personalDetails?.email ? `Email: ${personalDetails.email}` : ''}
+    ${personalDetails?.phone ? `Phone: ${personalDetails.phone}` : ''}
+
+    USE THESE EXACT DETAILS - DO NOT MODIFY OR USE PLACEHOLDERS
   `;
 };
 
 /**
- * Extracts key requirements from job description
- * @param {string} description - Job description
- * @returns {string} Extracted requirements
+ * Processes and formats work experience based on relevance to job
+ * @param {import('../ai.service').ResumeData} resumeData - Resume data
+ * @param {import('../ai.service').JobDetails} jobDetails - Job details
+ * @returns {string} Formatted experience section
  */
-const extractKeyRequirements = (description) => {
-  const requirements = description
-    .split(/[.!?]/)
-    .filter(sentence => 
-      /require|must|should|need|essential|qualification|experience/i.test(sentence)
-    )
-    .map(req => req.trim())
-    .filter(Boolean)
-    .slice(0, 5);  // Take top 5 requirements
+const buildExperienceSection = (resumeData, jobDetails) => {
+  if (!resumeData.workExperience?.length) {
+    return `
+      EXPERIENCE CONTEXT:
+      Candidate is new to the workforce or transitioning careers.
+      Focus on transferable skills, education, and projects instead of direct work experience.
+    `;
+    }
 
-  return requirements.length > 0 
-    ? requirements.join('. ') 
-    : 'No specific requirements extracted';
+    // Sort experiences by relevance and recency
+    const sortedExperience = [...resumeData.workExperience].sort((a, b) => {
+      const dateA = new Date(a.endDate || Date.now());
+      const dateB = new Date(b.endDate || Date.now());
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    const experienceDetails = sortedExperience.map(exp => `
+      Position: ${exp.jobtitle}
+      Company: ${exp.companyName}
+      ${exp.startDate ? `Duration: ${exp.startDate} to ${exp.endDate || 'Present'}` : ''}
+      Key Responsibilities:
+      ${exp.description}
+    `).join('\n');
+
+    return `
+      RELEVANT EXPERIENCE:
+      Use these specific experiences - DO NOT generalize or use placeholders.
+      ${experienceDetails}
+
+      EXPERIENCE GUIDELINES:
+      - Reference specific company names and roles
+      - Include actual dates and durations
+      - Use concrete achievements and metrics from the descriptions
+      - Maintain professional tone while being specific
+    `;
 };
 
 /**
- * Detects candidate profile type
- * @param {ResumeData} resumeData - Resume data
- * @returns {'EXPERIENCED' | 'TECHNICAL' | 'CAREER_CHANGER' | 'NEW_GRADUATE'} Profile type
+ * Maps and formats skills based on job requirements
+ * @param {import('../ai.service').ResumeData} resumeData - Resume data
+ * @param {import('../ai.service').JobDetails} jobDetails - Job details
+ * @returns {string} Formatted skills section
  */
-const detectCandidateProfile = (resumeData) => {
-  const hasStrongExperience = (resumeData.workExperience?.length ?? 0) >= 3;
-  const hasTechnicalSkills = resumeData.skills?.skills_?.toLowerCase().includes('programming') ||
-    resumeData.skills?.skills_?.toLowerCase().includes('software');
-  const isRecentGraduate = resumeData.education?.some(edu => 
-    edu.endDate && new Date(edu.endDate).getFullYear() >= new Date().getFullYear() - 1
-  );
+const buildSkillsSection = (resumeData, jobDetails) => {
+  if (!resumeData.skills?.skills_) {
+    return `
+      SKILLS CONTEXT:
+      Focus on demonstrating capabilities through experience and projects.
+      Emphasize learning ability and adaptability.
+    `;
+    }
 
-  if (hasStrongExperience) return 'EXPERIENCED';
-  if (hasTechnicalSkills) return 'TECHNICAL';
-  if (isRecentGraduate) return 'NEW_GRADUATE';
-  return 'CAREER_CHANGER';
-};
+    const skills = resumeData.skills.skills_.split(',').map(s => s.trim());
+        
+    return `
+      TECHNICAL AND PROFESSIONAL SKILLS:
+      ${skills.join(', ')}
+
+      SKILLS USAGE GUIDELINES:
+      - Reference these exact skills when relevant to the position
+      - Demonstrate practical application in experience or projects
+      - Do not invent or assume additional skills
+      - Connect skills directly to job requirements
+    `;
+  };
 
 /**
- * Allocates content space based on section priorities
- * @param {Object.<string, import('./content/contentAnalysis').SectionPriority>} sections
- * @returns {Object.<string, number>} Character limits per section
+ * Builds enhanced prompt with strict data usage rules
+ * @param {import('../ai.service').ResumeData} resumeData - Resume data
+ * @param {import('../ai.service').JobDetails} jobDetails - Job details
+ * @param {import('../ai.service').GenerationOptions} [options] - Generation options
+ * @returns {string} Complete generation prompt
  */
-const allocateContentSpace = (sections) => {
-  const TOTAL_CHARS = 2500; // Standard cover letter length
-  const MIN_SECTION_CHARS = 200;
-  
-  return Object.fromEntries(
-    Object.entries(sections)
-      .filter(([, priority]) => priority.allocationPercentage > 0)
-      .map(([section, priority]) => [
-        section,
-        Math.max(
-          MIN_SECTION_CHARS,
-          Math.floor(TOTAL_CHARS * (priority.allocationPercentage / 100))
-        )
-      ])
-  );
+const buildEnhancedPrompt = (resumeData, jobDetails, options = {}) => {
+  // Validate inputs
+  if (!resumeData || !jobDetails) {
+    throw new PromptGenerationError('Missing required data', {
+      hasResumeData: !!resumeData,
+      hasJobDetails: !!jobDetails
+    });
+  }
+
+  const personalDetails = buildPersonalDetailsSection(resumeData);
+  const experienceSection = buildExperienceSection(resumeData, jobDetails);
+  const skillsSection = buildSkillsSection(resumeData, jobDetails);
+
+  return `
+    You are a professional cover letter writer creating a personalized letter.
+    Your task is to write a compelling cover letter using ONLY the provided information.
+
+    JOB DETAILS:
+    Company: ${jobDetails.company}
+    Position: ${jobDetails.jobTitle}
+    Description: ${jobDetails.jobDescription}
+
+    ${personalDetails}
+
+    ${experienceSection}
+
+    ${skillsSection}
+
+    STRICT REQUIREMENTS:
+    1. NEVER use placeholder text like [Company Name] or [Your Name]
+    2. NEVER mention missing information or gaps
+    3. ONLY use details provided above
+    4. Maintain professional tone
+    5. Focus on specific, relevant experiences
+    6. Include measurable achievements where available
+
+    FORBIDDEN ELEMENTS:
+    - Generic phrases like "I am writing to express my interest"
+    - Placeholder text in brackets or parentheses
+    - Hypothetical or assumed experiences
+    - Unsubstantiated claims
+
+    TONE AND STYLE:
+    ${options.tone ? `- Maintain a ${options.tone} tone` : '- Maintain a professional, confident tone'}
+    - Be specific and direct
+    - Show enthusiasm through concrete examples
+    - Demonstrate understanding of the company and role
+
+    FORMAT:
+    - Standard business letter format
+    - 2-3 focused paragraphs
+    - Clear opening and closing
+    - Professional signature with provided contact details
+
+    Remember: Quality over quantity. Be specific and relevant rather than comprehensive.
+  `;
 };
 
 /**
  * Generates enhanced cover letter with validation
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @param {Function} generateContent - Function to generate content using AI
+ * @param {(prompt: string) => Promise<string>} generateContent - Function to generate content using AI
  * @param {Object} [options] - Generation options
  * @returns {Promise<GenerationResult>} Generated cover letter with metadata
  */
@@ -340,42 +447,26 @@ const generateEnhancedCoverLetter = async (resumeData, jobDetails, generateConte
     if (!resumeData) {
       throw new Error('Resume data is required');
     }
-    if (!jobDetails) {
-      throw new Error('Job details are required');
-    }
-    if (!jobDetails.company || !jobDetails.jobTitle || !jobDetails.jobDescription) {
+    if (!jobDetails?.company || !jobDetails?.jobTitle || !jobDetails?.jobDescription) {
       throw new Error('Job details must include company, jobTitle, and jobDescription');
     }
-    if (!generateContent || typeof generateContent !== 'function') {
+    if (typeof generateContent !== 'function') {
       throw new Error('Content generation function is required');
     }
 
-    // Step 1: Content Analysis and Selection
-    const selectedContent = selectOptimalContent(resumeData, jobDetails);
-    const contentPriority = prioritizeContent(resumeData, jobDetails);
+    const prompt = buildEnhancedPrompt(resumeData, jobDetails, options);
     
-    // Step 2: Content Authenticity Validation
-    const isAuthentic = validateContentAuthenticity(resumeData);
-    if (!isAuthentic) {
-      throw new Error('Resume content authenticity validation failed');
-    }
-
-    // Step 3: Generate Initial Content
-    const prompt = buildDynamicPrompt(resumeData, jobDetails, contentPriority);
     const initialContent = await generateContent(prompt);
     
-    // Step 4: Validate Generated Content
     const validation = validateContent(initialContent, jobDetails);
     
-    // Step 5: Enhancement if needed
+    // Enhancement if needed
     let finalContent = initialContent;
     if (!validation.isValid) {
-      // Build enhancement prompt based on validation results
       const enhancementPrompt = buildEnhancementPrompt(initialContent, validation, jobDetails);
       finalContent = await generateContent(enhancementPrompt);
     }
 
-    // Step 6: Final Validation
     const finalValidation = validateContent(finalContent, jobDetails);
     
     return {
@@ -383,13 +474,17 @@ const generateEnhancedCoverLetter = async (resumeData, jobDetails, generateConte
       metadata: {
         processingTime: Date.now() - startTime,
         validation: finalValidation,
-        contentMetrics: selectedContent.metrics,
+        contentMetrics: {
+          specificity: calculateSpecificityScore(finalContent),
+          personalization: calculatePersonalizationScore(finalContent, jobDetails),
+          completeness: calculateCompletenessScore(finalContent)
+        },
         enhancementSuggestions: finalValidation.warnings
       }
     };
   } catch (error) {
-    console.error('Error generating enhanced cover letter:', error);
-    throw new Error('Failed to generate enhanced cover letter: ' + error.message);
+    console.error('Error generating enhanced cover letter:', error instanceof Error ? error.message : 'Unknown error');
+    throw error instanceof Error ? error : new Error('Unknown error in cover letter generation');
   }
 };
 
@@ -433,5 +528,5 @@ module.exports = {
   calculatePersonalizationScore,
   calculateCompletenessScore,
   calculateProfessionalismScore,
-  buildDynamicPrompt
+  buildEnhancedPrompt
 }; 

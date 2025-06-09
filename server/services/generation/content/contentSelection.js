@@ -1,4 +1,5 @@
 // @ts-check
+const DataSanitizationPipeline = require('./sanitization/DataSanitizationPipeline');
 
 /**
  * @typedef {import('../../ai.service').ResumeData} ResumeData
@@ -27,11 +28,21 @@
  */
 
 /**
+ * @typedef {Object} Skills
+ * @property {string} skills_ - Comma-separated list of skills
+ */
+
+/**
  * @typedef {Object} ContentQualityMetrics
  * @property {number} specificity - Score for specific details (0-1)
  * @property {number} relevance - Score for job relevance (0-1)
  * @property {number} impact - Score for measurable impact (0-1)
  * @property {number} freshness - Score for content recency (0-1)
+ */
+
+/**
+ * @typedef {Object} ScoredItem
+ * @property {ContentQualityMetrics} score - Quality metrics
  */
 
 /**
@@ -157,64 +168,78 @@ const calculateFreshnessScore = (content) => {
 };
 
 /**
- * Selects optimal content based on quality and relevance
+ * Selects optimal content from resume data
  * @param {ResumeData} resumeData - Resume data
  * @param {JobDetails} jobDetails - Job details
- * @returns {SelectedContent} Selected content with quality scores
+ * @returns {Promise<SelectedContent>} Selected content with quality metrics
  */
-const selectOptimalContent = (resumeData, jobDetails) => {
-  const cacheKey = JSON.stringify({ resumeId: resumeData.id, jobId: jobDetails.jobTitle });
-  
-  if (contentAnalysisCache.has(cacheKey)) {
-    return contentAnalysisCache.get(cacheKey) || createEmptyContent();
+const selectOptimalContent = async (resumeData, jobDetails) => {
+  try {
+    // Sanitize and validate data
+    const sanitizationResult = await DataSanitizationPipeline.process(resumeData);
+    
+    if (sanitizationResult.errors.length > 0) {
+      console.warn('Data sanitization warnings:', sanitizationResult.warnings);
+      console.error('Data sanitization errors:', sanitizationResult.errors);
+    }
+
+    const sanitizedData = sanitizationResult.data;
+    
+    // Select content using sanitized data
+    const experience = await selectExperienceContent(sanitizedData.workExperience, jobDetails);
+    const skills = await selectSkillsContent(sanitizedData.skills, jobDetails);
+    const projects = await selectProjectContent(sanitizedData.projects, jobDetails);
+    const education = await selectEducationContent(sanitizedData.education, jobDetails);
+
+    // Calculate overall metrics
+    const metrics = {
+      specificity: calculateOverallMetric([experience, skills, projects, education], 'specificity'),
+      relevance: calculateOverallMetric([experience, skills, projects, education], 'relevance'),
+      impact: calculateOverallMetric([experience, skills, projects, education], 'impact'),
+      freshness: calculateOverallMetric([experience, skills, projects, education], 'freshness')
+    };
+
+    // Identify strengths and weaknesses
+    const strengths = [];
+    const weaknesses = [];
+
+    if (metrics.specificity > 0.7) strengths.push('High level of specific, quantifiable details');
+    if (metrics.relevance > 0.7) strengths.push('Strong alignment with job requirements');
+    if (metrics.impact > 0.7) strengths.push('Clear demonstration of achievements');
+    if (metrics.freshness > 0.7) strengths.push('Recent, up-to-date experience');
+
+    if (metrics.specificity < 0.5) weaknesses.push('Could include more specific details and metrics');
+    if (metrics.relevance < 0.5) weaknesses.push('Could better align with job requirements');
+    if (metrics.impact < 0.5) weaknesses.push('Could highlight more concrete achievements');
+    if (metrics.freshness < 0.5) weaknesses.push('Consider updating with more recent experience');
+
+    // Calculate overall score
+    const overallScore = (
+      metrics.specificity * 0.3 +
+      metrics.relevance * 0.3 +
+      metrics.impact * 0.25 +
+      metrics.freshness * 0.15
+    );
+
+    // Add sanitization metrics to the result
+    metrics.completeness = sanitizationResult.metrics.completeness;
+    metrics.consistency = sanitizationResult.metrics.consistency;
+    metrics.quality = sanitizationResult.metrics.quality;
+
+    return {
+      experience,
+      skills,
+      projects,
+      education,
+      metrics,
+      overallScore,
+      strengths,
+      weaknesses
+    };
+  } catch (error) {
+    console.error('Error in content selection:', error);
+    return createEmptyContent();
   }
-
-  const experienceContent = selectExperienceContent(resumeData.workExperience || [], jobDetails);
-  const skillsContent = selectSkillsContent(resumeData.skills || {}, jobDetails);
-  const projectContent = selectProjectContent(resumeData.projects || [], jobDetails);
-  const educationContent = selectEducationContent(resumeData.education || [], jobDetails);
-
-  // Calculate overall metrics
-  const metrics = {
-    specificity: calculateOverallMetric([experienceContent, projectContent], 'specificity'),
-    relevance: calculateOverallMetric([experienceContent, skillsContent, projectContent], 'relevance'),
-    impact: calculateOverallMetric([experienceContent, projectContent], 'impact'),
-    freshness: calculateOverallMetric([experienceContent, educationContent], 'freshness')
-  };
-
-  // Calculate overall score
-  const overallScore = (
-    metrics.specificity * 0.3 +
-    metrics.relevance * 0.3 +
-    metrics.impact * 0.2 +
-    metrics.freshness * 0.2
-  );
-
-  // Identify strengths and weaknesses
-  const strengths = [];
-  const weaknesses = [];
-
-  if (metrics.relevance > 0.7) strengths.push('High job relevance');
-  if (metrics.impact > 0.7) strengths.push('Strong achievements');
-  if (metrics.specificity > 0.7) strengths.push('Detailed experience');
-  
-  if (metrics.relevance < 0.3) weaknesses.push('Low job relevance');
-  if (metrics.impact < 0.3) weaknesses.push('Limited achievements');
-  if (metrics.specificity < 0.3) weaknesses.push('Lacks specific details');
-
-  const result = {
-    experience: experienceContent,
-    skills: skillsContent,
-    projects: projectContent,
-    education: educationContent,
-    metrics,
-    overallScore,
-    strengths,
-    weaknesses
-  };
-
-  contentAnalysisCache.set(cacheKey, result);
-  return result;
 };
 
 /**
@@ -250,13 +275,14 @@ const calculateOverallMetric = (sections, metric) => {
 
 /**
  * Selects most relevant work experience content
- * @param {Array<WorkExperience>} experiences - Work experience entries
+ * @param {WorkExperience[]} experiences - Work experience entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected experience content with scores
  */
 const selectExperienceContent = (experiences, jobDetails) => {
   if (!experiences?.length) return { content: [], score: 0 };
 
+  /** @type {(WorkExperience & ScoredItem)[]} */
   const scoredExperiences = experiences.map(exp => ({
     ...exp,
     score: assessContentQuality(
@@ -279,37 +305,39 @@ const selectExperienceContent = (experiences, jobDetails) => {
 
 /**
  * Selects most relevant skills content
- * @param {Object} skills - Skills section
+ * @param {Skills} skills - Skills section
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected skills content with scores
  */
 const selectSkillsContent = (skills, jobDetails) => {
   if (!skills?.skills_) return { content: [], score: 0 };
 
-  const skillsList = skills.skills_.split(',').map(s => s.trim());
-  const scoredSkills = skillsList.map(skill => ({
+  const skillsList = skills.skills_.split(',').map((s) => s.trim());
+  /** @type {Array<{ skill: string; score: number }>} */
+  const scoredSkills = skillsList.map((skill) => ({
     skill,
     score: calculateRelevanceScore(skill, jobDetails.jobDescription)
   }));
 
   return {
     content: scoredSkills
-      .filter(s => s.score > 0.3)
+      .filter((s) => s.score > 0.3)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8),
-    score: Math.max(...scoredSkills.map(s => s.score))
+    score: Math.max(...scoredSkills.map((s) => s.score))
   };
 };
 
 /**
  * Selects most relevant project content
- * @param {Array<Object>} projects - Project entries
+ * @param {Project[]} projects - Project entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected project content with scores
  */
 const selectProjectContent = (projects, jobDetails) => {
   if (!projects?.length) return { content: [], score: 0 };
 
+  /** @type {(Project & ScoredItem)[]} */
   const scoredProjects = projects.map(proj => ({
     ...proj,
     score: assessContentQuality(
@@ -332,13 +360,14 @@ const selectProjectContent = (projects, jobDetails) => {
 
 /**
  * Selects most relevant education content
- * @param {Array<Object>} education - Education entries
+ * @param {Education[]} education - Education entries
  * @param {JobDetails} jobDetails - Job details
  * @returns {SectionContent} Selected education content with scores
  */
 const selectEducationContent = (education, jobDetails) => {
   if (!education?.length) return { content: [], score: 0 };
 
+  /** @type {(Education & ScoredItem)[]} */
   const scoredEducation = education.map(edu => ({
     ...edu,
     score: assessContentQuality(

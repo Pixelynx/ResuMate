@@ -10,7 +10,10 @@
  * @property {string} description - Description of the job category
  */
 
-/** @type {Record<JobCategory, CategoryConfig>} */
+/** 
+ * @type {Record<JobCategory, CategoryConfig>} 
+ * @readonly
+ */
 const JOB_CATEGORIES = {
   TECHNICAL: {
     keywords: [
@@ -90,38 +93,38 @@ const classifyJob = (jobTitle, jobDescription) => {
   const combinedText = normalizeText(`${jobTitle} ${jobDescription}`);
   const words = new Set(combinedText.split(' '));
   
-  let maxMatches = 0;
-  let bestCategory = /** @type {JobCategory} */ ('GENERAL');
-  let matchedKeywords = [];
-  
-  // Find category with most keyword matches
-  for (const category of /** @type {JobCategory[]} */ (Object.keys(JOB_CATEGORIES))) {
-    if (category === 'GENERAL') continue;
-    
-    const config = JOB_CATEGORIES[category];
-    const matches = config.keywords.filter(keyword => {
-      const normalizedKeyword = normalizeText(keyword);
-      return normalizedKeyword.split(' ').every(word => words.has(word));
+  /** @type {{ category: JobCategory; matches: string[]; count: number; }[]} */
+  const categoryMatches = Object.entries(JOB_CATEGORIES)
+    .filter(([category]) => category !== 'GENERAL')
+    .map(([category, config]) => {
+      const matches = config.keywords.filter(keyword => {
+        const normalizedKeyword = normalizeText(keyword);
+        return normalizedKeyword.split(' ').every(word => words.has(word));
+      });
+      return {
+        category: /** @type {JobCategory} */ (category),
+        matches,
+        count: matches.length
+      };
     });
-    
-    if (matches.length > maxMatches) {
-      maxMatches = matches.length;
-      bestCategory = category;
-      matchedKeywords = matches;
-    }
-  }
-  
+
+  // Find category with most matches
+  const bestMatch = categoryMatches.reduce((best, current) => 
+    current.count > best.count ? current : best, 
+    { category: 'GENERAL', matches: [], count: 0 }
+  );
+
   // Calculate confidence based on number of matches
-  const totalKeywords = JOB_CATEGORIES[bestCategory].keywords.length;
+  const totalKeywords = JOB_CATEGORIES[bestMatch.category].keywords.length;
   const confidence = totalKeywords > 0 ? 
-    Math.min(1, (maxMatches / totalKeywords) + (maxMatches > 2 ? 0.3 : 0)) : 
+    Math.min(1, (bestMatch.count / totalKeywords) + (bestMatch.count > 2 ? 0.3 : 0)) : 
     0;
   
   return {
-    category: bestCategory,
+    category: bestMatch.category,
     confidence,
-    matchedKeywords,
-    suggestedSkills: JOB_CATEGORIES[bestCategory].relatedSkills
+    matchedKeywords: bestMatch.matches,
+    suggestedSkills: JOB_CATEGORIES[bestMatch.category].relatedSkills
   };
 };
 
@@ -143,9 +146,53 @@ const getCategoryWeight = (category) => {
   return JOB_CATEGORIES[category].weight;
 };
 
+/**
+ * Checks if a category is valid
+ * @param {string} category - Category to check
+ * @returns {category is JobCategory} Whether the category is valid
+ */
+const isValidCategory = (category) => {
+  return Object.keys(JOB_CATEGORIES).includes(category);
+};
+
+/**
+ * Extracts keywords from text based on job categories
+ * @param {string} text - Text to analyze
+ * @returns {string[]} Extracted keywords
+ */
+const extractKeywords = (text) => {
+  const normalizedText = normalizeText(text);
+  const words = new Set(normalizedText.split(' '));
+  const keywords = new Set();
+
+  // Extract keywords from each category
+  Object.values(JOB_CATEGORIES).forEach(config => {
+    config.keywords.forEach(keyword => {
+      const normalizedKeyword = normalizeText(keyword);
+      if (normalizedKeyword.split(' ').every(word => words.has(word))) {
+        keywords.add(keyword);
+      }
+    });
+
+    // Add related skills if they appear in the text
+    if (config.relatedSkills) {
+      config.relatedSkills.forEach(skill => {
+        const normalizedSkill = normalizeText(skill);
+        if (normalizedSkill.split(' ').every(word => words.has(word))) {
+          keywords.add(skill);
+        }
+      });
+    }
+  });
+
+  return Array.from(keywords);
+};
+
 module.exports = {
   JOB_CATEGORIES,
   classifyJob,
-  getRelatedSkills,
-  getCategoryWeight
+  extractKeywords,
+  getCategoryWeight: (category) => JOB_CATEGORIES[category]?.weight || 1.0,
+  getRelatedSkills: (category) => JOB_CATEGORIES[category]?.relatedSkills || [],
+  isValidCategory
 }; 
