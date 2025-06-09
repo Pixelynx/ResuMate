@@ -13,7 +13,6 @@ import {
   Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DescriptionIcon from '@mui/icons-material/Description';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import { useNavigate } from 'react-router-dom';
 import { resumeService, coverLetterService } from '../../utils/api';
