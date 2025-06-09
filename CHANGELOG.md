@@ -32,6 +32,19 @@
   - Removed percentage-based width calculations
   - Better handling of form width constraints
   - Enhanced mobile/desktop layout transitions
+- Enhanced mobile layout consistency across components:
+  - Removed Paper elevation and shadows on mobile views
+  - Maintained clean white backgrounds for forms and dashboard
+  - Preserved desktop gradient styling
+  - Improved spacing and padding for mobile
+  - Components affected:
+    - CoverLetterForm
+    - EditCoverLetter
+    - ViewCoverLetter
+    - ViewResume
+    - Dashboard
+  - Standardized mobile/desktop transitions
+  - Enhanced touch-friendly spacing
 
 ### Fixed
 - Fixed stepper visibility issues on mobile:

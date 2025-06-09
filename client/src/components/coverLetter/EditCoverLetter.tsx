@@ -10,6 +10,8 @@ import {
   CircularProgress,
   Alert,
   Container,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { coverLetterService } from '../../utils/api';
 import { CoverLetter } from './types/coverLetterTypes';
@@ -25,6 +27,8 @@ interface ValidationState {
 const EditCoverLetter: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [coverLetter, setCoverLetter] = useState<CoverLetter | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -156,13 +160,14 @@ const EditCoverLetter: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ paddingBottom: '80px' }}>
       <Paper 
-        elevation={3} 
+        elevation={isMobile ? 0 : 3} 
         sx={{ 
-          p: 4, 
+          p: { xs: 2, sm: 4 }, 
           mt: 4, 
           mb: 4,
           borderRadius: '8px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.1)',
+          background: 'white'
         }}
       >
         <Typography variant="h4" component="h1" gutterBottom align="center">

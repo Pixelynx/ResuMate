@@ -416,11 +416,12 @@ const CoverLetterForm: React.FC = () => {
         </Box>
         
         {/* Form content */}
-        <Paper elevation={3} sx={{ 
+        <Paper elevation={isMobile ? 0 : 3} sx={{ 
           p: { xs: 2, sm: 4 }, 
           width: '100%',
-          background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
-          maxWidth: isMobile ? '100%' : 'auto'
+          background: isMobile ? 'transparent' : 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))',
+          maxWidth: isMobile ? '100%' : 'auto',
+          boxShadow: isMobile ? 'none' : undefined
         }}>
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Create Cover Letter
