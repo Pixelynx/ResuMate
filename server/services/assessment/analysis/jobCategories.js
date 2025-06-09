@@ -155,10 +155,44 @@ const isValidCategory = (category) => {
   return Object.keys(JOB_CATEGORIES).includes(category);
 };
 
+/**
+ * Extracts keywords from text based on job categories
+ * @param {string} text - Text to analyze
+ * @returns {string[]} Extracted keywords
+ */
+const extractKeywords = (text) => {
+  const normalizedText = normalizeText(text);
+  const words = new Set(normalizedText.split(' '));
+  const keywords = new Set();
+
+  // Extract keywords from each category
+  Object.values(JOB_CATEGORIES).forEach(config => {
+    config.keywords.forEach(keyword => {
+      const normalizedKeyword = normalizeText(keyword);
+      if (normalizedKeyword.split(' ').every(word => words.has(word))) {
+        keywords.add(keyword);
+      }
+    });
+
+    // Add related skills if they appear in the text
+    if (config.relatedSkills) {
+      config.relatedSkills.forEach(skill => {
+        const normalizedSkill = normalizeText(skill);
+        if (normalizedSkill.split(' ').every(word => words.has(word))) {
+          keywords.add(skill);
+        }
+      });
+    }
+  });
+
+  return Array.from(keywords);
+};
+
 module.exports = {
   JOB_CATEGORIES,
   classifyJob,
-  getRelatedSkills,
-  getCategoryWeight,
+  extractKeywords,
+  getCategoryWeight: (category) => JOB_CATEGORIES[category]?.weight || 1.0,
+  getRelatedSkills: (category) => JOB_CATEGORIES[category]?.relatedSkills || [],
   isValidCategory
 }; 

@@ -1,11 +1,17 @@
 // @ts-check
 const { OpenAI } = require('openai');
 const { generateEnhancedCoverLetter } = require('./generation/coverLetterGenerator');
-const { prioritizeContent } = require('./generation/content/contentAnalysis');
 
 /**
  * @typedef {Object} PersonalDetails
+ * @property {string} [firstname]
+ * @property {string} [lastname]
+ * @property {string} [email]
+ * @property {string} [phone]
  * @property {string} [title] - Professional title
+ * @property {string} [linkedIn] - LinkedIn profile URL
+ * @property {string} [portfolio] - Portfolio URL
+ * @property {string} [location] - Location information
  */
 
 /**
@@ -24,6 +30,8 @@ const { prioritizeContent } = require('./generation/content/contentAnalysis');
  * @property {string} [firstName]
  * @property {string} [lastName]
  * @property {string} [title]
+ * @property {string} [email]
+ * @property {string} [phoneNumber]
  * @property {Array<Object>} [workExperience]
  * @property {Array<Education>} [education]
  * @property {Skills} [skills]
@@ -46,7 +54,6 @@ const { prioritizeContent } = require('./generation/content/contentAnalysis');
  * @typedef {Object} GenerationOptions
  * @property {string} [tone] - Desired tone (professional, enthusiastic, etc.)
  * @property {string[]} [emphasisAreas] - Areas to emphasize
- * @property {'short' | 'standard' | 'detailed'} [length] - Desired length
  * @property {'basic' | 'strict' | 'thorough'} [validationLevel] - Content validation level
  * @property {boolean} [mockMode] - Whether to run in mock mode
  */
@@ -119,7 +126,7 @@ const detectCandidateProfile = (resumeData) => {
 
 /**
  * Allocates content space based on section priorities
- * @param {Object.<string, import('./generation/content/contentAnalysis').SectionPriority>} sections
+ * @param {Object.<string, { allocationPercentage: number }>} sections
  * @returns {Object.<string, number>} Character limits per section
  */
 const allocateContentSpace = (sections) => {
