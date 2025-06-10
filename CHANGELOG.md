@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### [2025-06-09]
+[client]
+### Added
+- Implemented BulletPointTextField component for enhanced text input:
+  - Automatic bullet point conversion from hyphens
+  - Smart bullet point creation on Enter key
+  - Proper cursor positioning after bullet points
+  - Empty bullet point removal
+  - Intelligent paste handling for bullet-formatted text
+  - Integration with work experience and project descriptions
+
+### Changed
+- Improved form button labels for better clarity:
+  - Simplified "Add Another X" to "Add X" for all form sections
+  - Updated labels for Work Experience, Education, Certification, and Project sections
+
 ### [2025-06-08]
 [client]
 ### Added
@@ -54,7 +70,6 @@
   - Enhanced touch scrolling experience
 
 ### [2025-06-08]
-### Added
 [server]
 - Created core interfaces and directory structure for job matching system
   - Added SkillMatcherType interface for skill matching operations
