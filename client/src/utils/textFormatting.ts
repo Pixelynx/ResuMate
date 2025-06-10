@@ -35,7 +35,7 @@ export const handleBulletPointKeyDown = (
   value: string
 ): { handled: boolean; newValue?: string } => {
   const textarea = e.currentTarget;
-  const { selectionStart, selectionEnd } = textarea;
+  const { selectionStart, } = textarea;
   
   // Get the current line
   const lines = value.split('\n');
