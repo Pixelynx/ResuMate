@@ -15,6 +15,7 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Container,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -975,182 +976,186 @@ const ResumeForm: React.FC = () => {
     };
   
     return (
-      <Box sx={{ 
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          paddingBottom: '80px'
-        }}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-            <CircularProgress />
-            <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
-          </Box>
-        ) : (
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: isMobile ? 'column' : 'row',
-            alignItems: isMobile ? 'center' : 'flex-start',
-            gap: 3,
-            mt: 5,
-            px: 2
+      <Container maxWidth="xl">
+        <Box sx={{ 
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            paddingBottom: '80px'
           }}>
-            <Box sx={{ 
-              width: isMobile ? '100%' : 'auto',
-              mb: 0
-            }}>
-              <ResumeFormStepper activeStep={activeStep} steps={steps} />
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+              <CircularProgress />
+              <Typography variant="h6" sx={{ ml: 2 }}>Loading resume data...</Typography>
             </Box>
-            
-            {isMobile ? (
+          ) : (
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'center' : 'flex-start',
+              gap: 3,
+              mt: 5,
+              px: 2,
+              justifyContent: 'center'
+            }}>
               <Box sx={{ 
-                width: '100%',
-                p: 2
+                justifyItems: 'center',
+                width: isMobile ? '100%' : 'auto',
+                mb: 0
               }}>
-                <CardContent>
-                  <Typography variant="h5" component="div" gutterBottom>
-                    {steps[activeStep]}
-                  </Typography>
-                  {renderStepContent(activeStep)}
-                </CardContent>
-                <CardActions sx={{ 
-                  justifyContent: 'space-between',
-                  position: 'fixed',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  width: '100%',
-                  p: 2,
-                  bgcolor: 'background.paper',
-                  borderTop: 1,
-                  borderColor: 'divider',
-                  zIndex: 1200
-                }}>
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    onClick={handleBack} 
-                    disabled={activeStep === 0}
-                    sx={{ 
-                      minWidth: '100px',
-                      minHeight: '44px'
-                    }}
-                  >
-                    Back
-                  </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                      sx={{ 
-                        minWidth: '100px',
-                        minHeight: '44px'
-                      }}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update' : 'Save'}
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={handleNext}
-                      sx={{ 
-                        minWidth: '100px',
-                        minHeight: '44px'
-                      }}
-                    >
-                      {activeStep === steps.length - 2 ? 'Preview' : 'Next'}
-                    </Button>
-                  )}
-                </CardActions>
+                <ResumeFormStepper activeStep={activeStep} steps={steps} />
               </Box>
-            ) : (
-              <Card sx={{ 
-                maxWidth: 800,
-                width: '100%', 
-                p: 3,
-                borderRadius: 2,
-                boxShadow: 3,
-                background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
-              }}>
-                <CardContent>
-                  <Typography variant="h5" component="div" gutterBottom>
-                    {steps[activeStep]}
-                  </Typography>
-                  {renderStepContent(activeStep)}
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between', p: 1 }}>
-                  <Button 
-                    variant="outlined" 
-                    color="primary" 
-                    onClick={handleBack} 
-                    disabled={activeStep === 0}
-                    sx={{ minWidth: '100px' }}
-                  >
-                    Back
-                  </Button>
-                  <Box sx={{ flex: '1 1 auto' }} />
-                  {activeStep === steps.length - 1 ? (
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleFinish}
-                      disabled={submitting}
-                      startIcon={submitting ? <CircularProgress size={20} /> : null}
-                      sx={{ minWidth: '150px' }}
-                    >
-                      {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
-                    </Button>
-                  ) : (
+              
+              {isMobile ? (
+                <Box sx={{ 
+                  width: '100%',
+                  p: 2
+                }}>
+                  <CardContent>
+                    <Typography variant="h5" component="div" gutterBottom>
+                      {steps[activeStep]}
+                    </Typography>
+                    {renderStepContent(activeStep)}
+                  </CardContent>
+                  <CardActions sx={{ 
+                    justifyContent: 'space-between',
+                    position: 'fixed',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    width: '100%',
+                    p: 2,
+                    bgcolor: 'background.paper',
+                    borderTop: 1,
+                    borderColor: 'divider',
+                    zIndex: 1200
+                  }}>
                     <Button 
-                      variant="contained" 
+                      variant="outlined" 
                       color="primary" 
-                      onClick={handleNext}
-                      sx={{ minWidth: '150px' }}
+                      onClick={handleBack} 
+                      disabled={activeStep === 0}
+                      sx={{ 
+                        minWidth: '100px',
+                        minHeight: '44px'
+                      }}
                     >
-                      {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
+                      Back
                     </Button>
-                  )}
-                </CardActions>
-              </Card>
-            )}
-          </Box>
-        )}
-        
-        {/* Success/Error Notifications */}
-        <Snackbar 
-          open={submitSuccess} 
-          autoHideDuration={6000} 
-          onClose={() => {
-            setSubmitSuccess(false);
-            // Navigate to the preview step after successful submission
-            if (activeStep !== steps.length - 1) {
-              handleNext();
-            }
-          }}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => setSubmitSuccess(false)} severity="success">
-            Resume {savedResumeId ? 'updated' : 'saved'} successfully!
-          </Alert>
-        </Snackbar>
-        
-        <Snackbar 
-          open={!!submitError} 
-          autoHideDuration={6000} 
-          onClose={() => dispatch(clearError())}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={() => dispatch(clearError())} severity="error">
-            {submitError}
-          </Alert>
-        </Snackbar>
-      </Box>
+                    <Box sx={{ flex: '1 1 auto' }} />
+                    {activeStep === steps.length - 1 ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleFinish}
+                        disabled={submitting}
+                        startIcon={submitting ? <CircularProgress size={20} /> : null}
+                        sx={{ 
+                          minWidth: '100px',
+                          minHeight: '44px'
+                        }}
+                      >
+                        {submitting ? 'Submitting...' : savedResumeId ? 'Update' : 'Save'}
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        onClick={handleNext}
+                        sx={{ 
+                          minWidth: '100px',
+                          minHeight: '44px'
+                        }}
+                      >
+                        {activeStep === steps.length - 2 ? 'Preview' : 'Next'}
+                      </Button>
+                    )}
+                  </CardActions>
+                </Box>
+              ) : (
+                <Card sx={{ 
+                  maxWidth: 800,
+                  width: '100%', 
+                  p: 3,
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  background: 'linear-gradient(to right, rgba(106, 27, 154, 0.05), rgba(142, 36, 170, 0.05))'
+                }}>
+                  <CardContent>
+                    <Typography variant="h5" component="div" gutterBottom>
+                      {steps[activeStep]}
+                    </Typography>
+                    {renderStepContent(activeStep)}
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: 'space-between', p: 1 }}>
+                    <Button 
+                      variant="outlined" 
+                      color="primary" 
+                      onClick={handleBack} 
+                      disabled={activeStep === 0}
+                      sx={{ minWidth: '100px' }}
+                    >
+                      Back
+                    </Button>
+                    <Box sx={{ flex: '1 1 auto' }} />
+                    {activeStep === steps.length - 1 ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleFinish}
+                        disabled={submitting}
+                        startIcon={submitting ? <CircularProgress size={20} /> : null}
+                        sx={{ minWidth: '150px' }}
+                      >
+                        {submitting ? 'Submitting...' : savedResumeId ? 'Update Resume' : 'Save Resume'}
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        onClick={handleNext}
+                        sx={{ minWidth: '150px' }}
+                      >
+                        {activeStep === steps.length - 2 ? 'Preview Resume' : 'Next Section'}
+                      </Button>
+                    )}
+                  </CardActions>
+                </Card>
+              )}
+            </Box>
+          )}
+          
+          {/* Success/Error Notifications */}
+          <Snackbar 
+            open={submitSuccess} 
+            autoHideDuration={6000} 
+            onClose={() => {
+              setSubmitSuccess(false);
+              // Navigate to the preview step after successful submission
+              if (activeStep !== steps.length - 1) {
+                handleNext();
+              }
+            }}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => setSubmitSuccess(false)} severity="success">
+              Resume {savedResumeId ? 'updated' : 'saved'} successfully!
+            </Alert>
+          </Snackbar>
+          
+          <Snackbar 
+            open={!!submitError} 
+            autoHideDuration={6000} 
+            onClose={() => dispatch(clearError())}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={() => dispatch(clearError())} severity="error">
+              {submitError}
+            </Alert>
+          </Snackbar>
+        </Box>
+      </Container>
     );
   };
   
