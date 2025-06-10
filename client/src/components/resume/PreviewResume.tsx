@@ -19,6 +19,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import LanguageIcon from '@mui/icons-material/Language';
 import { formatDate } from '../../utils/validation';
 import { ResumeFormData } from './types/resumeTypes';
+import { processTextForDisplay } from '../../utils/textFormatting';
 
 const isSectionEmpty = (section: any[] | object): boolean => {
   if (Array.isArray(section)) {
@@ -164,11 +165,16 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                   {job.startDate && job.endDate && " - "}
                   {job.endDate && formatDate(job.endDate)}
                 </Typography>
-                {job.description && (
-                  <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
-                    {job.description}
-                  </Typography>
-                )}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    mt: 1 
+                  }}
+                >
+                  {processTextForDisplay(job.description)}
+                </Typography>
                 {index < workExperience.filter(j => j.companyName.trim() || j.jobtitle.trim()).length - 1 && <Divider sx={{ my: 2 }} />}
               </Box>
             ))}
@@ -201,11 +207,16 @@ const ResumePreview: React.FC<{ formData: ResumeFormData }> = ({ formData }) => 
                   </Box>
                 )}
                 
-                {project.description && (
-                  <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
-                    {project.description}
-                  </Typography>
-                )}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    mt: 1 
+                  }}
+                >
+                  {processTextForDisplay(project.description)}
+                </Typography>
                 
                 {project.projectUrl && (
                   <Box sx={{ mt: 1 }}>

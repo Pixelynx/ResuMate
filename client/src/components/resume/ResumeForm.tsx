@@ -57,6 +57,7 @@ import ResumeParser from './ResumeParser';
 import ResumeFormStepper from './ResumeFormStepper';
 import dayjs from 'dayjs';
 import { useSectionManager } from '../../hooks/useSectionManager';
+import BulletPointTextField from '../common/BulletPointTextField';
 
 const steps = ['Personal Details', 'Work Experience', 'Education', 'Skills', 'Certifications', 'Projects', 'Preview'];
 
@@ -674,23 +675,16 @@ const ResumeForm: React.FC = () => {
                   </LocalizationProvider>
                   </Grid>
                   <Grid item xs={12}>
-                  <TextField
-                    label="Job Description"
+                  <BulletPointTextField
+                    label="Description"
+                    value={entry.description || ''}
+                    onChange={(value: string) => handleChange('workExperience', index, 'description', value)}
+                    error={validationState.workExperience?.[index]?.description?.error}
+                    helperText={validationState.workExperience?.[index]?.description?.message}
+                    placeholder="Describe your responsibilities and achievements"
+                    minRows={4}
                     variant="outlined"
                     fullWidth
-                    multiline
-                    rows={4}
-                    inputRef={el => fieldRefs.current[`workExperience_${index}_description`] = el}
-                    value={entry.description}
-                    onChange={(e) => handleChange('workExperience', index, 'description', e.target.value)}
-                    onBlur={(e) => handleBlur('workExperience', index, 'description', e.target.value)}
-                    error={validationState.workExperience?.[index]?.description.error && 
-                           validationState.workExperience?.[index]?.description.touched}
-                    helperText={validationState.workExperience?.[index]?.description.touched ? 
-                              validationState.workExperience?.[index]?.description.message : ''}
-                    InputProps={{
-                      'aria-label': `Job Description for entry ${index + 1}`,
-                    }}
                   />
                   </Grid>
                   </Grid>
@@ -709,7 +703,7 @@ const ResumeForm: React.FC = () => {
                 onClick={workExperienceManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
-                Add Another Work Experience
+                Add Work Experience
               </Button>
             </Box>
           );
@@ -778,7 +772,7 @@ const ResumeForm: React.FC = () => {
                 onClick={educationManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
-                Add Another Education
+                Add Education
               </Button>
             </Box>
           );
@@ -880,7 +874,7 @@ const ResumeForm: React.FC = () => {
                 onClick={certificationsManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
-                Add Another Certification
+                Add Certification
               </Button>
             </Box>
           );
@@ -937,14 +931,16 @@ const ResumeForm: React.FC = () => {
                       />
                     </Grid>
                     <Grid item xs={12}>
-                      <TextField 
-                        label="Project Description" 
-                        variant="outlined" 
-                        fullWidth 
-                        multiline 
-                        rows={4}
-                        value={entry.description}
-                        onChange={(e) => handleChange('projects', index, 'description', e.target.value)}
+                      <BulletPointTextField
+                        label="Description"
+                        value={entry.description || ''}
+                        onChange={(value: string) => handleChange('projects', index, 'description', value)}
+                        error={validationState.projects?.[index]?.description?.error}
+                        helperText={validationState.projects?.[index]?.description?.message}
+                        placeholder="Describe the project, your role, and key achievements"
+                        minRows={4}
+                        variant="outlined"
+                        fullWidth
                       />
                     </Grid>
                   </Grid>
@@ -960,7 +956,7 @@ const ResumeForm: React.FC = () => {
                 onClick={projectsManager.addItem} 
                 startIcon={<AddCircleOutlineIcon />}
               >
-                Add Another Project
+                Add Project
               </Button>
             </Box>
           );

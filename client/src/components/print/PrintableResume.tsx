@@ -13,6 +13,7 @@ import { styled } from '@mui/material/styles';
 import { Resume } from '../resume/types/resumeTypes';
 import { useAppSelector } from '../../redux/hooks';
 import { selectIsPrinting } from '../../redux/selectors/printSelectors';
+import { processTextForDisplay } from '../../utils/textFormatting';
 
 interface PrintableResumeProps {
   resume: Resume;
@@ -171,8 +172,17 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                     </Typography>
                   </Grid>
                 </Grid>
-                <Typography variant="body1" sx={{ mt: 1, whiteSpace: 'pre-line' }}>
-                  {experience.description}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    mt: 1,
+                    fontSize: '10pt',
+                    lineHeight: 1.4
+                  }}
+                >
+                  {processTextForDisplay(experience.description)}
                 </Typography>
               </Box>
             ))}
@@ -205,8 +215,17 @@ const PrintableResume = forwardRef<HTMLDivElement, PrintableResumeProps>((props,
                     </Typography>
                   </Grid>
                 </Grid>
-                <Typography variant="body1" sx={{ mt: 1, mb: 0.5, whiteSpace: 'pre-line' }}>
-                  {project.description}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'monospace',
+                    mt: 1,
+                    fontSize: '10pt',
+                    lineHeight: 1.4
+                  }}
+                >
+                  {processTextForDisplay(project.description)}
                 </Typography>
                 {project.technologies && (
                   <Typography variant="body2" color="textSecondary">

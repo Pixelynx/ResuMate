@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
                   }
                 }}
               >
-                Create Cover Letter
+                New Cover Letter
               </Button>
             </Grid>
           </Grid>

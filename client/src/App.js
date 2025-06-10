@@ -9,6 +9,7 @@ import CoverLetterForm from './components/coverLetter/CoverLetterForm';
 import ViewCoverLetter from './components/coverLetter/ViewCoverLetter';
 import EditCoverLetter from './components/coverLetter/EditCoverLetter';
 import { ErrorBoundary } from 'react-error-boundary';
+import { setupResizeObserverErrorHandler } from './utils/errorHandlers';
 
 function ErrorFallback({ error }) {
   console.error('Error caught by ErrorBoundary:', error);
@@ -24,6 +25,10 @@ function ErrorFallback({ error }) {
 function App() {
   useEffect(() => {
     console.log('App component mounted');
+    // Setup error handler and get cleanup function
+    const cleanup = setupResizeObserverErrorHandler();
+    // Clean up when component unmounts
+    return cleanup;
   }, []);
 
   console.log('App component rendering');
