@@ -23,6 +23,41 @@ env:
   WORKFLOW_TIMEOUT: 25
 
 jobs:
+    test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test 1 - Basic output
+        run: |
+          echo "=== BASIC TEST ==="
+          echo "This should always work"
+          echo "Current time: $(date)"
+          
+      - name: Test 2 - Secret availability check
+        run: |
+          echo "=== SECRET AVAILABILITY ==="
+          echo "REACT_APP_API_URL exists: ${{ secrets.REACT_APP_API_URL != '' }}"
+          echo "CLEANUP_API_KEY exists: ${{ secrets.CLEANUP_API_KEY != '' }}"
+          echo "Repo: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          
+      - name: Test 3 - Environment variable test
+        env:
+          API_URL: ${{ secrets.REACT_APP_API_URL }}
+          API_KEY: ${{ secrets.CLEANUP_API_KEY }}
+        run: |
+          echo "=== ENVIRONMENT VARIABLE TEST ==="
+          echo "API_URL length: ${#API_URL}"
+          echo "API_KEY length: ${#API_KEY}"
+          if [ -n "$API_URL" ]; then
+            echo "[SUCCESS] API_URL is set"
+          else
+            echo "[FAILED] API_URL is empty"
+          fi
+          if [ -n "$API_KEY" ]; then
+            echo "[SUCCESS] API_KEY is set"
+          else
+            echo "[FAILED] API_KEY is empty"
+          fi
   cleanup:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -30,15 +65,15 @@ jobs:
     steps:
       - name: Validate environment configuration
         env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
           CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
           ENABLE_AUTO_DELETE: ${{ secrets.ENABLE_AUTO_DELETE }}
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
         run: |
           echo "Validating required environment variables..."
           
-          if [ -z "$API_BASE_URL" ]; then
-            echo "API_BASE_URL secret not configured"
+          if [ -z "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL secret not configured"
             exit 1
           fi
           
@@ -48,7 +83,7 @@ jobs:
           fi
           
           echo "Environment validation passed"
-          echo "API Base URL: $API_BASE_URL"
+          echo "API Base URL: $REACT_APP_API_URL"
           echo "Auto Delete Enabled: $ENABLE_AUTO_DELETE"
           echo "Test Email Configured: $([ -n "$TEST_EMAIL" ] && echo 'yes' || echo 'no')"
       - name: Checkout code
@@ -65,8 +100,8 @@ jobs:
         run: |
           echo "Validating required environment variables..."
           
-          if [ -z "$API_BASE_URL" ]; then
-            echo "API_BASE_URL secret not configured"
+          if [ -z "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL secret not configured"
             exit 1
           fi
           
@@ -76,7 +111,7 @@ jobs:
           fi
           
           echo "Environment validation passed"
-          echo "API Base URL: $API_BASE_URL"
+          echo "API Base URL: $REACT_APP_API_URL"
           echo "Auto Delete Enabled: $ENABLE_AUTO_DELETE"
           echo "Test Email Configured: $([ -n "$TEST_EMAIL" ] && echo 'yes' || echo 'no')"
       
@@ -85,7 +120,7 @@ jobs:
         run: |
           echo "Performing health check..."
           
-          HEALTH_URL="${API_BASE_URL}/api/admin/health"
+          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
           
           response=$(curl -s -w "HTTPSTATUS:%{http_code}" "$HEALTH_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -112,7 +147,7 @@ jobs:
           echo "Starting cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
-          CLEANUP_URL="${API_BASE_URL}/api/admin/cleanup"
+          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
           
           # Prepare headers
           if [ -n "$CLEANUP_API_KEY" ]; then
@@ -203,14 +238,14 @@ jobs:
       - name: Debug secrets
         run: |
           echo "Checking secret availability..."
-          echo "API_BASE_URL length: ${#API_BASE_URL}"
+          echo "REACT_APP_API_URL length: ${#REACT_APP_API_URL}"
           echo "CLEANUP_API_KEY length: ${#CLEANUP_API_KEY}"
           
           # Check if secrets are set (without revealing values)
-          if [ -n "$API_BASE_URL" ]; then
-            echo "API_BASE_URL is set"
+          if [ -n "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL is set"
           else
-            echo "API_BASE_URL is NOT set"
+            echo "REACT_APP_API_URL is NOT set"
           fi
           
           if [ -n "$CLEANUP_API_KEY" ]; then
@@ -219,5 +254,5 @@ jobs:
             echo "CLEANUP_API_KEY is NOT set"
           fi
         env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
           CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
