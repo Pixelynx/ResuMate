@@ -91,7 +91,13 @@ jobs:
             echo "[WARNING] URL contains spaces"
           fi
           
-          if [[ "$REACT_APP_API_URL" == *
+          if [[ "$REACT_APP_API_URL" == *$'\n'* ]]; then
+            echo "[WARNING] URL contains newlines"
+          fi
+          
+          if [[ "$REACT_APP_API_URL" == *$'\r'* ]]; then
+            echo "[WARNING] URL contains carriage returns"
+          fi
           
           # Show the constructed URLs
           HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
