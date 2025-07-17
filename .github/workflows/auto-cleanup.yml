@@ -122,10 +122,10 @@ jobs:
             echo "[SUCCESS] Health endpoint responded with code: $health_code"
           fi
 
-      - name: Execute cleanup
-        id: cleanup
+      - name: Validate cleanup
+        id: cleanup_validation
         run: |
-          echo "Starting cleanup process..."
+          echo "Validate cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
@@ -197,10 +197,10 @@ jobs:
             echo "[SUCCESS] Health endpoint responded with code: $health_code"
           fi
 
-      - name: Execute cleanup
-        id: cleanup
+      - name: Prepare cleanup
+        id: cleanup_prep
         run: |
-          echo "Starting cleanup process..."
+          echo "Prepping cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
@@ -270,10 +270,10 @@ jobs:
             echo "[SUCCESS] Health endpoint responded with code: $health_code"
           fi
 
-      - name: Execute cleanup
-        id: cleanup
+      - name: Debug cleanup
+        id: cleanup_debug
         run: |
-          echo "Starting cleanup process..."
+          echo "Debug cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
@@ -337,9 +337,9 @@ jobs:
           fi
       
       - name: Execute cleanup
-        id: cleanup
+        id: cleanup_execution
         run: |
-          echo "Starting cleanup process..."
+          echo "Executing cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
