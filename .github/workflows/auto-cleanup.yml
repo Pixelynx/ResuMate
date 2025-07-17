@@ -51,9 +51,7 @@ jobs:
           echo "API Base URL: $REACT_APP_API_URL"
           echo "Auto Delete Enabled: $ENABLE_AUTO_DELETE"
           echo "Test Email Configured: $([ -n "$TEST_EMAIL" ] && echo 'yes' || echo 'no')"
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -61,6 +59,25 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'server/package-lock.json'
       
+      - name: Debug secrets
+        run: |
+          echo "Checking secret availability..."
+          echo "REACT_APP_API_URL length: ${#REACT_APP_API_URL}"
+          echo "CLEANUP_API_KEY length: ${#CLEANUP_API_KEY}"
+          
+          # Check if secrets are set (without revealing values)
+          if [ -n "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL is set"
+          else
+            echo "REACT_APP_API_URL is NOT set"
+          fi
+          
+          if [ -n "$CLEANUP_API_KEY" ]; then
+            echo "CLEANUP_API_KEY is set"
+          else
+            echo "CLEANUP_API_KEY is NOT set"
+          fi
+
       - name: Validate environment configuration
         run: |
           echo "Validating required environment variables..."
@@ -86,6 +103,10 @@ jobs:
           echo "Base API URL: '$REACT_APP_API_URL'"
           echo "URL length: ${#REACT_APP_API_URL}"
           
+          # Clean the URL (remove any whitespace/newlines)
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          echo "Cleaned URL: '$CLEAN_URL'"
+          
           # Check for common URL issues
           if [[ "$REACT_APP_API_URL" == *" "* ]]; then
             echo "[WARNING] URL contains spaces"
@@ -100,15 +121,15 @@ jobs:
           fi
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
+          HEALTH_URL="${CLEAN_URL}/admin/health"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
           
           # Test basic connectivity to the base URL
           echo "Testing base URL connectivity..."
-          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$CLEAN_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
           
           echo "Base URL response code: $http_code"
@@ -135,7 +156,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -172,24 +193,24 @@ jobs:
             echo "[WARNING] URL contains newlines"
           fi
           
-          if [[ "$REACT_APP_API_URL" == *$'\n'* ]]; then
+          if [[ "$CLEAN_URL" == *$'\n'* ]]; then
             echo "[WARNING] URL contains newlines"
           fi
           
-          if [[ "$REACT_APP_API_URL" == *$'\r'* ]]; then
+          if [[ "$CLEAN_URL" == *$'\r'* ]]; then
             echo "[WARNING] URL contains carriage returns"
           fi
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
+          HEALTH_URL="${CLEAN_URL}/admin/health"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
           
           # Test basic connectivity to the base URL
           echo "Testing base URL connectivity..."
-          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$CLEAN_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
           
           echo "Base URL response code: $http_code"
@@ -216,7 +237,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -254,15 +275,15 @@ jobs:
           fi
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
+          HEALTH_URL="${CLEAN_URL}/admin/health"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
           
           # Test basic connectivity to the base URL
           echo "Testing base URL connectivity..."
-          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$CLEAN_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
           
           echo "Base URL response code: $http_code"
@@ -289,7 +310,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -327,7 +348,9 @@ jobs:
         run: |
           echo "Performing health check..."
           
-          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
+          # Clean the URL
+          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          HEALTH_URL="${CLEAN_URL}/admin/health"
           
           response=$(curl -s -w "HTTPSTATUS:%{http_code}" "$HEALTH_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -354,7 +377,9 @@ jobs:
           echo "Executing cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
-          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
+          # Clean the URL
+          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           # Prepare headers
           if [ -n "$CLEANUP_API_KEY" ]; then
@@ -402,6 +427,11 @@ jobs:
             echo "cleanup_status=auth_failed" >> $GITHUB_OUTPUT
             exit 1
             
+          elif [ "$http_code" -eq 404 ]; then
+            echo "Cleanup endpoint not found - check if /admin/cleanup exists"
+            echo "cleanup_status=not_found" >> $GITHUB_OUTPUT
+            exit 1
+            
           elif [ "$http_code" -eq 429 ]; then
             echo "Rate limit exceeded - will retry next scheduled run"
             echo "cleanup_status=rate_limited" >> $GITHUB_OUTPUT
@@ -422,12 +452,12 @@ jobs:
           echo "Triggered by: ${{ github.event_name }}"
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           echo "Health status: ${{ steps.health_check.outputs.health_status || 'unknown' }}"
-          echo "Cleanup status: ${{ steps.cleanup.outputs.cleanup_status || 'not_executed' }}"
+          echo "Cleanup status: ${{ steps.cleanup_execution.outputs.cleanup_status || 'not_executed' }}"
           
-          if [ "${{ steps.cleanup.outputs.cleanup_status }}" = "success" ]; then
-            echo "Resumes deleted: ${{ steps.cleanup.outputs.resumes_deleted || '0' }}"
-            echo "Cover letters deleted: ${{ steps.cleanup.outputs.cover_letters_deleted || '0' }}"
-            echo "Execution time: ${{ steps.cleanup.outputs.execution_time || '0' }}ms"
+          if [ "${{ steps.cleanup_execution.outputs.cleanup_status }}" = "success" ]; then
+            echo "Resumes deleted: ${{ steps.cleanup_execution.outputs.resumes_deleted || '0' }}"
+            echo "Cover letters deleted: ${{ steps.cleanup_execution.outputs.cover_letters_deleted || '0' }}"
+            echo "Execution time: ${{ steps.cleanup_execution.outputs.execution_time || '0' }}ms"
           fi
           
           echo "=================================="
@@ -442,24 +472,3 @@ jobs:
           
           # Create issue comment or notification here if needed
           # For now, we'll rely on GitHub's built-in failure notifications
-      - name: Debug secrets
-        run: |
-          echo "Checking secret availability..."
-          echo "REACT_APP_API_URL length: ${#REACT_APP_API_URL}"
-          echo "CLEANUP_API_KEY length: ${#CLEANUP_API_KEY}"
-          
-          # Check if secrets are set (without revealing values)
-          if [ -n "$REACT_APP_API_URL" ]; then
-            echo "REACT_APP_API_URL is set"
-          else
-            echo "REACT_APP_API_URL is NOT set"
-          fi
-          
-          if [ -n "$CLEANUP_API_KEY" ]; then
-            echo "CLEANUP_API_KEY is set"
-          else
-            echo "CLEANUP_API_KEY is NOT set"
-          fi
-        env:
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-          CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
