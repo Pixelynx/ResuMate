@@ -26,13 +26,31 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
-      CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
-      ENABLE_AUTO_DELETE: ${{ secrets.ENABLE_AUTO_DELETE }}
-      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
     
     steps:
+      - name: Validate environment configuration
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
+          ENABLE_AUTO_DELETE: ${{ secrets.ENABLE_AUTO_DELETE }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+        run: |
+          echo "Validating required environment variables..."
+          
+          if [ -z "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL secret not configured"
+            exit 1
+          fi
+          
+          if [ -z "$CLEANUP_API_KEY" ]; then
+            echo "CLEANUP_API_KEY secret not configured"
+            exit 1
+          fi
+          
+          echo "Environment validation passed"
+          echo "API Base URL: $REACT_APP_API_URL"
+          echo "Auto Delete Enabled: $ENABLE_AUTO_DELETE"
+          echo "Test Email Configured: $([ -n "$TEST_EMAIL" ] && echo 'yes' || echo 'no')"
       - name: Checkout code
         uses: actions/checkout@v4
         
