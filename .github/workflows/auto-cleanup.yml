@@ -18,6 +18,10 @@ on:
         type: boolean
 
 env:
+  REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+  CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
+  ENABLE_AUTO_DELETE: ${{ secrets.ENABLE_AUTO_DELETE }}
+  TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
   # Workflow timeout (should be less than 30 minutes to avoid overlap)
   WORKFLOW_TIMEOUT: 25
 
@@ -41,27 +45,27 @@ jobs:
         run: |
           echo "Validating required environment variables..."
           
-          if [ -z "${{ secrets.REACT_APP_API_URL }}" ]; then
+          if [ -z "${{ REACT_APP_API_URL }}" ]; then
             echo "REACT_APP_API_URL secret not configured"
             exit 1
           fi
           
-          if [ -z "${{ secrets.CLEANUP_API_KEY }}" ]; then
+          if [ -z "${{ CLEANUP_API_KEY }}" ]; then
             echo "CLEANUP_API_KEY secret not configured"
             exit 1
           fi
           
           echo "Environment validation passed"
-          echo "API Base URL: ${{ secrets.REACT_APP_API_URL }}"
-          echo "Auto Delete Enabled: ${{ secrets.ENABLE_AUTO_DELETE }}"
-          echo "Test Email Configured: ${{ secrets.TEST_EMAIL != '' && 'yes' || 'no' }}"
+          echo "API Base URL: ${{ REACT_APP_API_URL }}"
+          echo "Auto Delete Enabled: ${{ ENABLE_AUTO_DELETE }}"
+          echo "Test Email Configured: ${{ TEST_EMAIL != '' && 'yes' || 'no' }}"
       
       - name: Health check
         id: health_check
         run: |
           echo "Performing health check..."
           
-          HEALTH_URL="${{ secrets.REACT_APP_API_URL }}/api/admin/health"
+          HEALTH_URL="${{ REACT_APP_API_URL }}/api/admin/health"
           
           response=$(curl -s -w "HTTPSTATUS:%{http_code}" "$HEALTH_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -88,11 +92,11 @@ jobs:
           echo "Starting cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
-          CLEANUP_URL="${{ secrets.REACT_APP_API_URL }}/api/admin/cleanup"
+          CLEANUP_URL="${{ REACT_APP_API_URL }}/api/admin/cleanup"
           
           # Prepare headers
-          if [ -n "${{ secrets.CLEANUP_API_KEY }}" ]; then
-            AUTH_HEADER="Authorization: Bearer ${{ secrets.CLEANUP_API_KEY }}"
+          if [ -n "${{ CLEANUP_API_KEY }}" ]; then
+            AUTH_HEADER="Authorization: Bearer ${{ CLEANUP_API_KEY }}"
           else
             echo "No API key available for authentication"
             exit 1
