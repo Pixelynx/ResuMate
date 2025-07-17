@@ -1,4 +1,3 @@
-
 name: Auto-Delete Cleanup
 
 on:
@@ -156,7 +155,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -188,47 +187,6 @@ jobs:
           
           echo "Cleanup response code: $http_code"
           echo "Cleanup response body: $body"
-          
-          # Rest of your cleanup logic...\n'* ]]; then
-            echo "[WARNING] URL contains newlines"
-          fi
-          
-          if [[ "$CLEAN_URL" == *$'\n'* ]]; then
-            echo "[WARNING] URL contains newlines"
-          fi
-          
-          if [[ "$CLEAN_URL" == *$'\r'* ]]; then
-            echo "[WARNING] URL contains carriage returns"
-          fi
-          
-          # Show the constructed URLs
-          HEALTH_URL="${CLEAN_URL}/admin/health"
-          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
-          
-          echo "Constructed Health URL: '$HEALTH_URL'"
-          echo "Constructed Cleanup URL: '$CLEANUP_URL'"
-          
-          # Test basic connectivity to the base URL
-          echo "Testing base URL connectivity..."
-          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$CLEAN_URL" || echo "HTTPSTATUS:000")
-          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          
-          echo "Base URL response code: $http_code"
-          
-          # Test the health endpoint specifically
-          echo "Testing health endpoint..."
-          health_response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$HEALTH_URL" || echo "HTTPSTATUS:000")
-          health_code=$(echo "$health_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          
-          echo "Health endpoint response code: $health_code"
-          
-          if [ "$health_code" -eq 404 ]; then
-            echo "[FAILED] Health endpoint returns 404 - check if /admin/health exists"
-          elif [ "$health_code" -eq 000 ]; then
-            echo "[FAILED] Could not connect to health endpoint"
-          else
-            echo "[SUCCESS] Health endpoint responded with code: $health_code"
-          fi
 
       - name: Prepare cleanup
         id: cleanup_prep
@@ -237,7 +195,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -269,39 +227,6 @@ jobs:
           
           echo "Cleanup response code: $http_code"
           echo "Cleanup response body: $body"
-          
-          # Rest of your cleanup logic...\r'* ]]; then
-            echo "[WARNING] URL contains carriage returns"
-          fi
-          
-          # Show the constructed URLs
-          HEALTH_URL="${CLEAN_URL}/admin/health"
-          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
-          
-          echo "Constructed Health URL: '$HEALTH_URL'"
-          echo "Constructed Cleanup URL: '$CLEANUP_URL'"
-          
-          # Test basic connectivity to the base URL
-          echo "Testing base URL connectivity..."
-          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$CLEAN_URL" || echo "HTTPSTATUS:000")
-          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          
-          echo "Base URL response code: $http_code"
-          
-          # Test the health endpoint specifically
-          echo "Testing health endpoint..."
-          health_response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$HEALTH_URL" || echo "HTTPSTATUS:000")
-          health_code=$(echo "$health_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
-          
-          echo "Health endpoint response code: $health_code"
-          
-          if [ "$health_code" -eq 404 ]; then
-            echo "[FAILED] Health endpoint returns 404 - check if /admin/health exists"
-          elif [ "$health_code" -eq 000 ]; then
-            echo "[FAILED] Could not connect to health endpoint"
-          else
-            echo "[SUCCESS] Health endpoint responded with code: $health_code"
-          fi
 
       - name: Debug cleanup
         id: cleanup_debug
@@ -310,7 +235,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL (remove any whitespace/newlines)
-          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
@@ -349,7 +274,7 @@ jobs:
           echo "Performing health check..."
           
           # Clean the URL
-          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
           HEALTH_URL="${CLEAN_URL}/admin/health"
           
           response=$(curl -s -w "HTTPSTATUS:%{http_code}" "$HEALTH_URL" || echo "HTTPSTATUS:000")
@@ -378,7 +303,7 @@ jobs:
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
           # Clean the URL
-          CLEAN_URL=$(echo "$CLEAN_URL" | tr -d '[:space:]')
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
           CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           # Prepare headers
