@@ -32,6 +32,7 @@ app.use(express.json());
 require('./routes/resume.routes')(app);
 require('./routes/coverLetter.routes')(app);
 require('./routes/jobFit.routes')(app);
+require('./routes/admin.routes')(app);
 
 // Apply routes
 app.use('/api/matching', matchingRoutes);
