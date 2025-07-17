@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### [2025-07-17]
+[server] 
+### Added
+- Implemented auto-deletion system for demo environment cleanup:
+  - Created secure `/api/admin/cleanup` endpoint with API key authentication
+  - Added transaction-based cleanup logic for resumes and cover letters older than 2 hours
+  - Implemented rate limiting and comprehensive error handling
+  - Added `/api/admin/health` endpoint for monitoring system status
+  - Created authentication middleware with API key validation
+
+[workflow]
+### Added
+- GitHub Actions auto-cleanup workflow (`auto-cleanup.yml`):
+  - Scheduled execution every 30 minutes via cron job
+  - Manual trigger capability for testing and emergency cleanup
+  - Health check validation before cleanup execution
+  - Comprehensive error handling and retry logic
+  - Detailed logging and statistics reporting
+  - Environment validation and secure API key authentication
+
+[docs]
+### Added
+- Auto-cleanup documentation in README.md:
+  - Setup instructions for GitHub Secrets and environment variables
+  - Manual testing commands and workflow badge integration
+  - Security features overview and troubleshooting guide
+
 ### [2025-06-09]
 [client]
 ### Added

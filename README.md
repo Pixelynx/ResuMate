@@ -125,5 +125,61 @@ Our job fit scoring system provides intelligent matching between resumes and job
 - **Date Management**: Day.js for consistent date handling
 - **Form Management**: Custom validation system with React hooks
 
+## Auto-Cleanup System
+
+Resumate includes an automated cleanup system to prevent data accumulation in demo environments. The system automatically deletes resumes and cover letters created by non-test emails after 2 hours.
+
+### GitHub Actions Workflow
+- **Schedule**: Runs every 30 minutes via cron job
+- **Manual Trigger**: Can be triggered manually for testing
+- **Security**: Uses API key authentication for cleanup endpoint
+- **Monitoring**: Includes health checks and detailed logging
+
+### Required GitHub Secrets
+Set up the following secrets in your GitHub repository:
+
+```bash
+API_BASE_URL=https://your-backend-url.herokuapp.com
+CLEANUP_API_KEY=your-secure-api-key-here
+ENABLE_AUTO_DELETE=true
+TEST_EMAIL=test@example.com
+```
+
+### Environment Variables (Backend)
+Configure these in your production environment:
+
+```bash
+CLEANUP_API_KEY=your-secure-api-key-here
+ENABLE_AUTO_DELETE=true
+TEST_EMAIL=test@example.com
+```
+
+### Workflow Badge
+Add this badge to your README to monitor cleanup status:
+
+```markdown
+![Auto-Cleanup](https://github.com/yourusername/resumate/workflows/Auto-Delete%20Cleanup/badge.svg)
+```
+
+### Manual Testing
+Test the cleanup endpoint manually:
+
+```bash
+# Health check (no auth required)
+curl https://your-backend-url.herokuapp.com/api/admin/health
+
+# Manual cleanup (requires API key)
+curl -X POST \
+  -H "Authorization: Bearer your-api-key" \
+  https://your-backend-url.herokuapp.com/api/admin/cleanup
+```
+
+### Security Features
+- API key authentication for cleanup endpoint
+- Rate limiting (10 requests per minute per IP)
+- Input validation and sanitization
+- Transaction-based database operations
+- Comprehensive error handling and logging
+
 ## Development Roadmap
 - [ ] Implement user authentication

@@ -439,9 +439,72 @@ The Cover Letter model includes:
 - Proper error handling to prevent service disruptions
 - Optimized database queries with appropriate joins
 
+## Auto-Cleanup System Configuration
+
+The server includes an automated cleanup system for demo environments. Set up the following environment variables:
+
+### Required Environment Variables
+
+```bash
+# Auto-cleanup configuration
+CLEANUP_API_KEY=your_secure_random_api_key_here
+ENABLE_AUTO_DELETE=true
+TEST_EMAIL=test@example.com
+
+# Database configuration
+DATABASE_URL=postgres://username:password@host:port/database
+DB_HOST=localhost
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_NAME=resumatedb
+DB_PORT=5432
+
+# OpenAI API
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Server
+PORT=5000
+NODE_ENV=production
+```
+
+### Auto-Cleanup Endpoints
+
+#### Health Check
+```bash
+GET /api/admin/health
+```
+Returns server health status and configuration info. No authentication required.
+
+#### Cleanup Endpoint
+```bash
+POST /api/admin/cleanup
+Authorization: Bearer {CLEANUP_API_KEY}
+```
+Executes cleanup of resumes/cover letters older than 2 hours (excludes TEST_EMAIL).
+
+### Security Features
+- API key authentication required for cleanup endpoint
+- Rate limiting: 10 requests per minute per IP
+- Transaction-based database operations
+- Comprehensive error handling and logging
+- Input validation and sanitization
+
+### Testing Cleanup Locally
+
+```bash
+# Health check
+curl http://localhost:5000/api/admin/health
+
+# Manual cleanup (requires API key in .env)
+curl -X POST \
+  -H "Authorization: Bearer your-api-key" \
+  http://localhost:5000/api/admin/cleanup
+```
+
 ## Development Roadmap
 - [X] Add more AI-powered features for resume enhancement
 - [ ] Implement backend persistence for resume data
 - [X] Enhance cover letter generation by implementing cosine similarity between resume and job description
 - [X] Adjust cosine similarity logic for job scoring to ensure more balanced results
+- [X] Implement auto-cleanup system for demo environment management
 - [ ] Implement ATS optimization suggestions
