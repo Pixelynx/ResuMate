@@ -23,52 +23,17 @@ env:
   WORKFLOW_TIMEOUT: 25
 
 jobs:
-  test:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Test 1 - Basic output
-          run: |
-            echo "=== BASIC TEST ==="
-            echo "This should always work"
-            echo "Current time: $(date)"
-            
-        - name: Test 2 - Secret availability check
-          run: |
-            echo "=== SECRET AVAILABILITY ==="
-            echo "REACT_APP_API_URL exists: ${{ secrets.REACT_APP_API_URL != '' }}"
-            echo "CLEANUP_API_KEY exists: ${{ secrets.CLEANUP_API_KEY != '' }}"
-            echo "Repo: ${{ github.repository }}"
-            echo "Branch: ${{ github.ref }}"
-            
-        - name: Test 3 - Environment variable test
-          env:
-            API_URL: ${{ secrets.REACT_APP_API_URL }}
-            API_KEY: ${{ secrets.CLEANUP_API_KEY }}
-          run: |
-            echo "=== ENVIRONMENT VARIABLE TEST ==="
-            echo "API_URL length: ${#API_URL}"
-            echo "API_KEY length: ${#API_KEY}"
-            if [ -n "$API_URL" ]; then
-              echo "[SUCCESS] API_URL is set"
-            else
-              echo "[FAILED] API_URL is empty"
-            fi
-            if [ -n "$API_KEY" ]; then
-              echo "[SUCCESS] API_KEY is set"
-            else
-              echo "[FAILED] API_KEY is empty"
-            fi
   cleanup:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    
-    steps:
-      - name: Validate environment configuration
-        env:
+    env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
           CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
           ENABLE_AUTO_DELETE: ${{ secrets.ENABLE_AUTO_DELETE }}
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+    
+    steps:
+      - name: Validate environment configuration
         run: |
           echo "Validating required environment variables..."
           
