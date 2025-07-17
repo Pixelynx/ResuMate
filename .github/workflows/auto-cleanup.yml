@@ -100,8 +100,8 @@ jobs:
           fi
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
@@ -121,7 +121,7 @@ jobs:
           echo "Health endpoint response code: $health_code"
           
           if [ "$health_code" -eq 404 ]; then
-            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+            echo "[FAILED] Health endpoint returns 404 - check if /admin/health exists"
           elif [ "$health_code" -eq 000 ]; then
             echo "[FAILED] Could not connect to health endpoint"
           else
@@ -136,7 +136,7 @@ jobs:
           
           # Clean the URL (remove any whitespace/newlines)
           CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
-          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
           
@@ -175,8 +175,8 @@ jobs:
           if [[ "$REACT_APP_API_URL" == *
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
@@ -196,7 +196,7 @@ jobs:
           echo "Health endpoint response code: $health_code"
           
           if [ "$health_code" -eq 404 ]; then
-            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+            echo "[FAILED] Health endpoint returns 404 - check if /admin/health exists"
           elif [ "$health_code" -eq 000 ]; then
             echo "[FAILED] Could not connect to health endpoint"
           else
@@ -211,7 +211,7 @@ jobs:
           
           # Clean the URL (remove any whitespace/newlines)
           CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
-          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
           
@@ -248,8 +248,8 @@ jobs:
           fi
           
           # Show the constructed URLs
-          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
-          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
           
           echo "Constructed Health URL: '$HEALTH_URL'"
           echo "Constructed Cleanup URL: '$CLEANUP_URL'"
@@ -269,7 +269,7 @@ jobs:
           echo "Health endpoint response code: $health_code"
           
           if [ "$health_code" -eq 404 ]; then
-            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+            echo "[FAILED] Health endpoint returns 404 - check if /admin/health exists"
           elif [ "$health_code" -eq 000 ]; then
             echo "[FAILED] Could not connect to health endpoint"
           else
@@ -284,7 +284,7 @@ jobs:
           
           # Clean the URL (remove any whitespace/newlines)
           CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
-          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          CLEANUP_URL="${CLEAN_URL}/admin/cleanup"
           
           echo "Using cleaned URL: '$CLEANUP_URL'"
           
@@ -321,7 +321,7 @@ jobs:
         run: |
           echo "Performing health check..."
           
-          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
+          HEALTH_URL="${REACT_APP_API_URL}/admin/health"
           
           response=$(curl -s -w "HTTPSTATUS:%{http_code}" "$HEALTH_URL" || echo "HTTPSTATUS:000")
           http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -348,7 +348,7 @@ jobs:
           echo "Executing cleanup process..."
           echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           
-          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          CLEANUP_URL="${REACT_APP_API_URL}/admin/cleanup"
           
           # Prepare headers
           if [ -n "$CLEANUP_API_KEY" ]; then
