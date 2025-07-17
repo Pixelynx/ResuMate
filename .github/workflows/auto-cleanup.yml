@@ -1,6 +1,10 @@
 name: Auto-Delete Cleanup
 
 on:
+  push:
+    branches:
+      - main
+      - config/scheduler
   schedule:
     # Run every 30 minutes
     - cron: '*/30 * * * *'
