@@ -32,6 +32,9 @@ jobs:
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Validate environment configuration
         run: |
           echo "Validating required environment variables..."
