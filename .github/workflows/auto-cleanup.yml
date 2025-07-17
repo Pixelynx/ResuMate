@@ -182,3 +182,24 @@ jobs:
           
           # Create issue comment or notification here if needed
           # For now, we'll rely on GitHub's built-in failure notifications
+      - name: Debug secrets
+        run: |
+          echo "Checking secret availability..."
+          echo "REACT_APP_API_URL length: ${#REACT_APP_API_URL}"
+          echo "CLEANUP_API_KEY length: ${#CLEANUP_API_KEY}"
+          
+          # Check if secrets are set (without revealing values)
+          if [ -n "$REACT_APP_API_URL" ]; then
+            echo "REACT_APP_API_URL is set"
+          else
+            echo "REACT_APP_API_URL is NOT set"
+          fi
+          
+          if [ -n "$CLEANUP_API_KEY" ]; then
+            echo "CLEANUP_API_KEY is set"
+          else
+            echo "CLEANUP_API_KEY is NOT set"
+          fi
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          CLEANUP_API_KEY: ${{ secrets.CLEANUP_API_KEY }}
