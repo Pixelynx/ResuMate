@@ -80,6 +80,236 @@ jobs:
           echo "Auto Delete Enabled: $ENABLE_AUTO_DELETE"
           echo "Test Email Configured: $([ -n "$TEST_EMAIL" ] && echo 'yes' || echo 'no')"
       
+      - name: Debug URL construction
+        run: |
+          echo "=== URL DEBUGGING ==="
+          echo "Base API URL: '$REACT_APP_API_URL'"
+          echo "URL length: ${#REACT_APP_API_URL}"
+          
+          # Check for common URL issues
+          if [[ "$REACT_APP_API_URL" == *" "* ]]; then
+            echo "[WARNING] URL contains spaces"
+          fi
+          
+          if [[ "$REACT_APP_API_URL" == *
+          
+          # Show the constructed URLs
+          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          
+          echo "Constructed Health URL: '$HEALTH_URL'"
+          echo "Constructed Cleanup URL: '$CLEANUP_URL'"
+          
+          # Test basic connectivity to the base URL
+          echo "Testing base URL connectivity..."
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Base URL response code: $http_code"
+          
+          # Test the health endpoint specifically
+          echo "Testing health endpoint..."
+          health_response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$HEALTH_URL" || echo "HTTPSTATUS:000")
+          health_code=$(echo "$health_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Health endpoint response code: $health_code"
+          
+          if [ "$health_code" -eq 404 ]; then
+            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+          elif [ "$health_code" -eq 000 ]; then
+            echo "[FAILED] Could not connect to health endpoint"
+          else
+            echo "[SUCCESS] Health endpoint responded with code: $health_code"
+          fi
+
+      - name: Execute cleanup
+        id: cleanup
+        run: |
+          echo "Starting cleanup process..."
+          echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          
+          # Clean the URL (remove any whitespace/newlines)
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          
+          echo "Using cleaned URL: '$CLEANUP_URL'"
+          
+          # Prepare headers
+          if [ -n "$CLEANUP_API_KEY" ]; then
+            AUTH_HEADER="Authorization: Bearer $CLEANUP_API_KEY"
+          else
+            echo "No API key available for authentication"
+            exit 1
+          fi
+          
+          # Execute cleanup with more detailed error handling
+          echo "Attempting cleanup request..."
+          response=$(timeout 300 curl -s -w "HTTPSTATUS:%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" \
+            -H "User-Agent: GitHub-Actions-Auto-Cleanup/1.0" \
+            -v \
+            "$CLEANUP_URL" 2>&1 || echo "HTTPSTATUS:000")
+          
+          echo "Raw curl response:"
+          echo "$response"
+          echo "--- End of raw response ---"
+          
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+          
+          echo "Cleanup response code: $http_code"
+          echo "Cleanup response body: $body"
+          
+          # Rest of your cleanup logic...\n'* ]]; then
+            echo "[WARNING] URL contains newlines"
+          fi
+          
+          if [[ "$REACT_APP_API_URL" == *
+          
+          # Show the constructed URLs
+          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          
+          echo "Constructed Health URL: '$HEALTH_URL'"
+          echo "Constructed Cleanup URL: '$CLEANUP_URL'"
+          
+          # Test basic connectivity to the base URL
+          echo "Testing base URL connectivity..."
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Base URL response code: $http_code"
+          
+          # Test the health endpoint specifically
+          echo "Testing health endpoint..."
+          health_response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$HEALTH_URL" || echo "HTTPSTATUS:000")
+          health_code=$(echo "$health_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Health endpoint response code: $health_code"
+          
+          if [ "$health_code" -eq 404 ]; then
+            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+          elif [ "$health_code" -eq 000 ]; then
+            echo "[FAILED] Could not connect to health endpoint"
+          else
+            echo "[SUCCESS] Health endpoint responded with code: $health_code"
+          fi
+
+      - name: Execute cleanup
+        id: cleanup
+        run: |
+          echo "Starting cleanup process..."
+          echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          
+          # Clean the URL (remove any whitespace/newlines)
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          
+          echo "Using cleaned URL: '$CLEANUP_URL'"
+          
+          # Prepare headers
+          if [ -n "$CLEANUP_API_KEY" ]; then
+            AUTH_HEADER="Authorization: Bearer $CLEANUP_API_KEY"
+          else
+            echo "No API key available for authentication"
+            exit 1
+          fi
+          
+          # Execute cleanup with more detailed error handling
+          echo "Attempting cleanup request..."
+          response=$(timeout 300 curl -s -w "HTTPSTATUS:%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" \
+            -H "User-Agent: GitHub-Actions-Auto-Cleanup/1.0" \
+            -v \
+            "$CLEANUP_URL" 2>&1 || echo "HTTPSTATUS:000")
+          
+          echo "Raw curl response:"
+          echo "$response"
+          echo "--- End of raw response ---"
+          
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+          
+          echo "Cleanup response code: $http_code"
+          echo "Cleanup response body: $body"
+          
+          # Rest of your cleanup logic...\r'* ]]; then
+            echo "[WARNING] URL contains carriage returns"
+          fi
+          
+          # Show the constructed URLs
+          HEALTH_URL="${REACT_APP_API_URL}/api/admin/health"
+          CLEANUP_URL="${REACT_APP_API_URL}/api/admin/cleanup"
+          
+          echo "Constructed Health URL: '$HEALTH_URL'"
+          echo "Constructed Cleanup URL: '$CLEANUP_URL'"
+          
+          # Test basic connectivity to the base URL
+          echo "Testing base URL connectivity..."
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$REACT_APP_API_URL" || echo "HTTPSTATUS:000")
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Base URL response code: $http_code"
+          
+          # Test the health endpoint specifically
+          echo "Testing health endpoint..."
+          health_response=$(curl -s -w "HTTPSTATUS:%{http_code}" --max-time 10 "$HEALTH_URL" || echo "HTTPSTATUS:000")
+          health_code=$(echo "$health_response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          
+          echo "Health endpoint response code: $health_code"
+          
+          if [ "$health_code" -eq 404 ]; then
+            echo "[FAILED] Health endpoint returns 404 - check if /api/admin/health exists"
+          elif [ "$health_code" -eq 000 ]; then
+            echo "[FAILED] Could not connect to health endpoint"
+          else
+            echo "[SUCCESS] Health endpoint responded with code: $health_code"
+          fi
+
+      - name: Execute cleanup
+        id: cleanup
+        run: |
+          echo "Starting cleanup process..."
+          echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          
+          # Clean the URL (remove any whitespace/newlines)
+          CLEAN_URL=$(echo "$REACT_APP_API_URL" | tr -d '[:space:]')
+          CLEANUP_URL="${CLEAN_URL}/api/admin/cleanup"
+          
+          echo "Using cleaned URL: '$CLEANUP_URL'"
+          
+          # Prepare headers
+          if [ -n "$CLEANUP_API_KEY" ]; then
+            AUTH_HEADER="Authorization: Bearer $CLEANUP_API_KEY"
+          else
+            echo "No API key available for authentication"
+            exit 1
+          fi
+          
+          # Execute cleanup with more detailed error handling
+          echo "Attempting cleanup request..."
+          response=$(timeout 300 curl -s -w "HTTPSTATUS:%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" \
+            -H "User-Agent: GitHub-Actions-Auto-Cleanup/1.0" \
+            -v \
+            "$CLEANUP_URL" 2>&1 || echo "HTTPSTATUS:000")
+          
+          echo "Raw curl response:"
+          echo "$response"
+          echo "--- End of raw response ---"
+          
+          http_code=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+          body=$(echo "$response" | sed -e 's/HTTPSTATUS\:.*//g')
+          
+          echo "Cleanup response code: $http_code"
+          echo "Cleanup response body: $body"
+          
       - name: Health check
         id: health_check
         run: |
