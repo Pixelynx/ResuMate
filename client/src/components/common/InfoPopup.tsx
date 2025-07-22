@@ -66,7 +66,6 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   showDontShowAgain = true,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Handle escape key
