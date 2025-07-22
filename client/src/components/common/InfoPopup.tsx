@@ -8,8 +8,6 @@ import {
   Button,
   Box,
   Typography,
-  useTheme,
-  useMediaQuery,
   styled
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -65,7 +63,6 @@ const InfoPopup: React.FC<InfoPopupProps> = ({
   storageKey,
   showDontShowAgain = true,
 }) => {
-  const theme = useTheme();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Handle escape key
