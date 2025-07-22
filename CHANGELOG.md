@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### [2025-07-18]
+[client]
+### Added
+- Implemented reusable popup system with responsive design:
+  - Created InfoPopup component with Material-UI Dialog
+  - Added PopupContext for state management
+  - Implemented localStorage-based "don't show again" functionality
+  - Added accessibility features (keyboard navigation, ARIA labels)
+  - Created DashboardWelcomePopup for experimental stage notice
+  - Created CoverLetterNoticePopup for technical position optimization notice
+  - Added useInfoPopups hook for route-based popup management
+  - Integrated popup system with React Router
+  - Enhanced styling with purple theme and responsive design
+  - Added comprehensive TypeScript types and interfaces
+
 ### [2025-07-17]
 [server] 
 ### Added
