@@ -10,6 +10,8 @@ import ViewCoverLetter from './components/coverLetter/ViewCoverLetter';
 import EditCoverLetter from './components/coverLetter/EditCoverLetter';
 import { ErrorBoundary } from 'react-error-boundary';
 import { setupResizeObserverErrorHandler } from './utils/errorHandlers';
+import { PopupProvider } from './contexts/PopupContext';
+import useInfoPopups from './hooks/useInfoPopups';
 
 function ErrorFallback({ error }) {
   console.error('Error caught by ErrorBoundary:', error);
@@ -21,6 +23,42 @@ function ErrorFallback({ error }) {
     </div>
   );
 }
+
+// Separate component for routes to use hooks
+const AppRoutes = () => {
+  useInfoPopups(); // Hook to manage popups based on route
+
+  return (
+    <>
+      <Header />
+      <main style={{ height: 'calc(100vh + 50px)', padding: '20px' }}>
+        <Routes>
+          {/* Resume Routes */}
+          <Route path="/resume/builder" element={<ResumeForm />} />
+          <Route path="/resume/:id" element={<ViewResume />} />
+          
+          {/* Dashboard Route */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          
+          {/* Cover Letter Routes */}
+          <Route path="/cover-letter/new" element={<CoverLetterForm />} />
+          <Route path="/cover-letter/from-resume/:resumeid" element={<CoverLetterForm />} />
+          <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
+          <Route path="/cover-letter/edit/:id" element={<EditCoverLetter />} />
+          
+          {/* Cover Letters Routes (plural) - for compatibility */}
+          <Route path="/cover-letter/view/:id" element={<ViewCoverLetter />} />
+          <Route path="/cover-letter/edit-legacy/:id" element={<CoverLetterForm />} />
+          
+          {/* Redirects */}
+          <Route path="/builder" element={<Navigate to="/resume/builder" />} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </main>
+      <Footer />
+    </>
+  );
+};
 
 function App() {
   useEffect(() => {
@@ -45,34 +83,11 @@ function App() {
       }}
     >
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <Router>
-          <Header />
-          <main style={{ height: 'calc(100vh + 50px)', padding: '20px' }}>
-            <Routes>
-              {/* Resume Routes */}
-              <Route path="/resume/builder" element={<ResumeForm />} />
-              <Route path="/resume/:id" element={<ViewResume />} />
-              
-              {/* Dashboard Route */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              
-              {/* Cover Letter Routes */}
-              <Route path="/cover-letter/new" element={<CoverLetterForm />} />
-              <Route path="/cover-letter/from-resume/:resumeid" element={<CoverLetterForm />} />
-              <Route path="/cover-letter/:id" element={<ViewCoverLetter />} />
-              <Route path="/cover-letter/edit/:id" element={<EditCoverLetter />} />
-              
-              {/* Cover Letters Routes (plural) - for compatibility */}
-              <Route path="/cover-letter/view/:id" element={<ViewCoverLetter />} />
-              <Route path="/cover-letter/edit-legacy/:id" element={<CoverLetterForm />} />
-              
-              {/* Redirects */}
-              <Route path="/builder" element={<Navigate to="/resume/builder" />} />
-              <Route path="/" element={<Navigate to="/dashboard" />} />
-            </Routes>
-          </main>
-          <Footer />
-        </Router>
+        <PopupProvider>
+          <Router>
+            <AppRoutes />
+          </Router>
+        </PopupProvider>
       </ErrorBoundary>
     </div>
   );
