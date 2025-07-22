@@ -16,6 +16,11 @@
   - Integrated popup system with React Router
   - Enhanced styling with purple theme and responsive design
   - Added comprehensive TypeScript types and interfaces
+- Fixed client-side routing for production:
+  - Added Netlify `_redirects` file to handle SPA routing
+  - Configured catch-all route to serve index.html for all paths
+  - Resolved 404 errors on page refresh in production
+  - Enhanced routing stability for deep-linked URLs
 
 ### [2025-07-17]
 [server] 
